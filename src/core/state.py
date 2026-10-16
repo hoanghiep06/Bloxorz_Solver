@@ -1,20 +1,36 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Tuple, FrozenSet
+from typing import List, Tuple
 
 class Orientation(Enum):
     STANDING = 0     # Chiếm 1 ô (r, c)
     HORIZONTAL = 1   # Nằm ngang: (r, c) và (r, c + 1)
     VERTICAL = 2     # Nằm dọc: (r, c) và (r + 1, c)
 
+@dataclass(frozen=True, eq=False, repr=False)
 class BloxorzState:
-    def __init__(self, r: int, c: int, orientation: Orientation, bridges_state: Tuple[bool, ...] = ()):
-        self.r = r
-        self.c = c
-        self.orientation = orientation
-        # bridges_state lưu trạng thái đóng/mở của các cầu (hỗ trợ nâng cao sau này)
-        self.bridges_state = bridges_state
+    """Stable search key anchored at the top/left occupied cell.
 
-    def get_occupied_cells(self):
+    Bridge flags participate in identity; bridge effects are not implemented yet.
+    Board validates support/bounds separately, so negative coordinates are allowed.
+    """
+
+    r: int
+    c: int
+    orientation: Orientation
+    bridges_state: Tuple[bool, ...] = ()
+
+    def __post_init__(self):
+        if type(self.r) is not int or type(self.c) is not int:
+            raise TypeError("State coordinates r and c must be integers (not booleans).")
+        if not isinstance(self.orientation, Orientation):
+            raise ValueError("State orientation must be an Orientation member.")
+        if not isinstance(self.bridges_state, tuple) or any(
+            type(flag) is not bool for flag in self.bridges_state
+        ):
+            raise TypeError("bridges_state must be a tuple of booleans.")
+
+    def get_occupied_cells(self) -> List[Tuple[int, int]]:
         """Trả về danh sách các ô (r, c) mà khối đang chiếm giữ."""
         if self.orientation == Orientation.STANDING:
             return [(self.r, self.c)]
@@ -36,4 +52,7 @@ class BloxorzState:
                (other.r, other.c, other.orientation, other.bridges_state)
 
     def __repr__(self):
+        if self.bridges_state:
+            return (f"State({self.r}, {self.c}, {self.orientation.name}, "
+                    f"bridges_state={self.bridges_state})")
         return f"State({self.r}, {self.c}, {self.orientation.name})"
