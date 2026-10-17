@@ -1,7 +1,8 @@
 import sys
 from src.core.board import Board
 from src.solvers.bfs import BFSSolver
-# from src.solvers.dfs import DFSSolver
+from src.solvers.dfs import DFSSolver
+from src.solvers.ids import IDSSolver
 # from src.solvers.astar import AStarSolver
 
 def main():
@@ -10,10 +11,13 @@ def main():
     print(f"Loaded {map_path} successfully!")
     print(f"Start: ({board.start_r}, {board.start_c}), Goal: ({board.goal_r}, {board.goal_c})\n")
 
-    print(">>> Testing BFS Solver...")
-    solver = BFSSolver(board)
-    result = solver.solve()
-    print(result)
+    # print(">>> Testing BFS Solver...")
+    # solver = BFSSolver(board)
+    # result = solver.solve()
+    # print(result)
+    for name, cls in [("DFS", DFSSolver), ("IDS", IDSSolver)]:
+        print(f">>> Testing {name} Solver...")
+        print(cls(board).solve())
 
 if __name__ == "__main__":
     main()
