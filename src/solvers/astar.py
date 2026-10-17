@@ -6,14 +6,27 @@ from src.core.board import ACTIONS
 from src.core.state import BloxorzState
 
 class AStarSolver(BaseSolver):
+    def manhattan_dist(self, r, c):
+        return (abs(r - self.board.goal_r) + abs(c - self.board.goal_c))
+    
     def heuristic(self, state: BloxorzState) -> float:
-        # Gợi ý: Manhattan distance chia đôi (relaxed point)
-        # Có thể cộng thêm penalty nếu state không standing[cite: 6, 7] // Cộng thêm penalty làm mất consistency!!!
-        dist = (abs(state.r - self.board.goal_r) + abs(state.c - self.board.goal_c)) / 2.0
+        # Heuristic: min Manhattan distance of occupied block / 2
+        # Added penalty of 0.5 if not state.is_standing
+        occupied = state.get_occupied_cells()
+        dist = float('inf')
+        
+        for block in occupied:
+            curr = self.manhattan_dist(block[0], block[1]) / 2
+            if dist > curr: dist = curr
+            
+        if not state.is_standing: dist += 0.5
         return dist
-        # Prove tính nhất quán (consistent): Khi giả sử cost_function(n) >= 1, tính nhất quán hiển nhiên, vì tối đa block chỉ có thể di chuyển 2 bước
-        # => Manhattan distance / 2 <= 1 <= cost_function(n) (chứng minh tính nhất quán)
-
+        # Prove tính nhất quán (consistent): Với giả sử cost_function(n) >= 1
+        # Đpcm: h(N) <= h(P) + c(N, P) với N là node ban đầu và P là node hàng xóm
+        # Viết lại: h(N) - h(P) <= c(N, P) <= 1, gọi d(n) là min Manhattan distance tới đích, ta có 2 TH
+        # TH1: state.is_standing = 1 => d(N) - d(P) <= 2 (Đi tối đa 2 bước)=> h(N) - h(P) <= 2/2 = 1 (Consistent)
+        # TH2: state.is_standing = 0 => d(N) - d(P) <= 1 (Khi đi 2 bước phải đi cùng orientation của block, do đó min_d chỉ cách nhau tối đa 1)
+        # => h(N) - h(P) <= 1/2 + 0.5 = 1 (Consistent)
     def cost_function(self, state: BloxorzState) -> float:
         # Design later
         return 1
