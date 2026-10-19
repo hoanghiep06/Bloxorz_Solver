@@ -37,24 +37,34 @@ class AStarSolver(BaseSolver):
         f_n = defaultdict(lambda: float('inf'))
         path = defaultdict(list)
         initial_state = self.board.get_initial_state()
+        
         if self.board.is_goal(initial_state):
             return []
+        
         pq = []
-        heapq.heappush(pq, (0, initial_state, []))
+        heapq.heappush(pq, (0, 0, initial_state, []))
         visited = set()
+        
         while pq:
-            weight, current_state, current_path = heapq.heappop(pq)
+            
+            f_curr, g_curr, current_state, current_path = heapq.heappop(pq)
             self.expanded_nodes += 1
             visited.add(current_state)
+            
             if self.board.is_goal(current_state):
                 return current_path
-            if f_n[current_state] >= weight:
-                f_n[current_state] = weight
+            
+            if f_n[current_state] >= f_curr:
+                f_n[current_state] = f_curr
                 path[current_state] = current_path
+                
             for action in ACTIONS:
                 next_state = self.board.transition(current_state, action)
-                if next_state and next_state not in visited:
-                    heapq.heappush(pq, (self.heuristic(next_state) + self.cost_function(next_state), next_state, current_path + [action]))
+                if next_state is not None and next_state not in visited:
+                    c_n = self.cost_function(next_state)
+                    f_next = self.heuristic(next_state) + c_n + g_curr
+                    g_next = g_curr + c_n
+                    heapq.heappush(pq, (f_next, g_next, next_state, current_path + [action]))
                     
         return None
     
