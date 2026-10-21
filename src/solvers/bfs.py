@@ -4,26 +4,36 @@ from src.solvers.base_solver import BaseSolver
 from src.core.board import ACTIONS
 
 class BFSSolver(BaseSolver):
+    """FIFO graph search with unit action costs and first-discovery parents."""
+
     def _search(self) -> Optional[List[str]]:
         initial_state = self.board.get_initial_state()
         if self.board.is_goal(initial_state):
             return []
 
-        # queue lưu: (state_hien_tai, danh_sach_action_da_di)
-        queue = deque([(initial_state, [])])
+        # Only states enter the queue; each discovered state records one parent.
+        queue = deque([initial_state])
         visited = {initial_state}
+        parent = {}
 
         while queue:
-            current_state, path = queue.popleft()
+            current_state = queue.popleft()
             self.expanded_nodes += 1
 
             if self.board.is_goal(current_state):
+                path = []
+                # The root has no parent. Each link leads to an earlier layer.
+                while current_state != initial_state:
+                    current_state, action = parent[current_state]
+                    path.append(action)
+                path.reverse()
                 return path
 
             for action in ACTIONS:
                 next_state = self.board.transition(current_state, action)
                 if next_state is not None and next_state not in visited:
+                    parent[next_state] = (current_state, action)
                     visited.add(next_state)
-                    queue.append((next_state, path + [action]))
+                    queue.append(next_state)
 
         return None
