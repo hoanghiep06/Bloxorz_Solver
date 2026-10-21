@@ -7,6 +7,7 @@ from src.core.board import Board
 from src.solvers.bfs import BFSSolver
 from src.solvers.dfs import DFSSolver
 from src.solvers.ids import IDSSolver
+from src.solvers.greedy import GreedySolver
 from src.solvers.UCS_Algorithm.main_ucs import run_ucs_algorithm
 # from src.solvers.astar import AStarSolver
 
@@ -16,7 +17,12 @@ def main():
     print(f"Loaded {map_path} successfully!")
     print(f"Start: ({board.start_r}, {board.start_c}), Goal: ({board.goal_r}, {board.goal_c})\n")
 
-    for name, cls in [("BFS", BFSSolver), ("DFS", DFSSolver), ("IDS", IDSSolver)]:
+    for name, cls in [
+        ("BFS", BFSSolver),
+        ("DFS", DFSSolver),
+        ("IDS", IDSSolver),
+        ("Greedy", GreedySolver),
+    ]:
         print(f">>> Testing {name} Solver...")
         print(cls(board).solve())
 

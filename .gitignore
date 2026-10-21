@@ -29,3 +29,9 @@ Thumbs.db
 
 # Kết quả sinh ra khi chạy benchmark (bỏ comment nếu không muốn commit)
 # benchmark_results.csv
+
+# Quy tắc bổ sung từ nhánh Greedy
+*$py.class
+.venv
+ENV/
+*.pdf
