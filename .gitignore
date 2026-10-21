@@ -1,4 +1,4 @@
-# Môi trường ảo
+﻿# Môi trường ảo
 venv/
 .venv/
 env/
@@ -27,11 +27,11 @@ Thumbs.db
 # Biến môi trường
 .env
 
-# Kết quả sinh ra khi chạy benchmark (bỏ comment nếu không muốn commit)
-# benchmark_results.csv
+# File tài liệu kế hoạch cá nhân
+NHIEM_VU_*.md
+docs/PHASE_*.md
 
 # Quy tắc bổ sung từ nhánh Greedy
 *$py.class
-.venv
 ENV/
 *.pdf
