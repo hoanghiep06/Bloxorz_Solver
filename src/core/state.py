@@ -50,7 +50,8 @@ class BloxorzState:
             return False
         return (self.r, self.c, self.orientation, self.bridges_state) == \
                (other.r, other.c, other.orientation, other.bridges_state)
-
+    def __lt__(self, other):
+        return False
     def __repr__(self):
         if self.bridges_state:
             return (f"State({self.r}, {self.c}, {self.orientation.name}, "
