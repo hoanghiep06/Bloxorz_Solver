@@ -20,6 +20,9 @@ htmlcov/
 .idea/
 *.swp
 
+# File khóa tạm của trình soạn thảo
+.~lock.*#
+
 # OS
 .DS_Store
 Thumbs.db

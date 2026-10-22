@@ -1,5 +1,15 @@
 # GUI & Renderer — Gói thiết kế Chặng 2
 
+## Tài liệu Basic Renderer hiện hành
+
+Index bổ sung **23/10/2026**: các phần Chặng2 bên dưới giữ nguyên snapshot lịch sử.
+API/implementation hiện tại và readiness đọc từ gói bàn giao Chặng3:
+
+- [STAGE3_HANDOFF](STAGE3_HANDOFF.md) — tài liệu chính gửi Phong/Tài review.
+- [BASIC_RENDERER_API](BASIC_RENDERER_API.md) — source-backed API và verified examples.
+- [TEAM_INTEGRATION_REVIEW](TEAM_INTEGRATION_REVIEW.md) — findings/deviations và pending decisions.
+- [STAGE3_RELEASE_CHECKLIST](STAGE3_RELEASE_CHECKLIST.md) — runtime/Git/attribution checklist.
+
 Ngày kiểm chứng: **22/10/2026**, múi giờ Asia/Ho_Chi_Minh. Phụ trách: **Phước**.
 
 **DESIGN PACKAGE COMPLETE** là trạng thái của bộ tài liệu, không phải xác nhận GUI đã chạy hoặc **INTEGRATION CONTRACT APPROVED**. Hiện chưa có implementation GUI. Có thể dùng gói này để chuẩn bị Basic 3D Renderer độc lập; Advanced Integration cần Phong/Tài duyệt contract.
