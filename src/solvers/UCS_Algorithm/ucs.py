@@ -17,9 +17,13 @@ class UCSSolver(BaseSolver):
         # Mặc định dùng hàm chi phí vật lý
         self.cost_function = cost_function or PhysicsBasedCost()
         self.total_cost = 0.0 # Tổng chi phí từ trạng thái bắt đầu đến trạng thái hiện tại
-        self.solution: Optional[List[str]] = None,
+        self.solution: Optional[List[str]] = None
         self.solution_state: List[BloxorzState] = []
         self.solution_costs: List[float] = []
+
+    @property
+    def solution_states(self) -> List[BloxorzState]:
+        return self.solution_state
 
     def _search(self) -> Optional[List[str]]:
         start = self.board.get_initial_state()
@@ -40,12 +44,10 @@ class UCSSolver(BaseSolver):
         while frontier:
             # 1. Lấy trạng thái có chi phí tích lũy g nhỏ nhất
             current_g, _, current_state = heapq.heappop(frontier)
-            
 
             # 2. Bỏ qua nếu thấy đường khác tốt hơn tới current_state
             if current_g > best_g.get(current_state, float('inf')):
                 continue
-
 
             self.expanded_nodes += 1
 
@@ -70,9 +72,9 @@ class UCSSolver(BaseSolver):
 
                 return actions
 
-
             # 4. Duyệt các nhánh kế tiếp
-            for action in ACTIONS:
+            actions = self.board.get_actions(current_state) if hasattr(self.board, 'get_actions') else ACTIONS
+            for action in actions:
                 successor = self.board.transition(current_state, action)
                 if successor is None:
                     continue
@@ -90,14 +92,12 @@ class UCSSolver(BaseSolver):
 
                     heapq.heappush(frontier, (new_g, next(sequence), successor))
 
-
         self.total_cost = float("inf")
         self.solution = None
         self.solution_state = []
         self.solution_costs = []
         # Nếu không tìm thấy đường đi
         return None
-
 
     def _calculate_path_costs(
         self, states: Sequence[BloxorzState], actions: Sequence[str]
@@ -115,10 +115,9 @@ class UCSSolver(BaseSolver):
     def get_solution_states(
         self, solution: Optional[Sequence[str]] = None
     ) -> List[BloxorzState]:
-
         # Reconstruct states dựa trên action path
-        if solution is None and self.solution_states:
-            return list(self.solution_states)
+        if solution is None and self.solution_state:
+            return list(self.solution_state)
 
         actions = list(solution or [])
         states = [self.board.get_initial_state()]
@@ -128,7 +127,7 @@ class UCSSolver(BaseSolver):
             current = self.board.transition(current, action)
             if current is None:
                 raise ValueError(
-                    f"[INVILID SOLUTION]: hành động {action!r} dẫn tới trạng thái không hợp lệ"
+                    f"[INVALID SOLUTION]: hành động {action!r} dẫn tới trạng thái không hợp lệ"
                 )
             states.append(current)
 
@@ -150,6 +149,8 @@ def reconstruct_path(parent, start, goal) -> List[str]:
     return actions
 
 def _state_label(state: BloxorzState) -> str:
+    if state.is_split():
+        return f"SPLIT(cubes={state.cubes}, active={state.active_cube})"
     return f"({state.r}, {state.c}, {state.orientation.name})"
 
 def visualize_ucs_solution(
@@ -211,4 +212,3 @@ def visualize_ucs_solution(
             print("".join(row))
 
     print("\nKý hiệu: B = khối, G = đích, F = ô dễ vỡ, · = vực, . = sàn.")
-

@@ -2,8 +2,13 @@ from typing import List, Optional
 from src.solvers.base_solver import BaseSolver
 from src.core.board import ACTIONS
 
-
 class IDSSolver(BaseSolver):
+    """Iterative Deepening Search (IDS) solver for Bloxorz.
+
+    Supports basic boards as well as advanced mechanics (fragile tiles,
+    bridges/switches, and split cubes via 'SPACE' cube switching).
+    """
+
     def _search(self) -> Optional[List[str]]:
         initial_state = self.board.get_initial_state()
         limit = 0
@@ -23,9 +28,6 @@ class IDSSolver(BaseSolver):
 
     def _depth_limited(self, initial_state, limit):
         """DFS giới hạn độ sâu. Trả về (path hoặc None, số state đã chạm tới)."""
-        # best_depth: độ sâu nhỏ nhất đã tới được mỗi state trong lượt này.
-        # Chỉ mở lại state nếu tới được bằng đường NGẮN HƠN, nếu dùng visited
-        # thường thì có thể bỏ sót nghiệm do state bị khóa ở độ sâu lớn.
         best_depth = {}
         parent = {}
         stack = [(initial_state, 0, None, None)]
@@ -45,7 +47,8 @@ class IDSSolver(BaseSolver):
             if depth == limit:
                 continue
 
-            for action in reversed(ACTIONS):
+            actions = self.board.get_actions(state) if hasattr(self.board, 'get_actions') else ACTIONS
+            for action in reversed(actions):
                 next_state = self.board.transition(state, action)
                 if next_state is None:
                     continue
