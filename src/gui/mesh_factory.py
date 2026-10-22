@@ -167,3 +167,30 @@ def make_block_mesh(*, pitch: float = 1.0) -> GeomNode:
               for axis in range(3) for sign in (-1, 1)}
     return _beveled_box("MainBlockMesh", (pitch, pitch, 2 * pitch), 0.03 * pitch,
                         colors, BLOCK_HIGHLIGHT, inlay=True)
+
+
+class MeshBuilder(_MeshBuilder):
+    """Public flat-normal convex-face builder for additional procedural assets."""
+
+
+def make_beveled_box_mesh(*, name, dimensions, bevel, top_color, side_color, edge_color):
+    """Public reusable box primitive; dimensions are centered nominal extents.
+
+    Stage 4 extension point; existing Basic mesh factories retain their geometry.
+    """
+    if type(name) is not str or not name.strip():
+        raise ValueError('name must be nonempty text.')
+    if type(dimensions) is not tuple or len(dimensions) != 3:
+        raise ValueError('dimensions must be a tuple of three positive extents.')
+    for value in (*dimensions, bevel):
+        _pitch(value)
+    if bevel >= min(dimensions) / 2:
+        raise ValueError('bevel must be less than every half extent.')
+    for color in (top_color, side_color, edge_color):
+        if type(color) is not tuple or len(color) != 4 or any(
+            type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 1 for v in color
+        ):
+            raise ValueError('colors must be finite RGBA tuples in [0, 1].')
+    colors = {(axis, sign): top_color if (axis, sign) == (2, 1) else side_color
+              for axis in range(3) for sign in (-1, 1)}
+    return _beveled_box(name, dimensions, bevel, colors, edge_color)
