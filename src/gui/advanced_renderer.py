@@ -47,6 +47,7 @@ class AdvancedSceneRenderer:
         self._whole = None
         self._cubes = self._indicators = ()
         self._cube_slots = {}
+        self._actor_visuals_visible = True
         self._disposed = False
 
     def _require_active(self):
@@ -175,8 +176,22 @@ class AdvancedSceneRenderer:
             self._visible(indicator, not is_whole and snapshot.active_cube_id is not None
                           and self._cube_slots.get(snapshot.active_cube_id) == index)
         self._contents[1].show()
-        self._contents[2].show()
+        self._visible(self._contents[2], self._actor_visuals_visible)
         self._snapshot = snapshot
+
+    def set_actor_visuals_visible(self, visible):
+        """Presentation lease for an external rig; never change snapshots or tiles.
+
+        The flag persists through show_snapshot/load_board until explicitly released.
+        Only this renderer's actor content is touched, including during host cleanup.
+        """
+        if type(visible) is not bool:
+            raise TypeError('visible must be bool.')
+        if self._disposed:
+            raise RuntimeError('Renderer is disposed.')
+        self._actor_visuals_visible = visible
+        if self._contents and self._snapshot is not None:
+            self._visible(self._contents[2], visible)
 
     @staticmethod
     def _visible(node, visible):
