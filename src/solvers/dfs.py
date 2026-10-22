@@ -2,13 +2,8 @@ from typing import List, Optional
 from src.solvers.base_solver import BaseSolver
 from src.core.board import ACTIONS
 
+
 class DFSSolver(BaseSolver):
-    """Depth-First Search (DFS) solver with cycle avoidance.
-
-    Supports basic boards as well as advanced mechanics (fragile tiles,
-    bridges/switches, and split cubes via 'SPACE' cube switching).
-    """
-
     def _search(self) -> Optional[List[str]]:
         initial_state = self.board.get_initial_state()
 
@@ -29,9 +24,8 @@ class DFSSolver(BaseSolver):
             if self.board.is_goal(current_state):
                 return self._build_path(parent, current_state)
 
-            actions = self.board.get_actions(current_state) if hasattr(self.board, 'get_actions') else ACTIONS
-            # Đảo ngược để action đầu tiên được duyệt trước (stack LIFO)
-            for action in reversed(actions):
+            # Đảo ngược để U được duyệt trước (stack LIFO)
+            for action in reversed(ACTIONS):
                 next_state = self.board.transition(current_state, action)
                 if next_state is not None and next_state not in parent:
                     stack.append((next_state, current_state, action))
