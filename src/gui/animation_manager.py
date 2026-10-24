@@ -120,6 +120,8 @@ class AnimationManager:
         if request.kind is AnimationKind.ROLL:
             plan = RollPlan(self._poses[request.actor_id], request.direction)
             plan.validate_target(target[request.actor_id])
+        elif request.terminal is not None and request.terminal.roll_direction is not None:
+            plan = RollPlan(self._poses[request.terminal.actor_id], request.terminal.roll_direction)
         self._start_poses = self._poses.copy()
         self._targets, self._roll = target, plan
         self._timeline = AnimationTimeline(request.duration, self._rate)
@@ -143,7 +145,9 @@ class AnimationManager:
         active = before.active_cube_id
         weights, opacity, scales = None, {}, {}
         if self._roll is not None:
-            poses[request.actor_id] = self._roll.sample(progress)
+            key = request.actor_id if request.kind is AnimationKind.ROLL else request.terminal.actor_id
+            poses[key] = self._roll.sample(progress if request.kind is AnimationKind.ROLL
+                                           else min(1, progress / .45))
         for event in request.events:
             if progress < event.start:
                 continue
@@ -179,7 +183,13 @@ class AnimationManager:
                     weights[event.active_cube_id] = u
             elif event.kind is EventKind.FALL:
                 key = request.terminal.actor_id
-                source = self._start_poses[key]
+                if self._roll is not None:
+                    if progress < .45:
+                        continue
+                    source = self._roll.sample(1)
+                    u = smoothstep((progress - .45) / .55)
+                else:
+                    source = self._start_poses[key]
                 poses[key] = replace(source, center=add(source.center, (0, 0, -request.terminal.fall_distance*self._pitch*u*u)))
                 opacity[key] = max(0, 1-2*max(0, u-.5))
             elif event.kind is EventKind.GOAL_COMPLETE:

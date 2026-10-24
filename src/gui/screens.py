@@ -17,11 +17,16 @@ from src.gui.level_intro import LevelIntro
 from src.gui.mouse_control import pick_action
 from src.gui.move_arrows import MoveArrows
 from src.gui.profile import star_rating
+from src.gui.game_adapter import prepare_level
+from src.gui.solver_worker import SolverJob
 
 
 def destroy_items(items):
+    from direct.gui.DirectGuiBase import DirectGuiWidget
     for item in reversed(items):
-        if isinstance(item, NodePath):
+        if isinstance(item, DirectGuiWidget):
+            item.destroy()
+        elif isinstance(item, NodePath):
             if not item.isEmpty():
                 item.removeNode()
         else:
@@ -66,7 +71,7 @@ class Screen:
         """Safe inside widget callbacks: widgets are destroyed on the next frame."""
         items, self._owned = self._owned, []
         if items:
-            self.flow.later(lambda: destroy_items(items))
+            self.flow.retire(items)
 
     def build(self, width, height):
         raise NotImplementedError
@@ -182,7 +187,7 @@ class LevelSelect(Screen):
 class SettingsScreen(Screen):
     name = 'settings'
     HINTS = {'keyboard': 'Arrow keys or WASD roll the block.',
-             'mouse': 'Click around the block: it rolls toward the click.'}
+             'mouse': 'Click around the block to roll. Space switches split cubes.'}
 
     def build(self, width, height):
         flow, settings = self.flow, self.flow.save.settings
@@ -368,6 +373,9 @@ class UIFlow:
         self.name = None
         self._supported, self._disposed = {}, False
         self._idle, self.hint_ready = 0.0, False
+        self._later_tasks = set()
+        self._retired = []
+        self._par_job = self._par_task = None
 
         ui.set_theme(save.settings.theme)
         self.apply_scene_theme(save.settings.theme)
@@ -401,18 +409,28 @@ class UIFlow:
 
     def later(self, function):
         def run(task):
-            function()
+            self._later_tasks.discard(task)
+            if not self._disposed:
+                function()
             return task.done
-        self.app.taskMgr.doMethodLater(0.0, run, 'ui-later')
+        task = self.app.taskMgr.doMethodLater(0.0, run, f'ui-later-{id(self)}')
+        self._later_tasks.add(task)
+
+    def retire(self, items):
+        self._retired.append(items)
+        def release():
+            if items in self._retired:
+                destroy_items(items)
+                self._retired.remove(items)
+        self.later(release)
 
     def is_supported(self, index):
-        """Levels the current Basic adapter can render (others show as locked)."""
+        """Validate both Advanced board data and the initial Core snapshot."""
         entry = self.catalog[index]
         if entry.level_id not in self._supported:
             try:
                 from src.core.board import Board
-                from src.gui.render_adapter import build_board_data
-                build_board_data(Board(str(entry.path)), level_id=entry.level_id)
+                prepare_level(Board(str(entry.path)), level_id=entry.level_id, session_id='capability')
                 self._supported[entry.level_id] = True
             except Exception:
                 self._supported[entry.level_id] = False
@@ -423,14 +441,34 @@ class UIFlow:
         entry = self.catalog[self.controller.level_index]
         if entry.level_id in self.save.par:
             return
+        self._cancel_par()
         try:
-            from src.solvers.bfs import BFSSolver
-            result = BFSSolver(self.controller.board).solve()
+            self._par_job = SolverJob(self.controller.board, 'src.solvers.bfs', 'BFSSolver')
         except Exception:
             return
-        if result.success:
-            self.save.par[entry.level_id] = result.solution_length
-            self.save.save()
+        def poll(task):
+            try:
+                outcome = self._par_job.poll()
+            except Exception:
+                self._par_job.cancel()
+                self._par_job = self._par_task = None
+                return task.done
+            if outcome is None:
+                return task.cont
+            self._par_job = self._par_task = None
+            ok, result = outcome
+            if ok and result.success:
+                self.save.par[entry.level_id] = result.solution_length
+                self.save.save()
+            return task.done
+        self._par_task = self.app.taskMgr.add(poll, f'ParSolver-{id(self)}')
+
+    def _cancel_par(self):
+        if self._par_task is not None:
+            self.app.taskMgr.remove(self._par_task)
+        if self._par_job is not None:
+            self._par_job.cancel()
+        self._par_job = self._par_task = None
 
     def apply_scene_theme(self, theme):
         """Recolour the 3D backdrop (SceneStyle is found by type inside the presentation)."""
@@ -490,6 +528,7 @@ class UIFlow:
         self.name = name
         game = name == 'game'
         if not game:
+            self._cancel_par()
             self.controller.cancel_guide()      # leaving the level drops any guide state
         self.reset_idle()
         self.ambient.set_intensity(.45 if game else 1.0)
@@ -532,6 +571,7 @@ class UIFlow:
     def start_level(self, index):
         if not self.is_supported(index):
             return
+        self._cancel_par()
         self.attract.stop()
         self.screens['game'].hide_result()
         if self.controller.load_level(index):
@@ -586,6 +626,11 @@ class UIFlow:
                 or self.screens['game'].result_visible or controller.manager is None
                 or controller.manager.is_busy or controller.phase != 'READY'):
             return
+        # A DirectGUI click must not also become a move on the board behind it.
+        from direct.gui.DirectGuiBase import DirectGuiWidget
+        region = self.app.mouseWatcherNode.getOverRegion()
+        if region is not None and region.getName() in DirectGuiWidget.guiDict:
+            return
         action = pick_action(self.app, self.app.dashboard.viewport.region,
                              self.app.presentation.camera.current_fit,
                              controller.state.get_occupied_cells(),
@@ -597,6 +642,13 @@ class UIFlow:
         if self._disposed:
             return
         self._disposed = True
+        self._cancel_par()
+        for task in self._later_tasks:
+            self.app.taskMgr.remove(task)
+        self._later_tasks.clear()
+        for items in self._retired:
+            destroy_items(items)
+        self._retired.clear()
         self._listener.ignoreAll()
         self.app.taskMgr.remove('ui-idle')
         self.attract.stop()

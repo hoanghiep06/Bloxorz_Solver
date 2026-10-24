@@ -16,20 +16,17 @@ class AStarSolver(BaseSolver):
         return float(abs(r - self.board.goal_r) + abs(c - self.board.goal_c))
 
     def heuristic(self, state: BloxorzState) -> float:
-        """Admissible and consistent heuristic estimating remaining distance to goal.
+        """Estimate remaining unit-cost rolls without overestimating.
 
-        - For whole blocks: min Manhattan distance of occupied cells to goal divided by 2
-          (since a roll moves up to 2 cells), plus 0.5 penalty if not standing (at least
-          one roll is required to stand up on the goal).
-        - For split blocks: accounts for steps needed for cubes to become adjacent plus
-          distance to goal.
+        Without split switches, use the existing relaxed Manhattan bound and
+        orientation penalty. Split switches can teleport cubes arbitrarily far,
+        invalidating spatial bounds even BEFORE the block reaches the switch.
+        Use h=0 for every state on such boards (Dijkstra ordering), and for any
+        supplied split state. This preserves optimality with nonnegative costs
+        at the expense of expanding more states on split boards.
         """
-        if state.is_split():
-            c0, c1 = state.cubes
-            inter_dist = float(abs(c0[0] - c1[0]) + abs(c0[1] - c1[1]))
-            d0 = self.manhattan_dist(c0[0], c0[1])
-            d1 = self.manhattan_dist(c1[0], c1[1])
-            return max(0.0, (inter_dist - 1.0) / 2.0) + min(d0, d1) / 2.0 + 1.0
+        if state.is_split() or getattr(self.board, 'split_switches', None):
+            return 0.0
 
         occupied = state.get_occupied_cells()
         min_d = min(self.manhattan_dist(r, c) for r, c in occupied) / 2.0

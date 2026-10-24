@@ -196,6 +196,7 @@ class PipelineIntegrationTests(SceneFixture):
         from panda3d.core import Point2, Point3
         camera = self.app.presentation.camera
         light = self.app.presentation.lighting
+        widgets = tuple(id(widget) for widget in self.app.dashboard.hud._widgets)
         for name in SHAPES:
             data = make_fixture(name)
             self.renderer.load_board(data)
@@ -215,5 +216,6 @@ class PipelineIntegrationTests(SceneFixture):
                     self.assertTrue(light.key.node().getLens().project(light_point, projected))
                     self.assertLess(max(abs(projected.x), abs(projected.y)), 1)
                 self.assertEqual(len(self.app.win.regions), 2)
-                self.assertEqual(len(self.app.dashboard.hud._widgets), 42)
+                self.assertEqual(tuple(id(widget) for widget in self.app.dashboard.hud._widgets), widgets)
+                self.assertEqual(len(self.app.dashboard.hud.metric_values), 5)
                 self.assertAlmostEqual(self.app.camLens.getVfov(), 45, places=4)

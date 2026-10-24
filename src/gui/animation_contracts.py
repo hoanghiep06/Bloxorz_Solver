@@ -96,6 +96,7 @@ class TerminalVisualOutcome:
     kind: EventKind
     actor_id: str | None = None  # None denotes WHOLE; strings denote stable cube IDs.
     fall_distance: float = 3.0
+    roll_direction: RollDirection | None = None
 
     def __post_init__(self):
         if self.kind not in (EventKind.FALL, EventKind.GOAL_COMPLETE):
@@ -103,6 +104,9 @@ class TerminalVisualOutcome:
         if self.actor_id is not None:
             text(self.actor_id, 'actor_id')
         finite(self.fall_distance, 'fall_distance', minimum=.01)
+        if self.roll_direction is not None and (self.kind is not EventKind.FALL
+                or type(self.roll_direction) is not RollDirection):
+            raise ValueError('Only FALL can include an explicit roll direction.')
 
 
 @dataclass(frozen=True, slots=True)

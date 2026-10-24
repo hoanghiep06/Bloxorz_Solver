@@ -95,11 +95,19 @@ class HudShell:
         self._disposed = False
         self.layout = None
         self.model = model
-        self.surfaces = {}        # legacy attribute, intentionally empty
+        self.surfaces = {}
         self.buttons = {}
         self.root = pixel2d.attachNewNode('DashboardHUD')
         self.bar = self.root.attachNewNode('HUDBar')
         try:
+            from direct.gui.DirectGui import DirectFrame
+            self.metrics = self._own(DirectFrame(parent=self.root, relief=DGG.FLAT,
+                frameColor=ui.PAPER, frameSize=(0, 1, -76, 0)))
+            self.surfaces = {'controls': self.bar, 'metrics': self.metrics}
+            self.metric_labels = [self._label(text, 14, 0, 0, muted=True, parent=self.metrics)
+                                  for text in METRIC_LABELS]
+            self.metric_values = [self._label(UNKNOWN, 20, 0, 0, parent=self.metrics)
+                                  for _ in METRIC_LABELS]
             x = MARGIN
             for name, width in TOP_ROW:
                 self._add_button(name, x, MARGIN, width)
@@ -150,7 +158,7 @@ class HudShell:
 
     def _add_button(self, name, x, y, width, group=None):
         button = ui.make_button(self.bar, DISPLAY.get(name, name), x, y, width, BTN_H,
-                                lambda: None, size=TEXT, enabled=False)
+                                None, size=TEXT, enabled=False)
         self._own(button.border)
         self._own(button)
         self.buttons[name] = button
@@ -254,6 +262,11 @@ class HudShell:
         self.warning['text_fg'] = ui.INK
         self.speed['frameColor'] = ui.LINE
         self.speed.thumb['frameColor'] = ui.PRIMARY
+        self.metrics['frameColor'] = ui.PAPER
+        for label in self.metric_labels:
+            label['text_fg'] = ui.MUTED
+        for label in self.metric_values:
+            label['text_fg'] = ui.INK
 
     # ------------------------------------------------------------ layout/data
     def _fit_text(self, label, text, size, max_width):
@@ -270,6 +283,9 @@ class HudShell:
         self._fit_text(self.level, self.model.level_label, LEVEL_SIZE,
                        max(80, width - LEFT_END - 3 * MARGIN))
         self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
+        cell = (width - 40) / 5
+        for label, value in zip(self.metric_values, metric_values(self.model)):
+            self._fit_text(label, value, 20, cell - 20)
 
     def apply_layout(self, layout):
         if self._disposed:
@@ -277,11 +293,19 @@ class HudShell:
         self.layout = layout
         if not layout.supported:
             self.bar.hide()
+            self.metrics.hide()
             self.warning.setPos(layout.width / 2, 0, -layout.height / 2)
             self.warning.show()
             return
         self.warning.hide()
         self.bar.show()
+        self.metrics.show()
+        self.metrics.setPos(20, 0, -(layout.height - 94))
+        self.metrics['frameSize'] = (0, layout.width - 40, -76, 0)
+        cell = (layout.width - 40) / 5
+        for index, (label, value) in enumerate(zip(self.metric_labels, self.metric_values)):
+            label.setPos(index * cell + 10, 0, -24)
+            value.setPos(index * cell + 10, 0, -55)
         self.level.setX(layout.width - MARGIN)
         self.runtime.setX(layout.width - MARGIN)
         self._refresh_texts()

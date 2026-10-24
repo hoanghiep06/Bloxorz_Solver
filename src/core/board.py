@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 from src.core.state import BloxorzState, Orientation
 
@@ -13,6 +14,15 @@ DIRECTION_DELTA = {
     'L': (0, -1),
     'R': (0, 1),
 }
+
+
+@dataclass(frozen=True)
+class TransitionOutcome:
+    next_state: Optional[BloxorzState]
+    motion_state: Optional[BloxorzState]
+    attempted_state: Optional[BloxorzState]
+    failure_reason: Optional[str] = None
+    failed_cube: Optional[int] = None
 
 
 class Board:
@@ -57,15 +67,24 @@ class Board:
 
         for idx, bridge in enumerate(self.bridges):
             raw_id = bridge.get('id', idx)
-            self.bridge_id_to_idx[raw_id] = idx
-            self.bridge_id_to_idx[str(raw_id)] = idx
-            self.bridge_id_to_idx[idx] = idx
-            self.bridge_id_to_idx[str(idx)] = idx
+            for bridge_id in (raw_id, str(raw_id)):
+                if (bridge_id in self.bridge_id_to_idx
+                        and self.bridge_id_to_idx[bridge_id] != idx):
+                    raise ValueError(f'Duplicate bridge ID {raw_id!r}.')
+                self.bridge_id_to_idx[bridge_id] = idx
 
             is_open = bool(bridge.get('initial_state', False))
             initial_bridge_flags.append(is_open)
             for cell in bridge.get('cells', []):
                 self.cell_to_bridge_idx[(cell[0], cell[1])] = idx
+
+        # Register positional aliases only after all declared IDs. An explicit
+        # numeric ID (including its string form) always wins over a list index.
+        for idx in range(len(self.bridges)):
+            target_idx = self.bridge_id_to_idx.get(
+                idx, self.bridge_id_to_idx.get(str(idx), idx))
+            self.bridge_id_to_idx.setdefault(idx, target_idx)
+            self.bridge_id_to_idx.setdefault(str(idx), target_idx)
 
         self.initial_bridges_state: Tuple[bool, ...] = tuple(initial_bridge_flags)
 
@@ -223,7 +242,12 @@ class Board:
         """Cập nhật trạng thái các cầu liên kết khi công tắc được kích hoạt."""
         if not bridges_state:
             return bridges_state
-        target_bridges = sw.get('targets') or sw.get('bridges') or sw.get('target') or []
+        target_bridges = []
+        for key in ('targets', 'bridges', 'target'):
+            value = sw.get(key)
+            if value is not None:
+                target_bridges = value
+                break
         if isinstance(target_bridges, (int, str)):
             target_bridges = [target_bridges]
         if not target_bridges:
@@ -294,7 +318,59 @@ class Board:
         """Trả về danh sách các công tắc tại ô (r, c)."""
         return self.switches_by_cell.get(cell, [])
 
+    def get_motion_state(self, state: BloxorzState, action: str) -> Optional[BloxorzState]:
+        """Kinematics before switches/merge; may be unsupported or outside the grid."""
+        if action not in VALID_ACTIONS:
+            raise ValueError(f'Unsupported action {action!r}.')
+        if action in ('SPACE', 'SWITCH'):
+            if not state.is_split():
+                return None
+            return BloxorzState.create_split(*state.cubes, 1 - state.active_cube,
+                                             state.bridges_state)
+        if state.is_split():
+            cubes = list(state.cubes)
+            dr, dc = DIRECTION_DELTA[action]
+            r, c = cubes[state.active_cube]
+            cubes[state.active_cube] = (r + dr, c + dc)
+            return BloxorzState.create_split(*cubes, state.active_cube, state.bridges_state)
+        r, c, orientation = state.r, state.c, state.orientation
+        if orientation == Orientation.STANDING:
+            dr, dc, target = {'U': (-2, 0, Orientation.VERTICAL),
+                              'D': (1, 0, Orientation.VERTICAL),
+                              'L': (0, -2, Orientation.HORIZONTAL),
+                              'R': (0, 1, Orientation.HORIZONTAL)}[action]
+        elif orientation == Orientation.HORIZONTAL:
+            dr, dc, target = {'U': (-1, 0, orientation), 'D': (1, 0, orientation),
+                              'L': (0, -1, Orientation.STANDING),
+                              'R': (0, 2, Orientation.STANDING)}[action]
+        else:
+            dr, dc, target = {'U': (-1, 0, Orientation.STANDING),
+                              'D': (2, 0, Orientation.STANDING),
+                              'L': (0, -1, orientation), 'R': (0, 1, orientation)}[action]
+        return BloxorzState(r + dr, c + dc, target, state.bridges_state)
+
+    def describe_transition(self, state: BloxorzState, action: str) -> TransitionOutcome:
+        """Describe a GUI action without changing the solver's Optional-state API."""
+        motion = self.get_motion_state(state, action)
+        if motion is None or (motion.is_split() and motion.cubes[0] == motion.cubes[1]):
+            return TransitionOutcome(None, motion, None, 'blocked')
+        result = self.transition(state, action)
+        attempted = self._transition(state, action, validate_result=False) or motion
+        reason, failed_cube = None, None
+        if result is None:
+            reason = 'fall'
+            if attempted.is_split():
+                failed_cube = next((i for i, cell in enumerate(attempted.cubes)
+                                    if not self.is_valid_cell(*cell, attempted.bridges_state)),
+                                   state.active_cube)
+            elif attempted.is_standing() and self.is_fragile_tile(attempted.r, attempted.c):
+                reason = 'fragile'
+        return TransitionOutcome(result, motion, attempted, reason, failed_cube)
+
     def transition(self, state: BloxorzState, action: str) -> Optional[BloxorzState]:
+        return self._transition(state, action)
+
+    def _transition(self, state: BloxorzState, action: str, *, validate_result=True) -> Optional[BloxorzState]:
         """Return a new valid state or None; unsupported actions raise ValueError.
 
         The source must be a valid BloxorzState on this board and is never mutated.
@@ -342,7 +418,7 @@ class Board:
                 merged_cells = [(merged_r, merged_c), (merged_r, merged_c + 1)]
                 new_bridges = self._apply_switches_for_cells(merged_cells, merged_o, state.bridges_state)
                 merged_state = BloxorzState(merged_r, merged_c, merged_o, new_bridges)
-                return merged_state if self.is_valid_state(merged_state) else None
+                return merged_state if not validate_result or self.is_valid_state(merged_state) else None
 
             # Kề dọc: cùng cột c, hàng cách nhau đúng 1
             elif c1_pos == c2_pos and abs(r1 - r2) == 1:
@@ -352,7 +428,7 @@ class Board:
                 merged_cells = [(merged_r, merged_c), (merged_r + 1, merged_c)]
                 new_bridges = self._apply_switches_for_cells(merged_cells, merged_o, state.bridges_state)
                 merged_state = BloxorzState(merged_r, merged_c, merged_o, new_bridges)
-                return merged_state if self.is_valid_state(merged_state) else None
+                return merged_state if not validate_result or self.is_valid_state(merged_state) else None
 
             else:
                 # Chưa kề nhau: tiếp tục di chuyển khối con ở chế độ SPLIT
@@ -361,31 +437,11 @@ class Board:
                 # Khối con 1x1x1 chỉ kích hoạt được SOFT switch (không đủ nặng kích hoạt heavy switch)
                 new_bridges = self._apply_soft_switch_at(next_pos, state.bridges_state)
                 new_state = BloxorzState.create_split(new_c0, new_c1, active_idx, new_bridges)
-                return new_state if self.is_valid_state(new_state) else None
+                return new_state if not validate_result or self.is_valid_state(new_state) else None
 
-        # --- Xử lý di chuyển khối nguyên vẹn (WHOLE mode: 12 trường hợp lăn) ---
-        r, c, o = state.r, state.c, state.orientation
-        new_r, new_c, new_o = r, c, o
-
-        if o == Orientation.STANDING:
-            if action == 'U':   new_r, new_c, new_o = r - 2, c, Orientation.VERTICAL
-            elif action == 'D': new_r, new_c, new_o = r + 1, c, Orientation.VERTICAL
-            elif action == 'L': new_r, new_c, new_o = r, c - 2, Orientation.HORIZONTAL
-            elif action == 'R': new_r, new_c, new_o = r, c + 1, Orientation.HORIZONTAL
-
-        elif o == Orientation.HORIZONTAL:
-            if action == 'U':   new_r, new_c, new_o = r - 1, c, Orientation.HORIZONTAL
-            elif action == 'D': new_r, new_c, new_o = r + 1, c, Orientation.HORIZONTAL
-            elif action == 'L': new_r, new_c, new_o = r, c - 1, Orientation.STANDING
-            elif action == 'R': new_r, new_c, new_o = r, c + 2, Orientation.STANDING
-
-        elif o == Orientation.VERTICAL:
-            if action == 'U':   new_r, new_c, new_o = r - 1, c, Orientation.STANDING
-            elif action == 'D': new_r, new_c, new_o = r + 2, c, Orientation.STANDING
-            elif action == 'L': new_r, new_c, new_o = r, c - 1, Orientation.VERTICAL
-            elif action == 'R': new_r, new_c, new_o = r, c + 1, Orientation.VERTICAL
-
-        candidate = BloxorzState(new_r, new_c, new_o, state.bridges_state)
+        # The same kinematics feeds solvers and the GUI's pre-effect roll pose.
+        candidate = self.get_motion_state(state, action)
+        new_r, new_c, new_o = candidate.r, candidate.c, candidate.orientation
         if not self.is_valid_state(candidate):
             return None
 
@@ -404,16 +460,16 @@ class Board:
                         new_bridges = self._apply_soft_switch_at(pos0, new_bridges)
                         new_bridges = self._apply_soft_switch_at(pos1, new_bridges)
                         split_state = BloxorzState.create_split(pos0, pos1, active_cube=0, bridges_state=new_bridges)
-                        return split_state if self.is_valid_state(split_state) else None
+                        return split_state if not validate_result or self.is_valid_state(split_state) else None
 
             # Kích hoạt Heavy switch ("X") hoặc Soft switch ("O") khi đứng thẳng
             new_bridges = self._apply_switches_for_standing((new_r, new_c), state.bridges_state)
             result_state = BloxorzState(new_r, new_c, new_o, new_bridges)
-            return result_state if self.is_valid_state(result_state) else None
+            return result_state if not validate_result or self.is_valid_state(result_state) else None
 
         else:
             # Khối đang nằm (HORIZONTAL hoặc VERTICAL): chỉ kích hoạt Soft switch
             occupied = candidate.get_occupied_cells()
             new_bridges = self._apply_switches_for_cells(occupied, new_o, state.bridges_state)
             result_state = BloxorzState(new_r, new_c, new_o, new_bridges)
-            return result_state if self.is_valid_state(result_state) else None
+            return result_state if not validate_result or self.is_valid_state(result_state) else None

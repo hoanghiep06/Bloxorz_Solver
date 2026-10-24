@@ -118,10 +118,10 @@ class StabilityTests(SceneFixture):
         from src.gui.hud import HudShell
         before = self.counts()
         original = HudShell._label
-        def fail_at_solver(shell,parent,text,*args,**kwargs):
-            if text == 'AI SOLVERS':
+        def fail_at_solver(shell,text,*args,**kwargs):
+            if text == 'Search Time':
                 raise RuntimeError('injected partial HUD failure')
-            return original(shell,parent,text,*args,**kwargs)
+            return original(shell,text,*args,**kwargs)
         with patch.object(HudShell,'_label',fail_at_solver):
             with self.assertRaisesRegex(RuntimeError,'partial HUD'):
                 HudShell(self.app.pixel2d)

@@ -1,5 +1,10 @@
 # GUI & Renderer — Gói thiết kế Chặng 2
 
+> **Current game integration:** Core Advanced mechanics, phased replay, stable IDs,
+> worker solvers and metrics HUD are connected in the native game. See
+> [GAME_INTEGRATION.md](GAME_INTEGRATION.md) for the current API, controls and tests.
+> Older stage/handoff documents below describe their historical checkpoint.
+
 ## Tài liệu Basic Renderer hiện hành
 
 Index bổ sung **23/10/2026**: các phần Chặng2 bên dưới giữ nguyên snapshot lịch sử.

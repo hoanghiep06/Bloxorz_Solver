@@ -148,3 +148,13 @@ python -m tools.gui_stage3_6_smoke
 python -m tools.gui_stage4_smoke
 python -m tools.gui_stage5_smoke
 ```
+
+
+## Native game integration modules
+
+- `src/gui/game_adapter.py`: validated Advanced board/snapshot mapping from Core, stable bridge/switch/cube IDs.
+- `src/gui/action_plan.py`: one Core action becomes explicit roll/effect/terminal phases.
+- `src/gui/game_scene.py`: staged level scene and surface-layer ownership; failed loading preserves the live scene.
+- `src/gui/solver_worker.py`: cancellable solver processes; Panda remains on the main thread.
+- `tools/game_integration_smoke.py`: native UI regression, including all 10 levels × 6 solvers.
+- `docs/gui/GAME_INTEGRATION.md`: current contracts, controls, cancellation and verification.

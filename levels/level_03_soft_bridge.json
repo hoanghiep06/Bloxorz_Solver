@@ -1,0 +1,49 @@
+{
+  "name": "Soft Switch Bridge",
+  "grid": [
+    [
+      1,
+      1,
+      1,
+      4,
+      7,
+      7,
+      2
+    ]
+  ],
+  "start": [
+    0,
+    0
+  ],
+  "goal": [
+    0,
+    6
+  ],
+  "bridges": [
+    {
+      "id": 0,
+      "cells": [
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "initial_state": false
+    }
+  ],
+  "switches": [
+    {
+      "cell": [
+        0,
+        3
+      ],
+      "type": "soft",
+      "target": 0,
+      "action": "open"
+    }
+  ]
+}

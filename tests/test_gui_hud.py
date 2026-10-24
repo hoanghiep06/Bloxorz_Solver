@@ -63,9 +63,9 @@ class HudWidgetTests(unittest.TestCase):
 
     def test_surfaces_controls_and_disabled_gui_items(self):
         from direct.gui import DirectGuiGlobals as DGG
-        self.assertEqual(set(self.hud.surfaces), {'header', 'panel', 'status'})
-        self.assertEqual(set(self.hud.buttons), {'New Game', 'Restart', 'Select Level',
-            'BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*', 'Play', 'Pause', 'Step', 'Stop'})
+        self.assertEqual(set(self.hud.surfaces), {'controls', 'metrics'})
+        self.assertEqual(set(self.hud.buttons), {'Exit', 'Restart', 'Guide',
+            'BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*', 'Play', 'Step', 'Close'})
         for control in (*self.hud.buttons.values(), self.hud.speed, self.hud.speed.component('thumb')):
             self.assertEqual(control['state'], DGG.DISABLED)
             self.assertFalse(control.guiItem.getActive())

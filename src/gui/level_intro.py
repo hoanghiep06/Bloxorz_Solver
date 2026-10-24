@@ -32,10 +32,9 @@ class LevelIntro:
         app = self.app
         span = max(1, rows + cols - 2)
         for root in (app.static_board_root, app.dynamic_tile_root):
-            for content in root.getChildren():
-                for node in content.getChildren():
-                    r, c = self._cell(node)
-                    self._items.append((node, node.getPos(), (r + c) / span * self.WAVE))
+            for node in root.findAllMatches('**/=cell'):
+                r, c = self._cell(node)
+                self._items.append((node, node.getPos(), (r + c) / span * self.WAVE))
         for node, pos, _ in self._items:
             node.setPos(pos[0], pos[1], pos[2] - self.DEPTH)
             node.setScale(.01)
