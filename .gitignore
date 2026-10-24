@@ -1,37 +1,48 @@
-﻿# Môi trường ảo
+# ---------- Môi trường ảo ----------
 venv/
 .venv/
 env/
+ENV/
 
-# Python cache / build
+# ---------- Python cache / build ----------
 __pycache__/
 *.py[cod]
+*.class
 *.egg-info/
+.eggs/
 build/
 dist/
 
-# Test / coverage
+# ---------- Test / coverage / linter ----------
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 
-# IDE / editor
+# ---------- IDE / editor ----------
 .vscode/
 .idea/
 *.swp
+.~lock.*#          # file khóa tạm của LibreOffice
 
-# OS
+# ---------- OS ----------
 .DS_Store
 Thumbs.db
 
-# Biến môi trường
+# ---------- Biến môi trường / log ----------
 .env
+*.log
 
-# File tài liệu kế hoạch cá nhân
+# ---------- File tài liệu kế hoạch cá nhân ----------
 NHIEM_VU_*.md
 docs/PHASE_*.md
 
-# Quy tắc bổ sung từ nhánh Greedy
-*$py.class
-ENV/
-*.pdf
+# ---------- Thư mục dữ liệu sinh cục bộ ----------
+trajectories/
+
+# ---------- Kết quả benchmark (bỏ comment nếu không muốn commit) ----------
+# benchmark_results.csv
+
+# ---------- Khác ----------
+*.pdf              # bỏ qua mọi PDF; nếu cần commit báo cáo thì thêm: !docs/*.pdf

@@ -1,0 +1,607 @@
+"""Menu flow: Main -> Levels -> Game, plus Settings. DirectGUI widgets on pixel2d.
+
+The 3D scene is the background everywhere: the main menu and settings run an
+attract-mode solver demo, Level Select keeps the scene still, and the Game screen
+hands the scene to the player and shows the HUD.
+"""
+import math
+
+from direct.gui import DirectGuiGlobals as DGG
+from direct.showbase.DirectObject import DirectObject
+from panda3d.core import NodePath
+
+from src.gui import ui_theme as ui
+from src.gui.ambient import Ambient
+from src.gui.layout import Rect
+from src.gui.level_intro import LevelIntro
+from src.gui.mouse_control import pick_action
+from src.gui.move_arrows import MoveArrows
+from src.gui.profile import star_rating
+
+
+def destroy_items(items):
+    for item in reversed(items):
+        if isinstance(item, NodePath):
+            if not item.isEmpty():
+                item.removeNode()
+        else:
+            item.destroy()
+
+
+class Screen:
+    name = ''
+
+    def __init__(self, flow):
+        self.flow = flow
+        self.root = flow.app.pixel2d.attachNewNode('Screen-' + self.name)
+        self.root.hide()
+        self.visible = False
+        self._owned = []
+
+    def own(self, item):
+        self._owned.append(item)
+        return item
+
+    def button(self, text, x, y, width, height, command, **options):
+        def clicked():
+            self.flow.audio.play('click')
+            command()
+        button = ui.make_button(self.root, text, x, y, width, height, clicked, **options)
+        self.own(button.border)
+        self.own(button)
+        return button
+
+    def label(self, text, size, x, y, **options):
+        return self.own(ui.make_label(self.root, text, size, x, y, **options))
+
+    def card(self, x, y, width, height, alpha=.94):
+        for frame in ui.make_card(self.root, x, y, width, height, alpha):
+            self.own(frame)
+
+    def clear(self):
+        destroy_items(self._owned)
+        self._owned = []
+
+    def release_later(self):
+        """Safe inside widget callbacks: widgets are destroyed on the next frame."""
+        items, self._owned = self._owned, []
+        if items:
+            self.flow.later(lambda: destroy_items(items))
+
+    def build(self, width, height):
+        raise NotImplementedError
+
+    def rebuild(self):
+        self.clear()
+        self.build(*self.flow.size)
+
+    def show(self):
+        self.visible = True
+        self.rebuild()
+        self.root.show()
+
+    def hide(self):
+        self.visible = False
+        self.root.hide()
+
+    def resize(self):
+        if self.visible:
+            self.rebuild()
+
+    def dispose(self):
+        self.clear()
+        self.root.removeNode()
+
+
+class MainMenu(Screen):
+    name = 'main'
+
+    def build(self, width, height):
+        left = width * UIFlow.LEFT_SHARE
+        self.card(-2, -2, left + 2, height + 4, alpha=1)
+        cx = left / 2
+        self.label('BLOXORZ', 72, cx, height * .28, align='center')
+        self.label('SOLVER', 26, cx, height * .28 + 42, color=ui.MUTED, align='center')
+        bw, bh, x, y = 300, 58, cx - 150, height * .46
+        self.button('Start', x, y, bw, bh, lambda: self.flow.show('levels'), primary=True, size=26)
+        self.button('Settings', x, y + 76, bw, bh, lambda: self.flow.show('settings'), size=26)
+        self.button('Quit', x, y + 152, bw, bh, self.flow.app.userExit, size=26)
+
+
+class LevelSelect(Screen):
+    """Lưới 4x2 = 8 level mỗi trang; nhiều hơn 8 thì có mũi tên < > để lật trang."""
+    name = 'levels'
+    COLS, ROWS = 4, 2
+    PER_PAGE = COLS * ROWS
+
+    def __init__(self, flow):
+        super().__init__(flow)
+        self.page = 0
+
+    def show(self):
+        count = len(self.flow.catalog)
+        last = min(self.flow.controller.level_index, count - 1)
+        self.page = last // self.PER_PAGE          # mở đúng trang chứa level vừa chơi
+        super().show()
+
+    def _go(self, delta):
+        self.page += delta
+        self.release_later()                       # an toàn khi đang trong callback nút
+        self.build(*self.flow.size)
+
+    def build(self, width, height):
+        flow, catalog = self.flow, self.flow.catalog
+        count = len(catalog)
+        pages = max(1, math.ceil(count / self.PER_PAGE))
+        self.page = min(max(self.page, 0), pages - 1)
+        first = self.page * self.PER_PAGE
+        entries = catalog.entries[first:first + self.PER_PAGE]
+
+        cols, rows = self.COLS, self.ROWS
+        gap, pad = 18, 30
+        head, foot, side = 130, 70, 110           # tiêu đề / chân trang / chỗ cho mũi tên
+        size = max(70, min(120,
+                           (height - head - foot - 2 * pad - (rows - 1) * gap) // rows,
+                           (width - 2 * pad - 2 * side - (cols - 1) * gap) // cols))
+        card_w = cols * size + (cols - 1) * gap + 2 * pad
+        card_h = rows * size + (rows - 1) * gap + 2 * pad
+        cx0 = (width - card_w) / 2
+        cy0 = head + max(0, (height - head - foot - card_h) / 2)
+
+        # Tiêu đề nằm trên cao, ngoài khung level.
+        self.label('Select Level', 44, width / 2, 62, align='center')
+        ids = [entry.level_id for entry in catalog.entries]
+        earned = flow.save.total_stars(ids)
+        self.label(f'{earned} / {3 * count} stars', 20, width / 2, 98,
+                   color=ui.MUTED, align='center')
+        self.button('Back', 30, 30, 120, 48, lambda: flow.show('main'), size=22)
+
+        for i, entry in enumerate(entries):          # không vẽ khung nền: giữ nguyên background 3D
+            index = first + i
+            x = cx0 + pad + (i % cols) * (size + gap)
+            y = cy0 + pad + (i // cols) * (size + gap)
+            supported = flow.is_supported(index)
+            card = self.button(str(index + 1) if supported else '—', x, y, size, size,
+                               lambda n=index: flow.start_level(n), size=int(size * .38),
+                               enabled=supported, text_y=.42)
+            stars = flow.save.stars_for(entry.level_id)
+            for k in range(3):
+                self.own(ui.make_star(card, size / 2 + (k - 1) * size * .27, size * .8,
+                                      size * .1, on=k < stars))
+
+        if pages > 1:
+            ay = cy0 + card_h / 2 - 32
+            self.button('<', cx0 - 84, ay, 64, 64, lambda: self._go(-1), size=34,
+                        enabled=self.page > 0, primary=self.page > 0)
+            self.button('>', cx0 + card_w + 20, ay, 64, 64, lambda: self._go(1), size=34,
+                        enabled=self.page < pages - 1, primary=self.page < pages - 1)
+            self.label(f'Page {self.page + 1} / {pages}', 20, width / 2, cy0 + card_h + 40,
+                       color=ui.MUTED, align='center')
+
+
+class SettingsScreen(Screen):
+    name = 'settings'
+    HINTS = {'keyboard': 'Arrow keys or WASD roll the block.',
+             'mouse': 'Click around the block: it rolls toward the click.'}
+
+    def build(self, width, height):
+        flow, settings = self.flow, self.flow.save.settings
+        self._ready = False             # slider callbacks fire during construction
+        cw, ch = 560, 660
+        x0, y0 = (width - cw) / 2, (height - ch) / 2
+        self.card(x0, y0, cw, ch, alpha=.97)
+        self.label('Settings', 40, width / 2, y0 + 62, align='center')
+        self.label('Controls', 20, x0 + 40, y0 + 125, color=ui.MUTED)
+        self._toggles = {}
+        for i, (mode, text) in enumerate((('keyboard', 'Keyboard'), ('mouse', 'Mouse'))):
+            self._toggles[mode] = self.button(text, x0 + 40 + i * 250, y0 + 142, 230, 50,
+                                              lambda m=mode: self._set_mode(m))
+        self._hint = self.label('', 17, width / 2, y0 + 228, color=ui.MUTED, align='center')
+        self._apply_mode(settings.control_mode)
+
+        self.label('Appearance', 20, x0 + 40, y0 + 270, color=ui.MUTED)
+        for i, (theme, text) in enumerate((('light', 'Light'), ('dark', 'Dark'))):
+            self.button(text, x0 + 40 + i * 250, y0 + 286, 230, 50,
+                        lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
+
+        self.label('Music', 20, x0 + 40, y0 + 368, color=ui.MUTED)
+        (self._music_buttons, self._music_slider,
+         self._music_text) = self._audio_row(
+            x0, cw, y0 + 382, settings.music, self._set_music,
+            settings.music_volume, self._on_music_volume, self._music_released)
+
+        self.label('Sound effects', 20, x0 + 40, y0 + 464, color=ui.MUTED)
+        (self._sfx_buttons, self._sfx_slider,
+         self._sfx_text) = self._audio_row(
+            x0, cw, y0 + 478, settings.sfx, self._set_sfx,
+            settings.sfx_volume, self._on_sfx_volume, self._sfx_released)
+
+        self.button('Back', x0 + (cw - 200) / 2, y0 + ch - 76, 200, 50,
+                    lambda: flow.show('main'), primary=True)
+        self._ready = True
+
+    def _audio_row(self, x0, cw, y, enabled, set_enabled, volume, on_volume, on_release):
+        """On / Off buttons + volume slider + percent text on one row."""
+        buttons = {}
+        for i, (value, text) in enumerate(((True, 'On'), (False, 'Off'))):
+            buttons[value] = self.button(text, x0 + 40 + i * 105, y, 95, 50,
+                                         lambda v=value: set_enabled(v), primary=enabled == value)
+        percent = self.label(f'{round(volume * 100)}%', 20, x0 + cw - 40, y + 32, align='right')
+        slider = self.own(ui.make_slider(self.root, x0 + 265, y + 19, 190, 12, volume, on_volume))
+        slider.thumb.bind(DGG.B1RELEASE, on_release)
+        return buttons, slider, percent
+
+    def _apply_mode(self, mode):
+        for key, button in self._toggles.items():
+            ui.style_button(button, primary=key == mode)
+        self._hint['text'] = self.HINTS[mode]
+
+    def _set_mode(self, mode):
+        self.flow.save.settings.control_mode = mode
+        self.flow.save.save()
+        self._apply_mode(mode)
+
+    def _set_music(self, enabled):
+        self.flow.save.settings.music = enabled
+        self.flow.save.save()
+        self.flow.audio.set_music_enabled(enabled)
+        for value, button in self._music_buttons.items():
+            ui.style_button(button, primary=value == enabled)
+
+    def _set_sfx(self, enabled):
+        self.flow.save.settings.sfx = enabled
+        self.flow.save.save()
+        self.flow.audio.set_sfx_enabled(enabled)
+        for value, button in self._sfx_buttons.items():
+            ui.style_button(button, primary=value == enabled)
+
+    def _set_theme(self, theme):
+        self.flow.save.settings.theme = theme
+        self.flow.save.save()
+        ui.set_theme(theme)
+        self.flow.apply_scene_theme(theme)
+        self.flow.ambient.set_theme(theme)
+        self.flow.app.dashboard.hud.restyle()
+        self.release_later()                 # old widgets are destroyed next frame
+        self.build(*self.flow.size)
+
+    def _on_music_volume(self):
+        if not self._ready:
+            return
+        value = float(self._music_slider['value'])
+        self.flow.save.settings.music_volume = value
+        self.flow.audio.set_music_volume(value)
+        self._music_text['text'] = f'{round(value * 100)}%'
+
+    def _on_sfx_volume(self):
+        if not self._ready:
+            return
+        value = float(self._sfx_slider['value'])
+        self.flow.save.settings.sfx_volume = value
+        self.flow.audio.set_sfx_volume(value)
+        self._sfx_text['text'] = f'{round(value * 100)}%'
+
+    def _music_released(self, event=None):
+        self.flow.save.save()
+
+    def _sfx_released(self, event=None):
+        self.flow.save.save()
+        self.flow.audio.play('click')     # nghe thử mức tiếng hiệu ứng
+
+
+class GameScreen(Screen):
+    """The HUD belongs to HudShell; this screen only hosts the level-complete card."""
+    name = 'game'
+    result_visible = False
+
+    def build(self, width, height):
+        pass
+
+    def show(self):
+        self.visible = True
+        self.release_later()
+        self.root.show()
+
+    def hide(self):
+        self.visible = False
+        self.hide_result()
+        self.root.hide()
+
+    def hide_result(self):
+        self.result_visible = False
+        self.release_later()
+
+    def show_result(self):
+        flow, controller = self.flow, self.flow.controller
+        entry = flow.catalog[controller.level_index]
+        par = flow.save.par.get(entry.level_id)
+        stars = star_rating(controller.moves, par)
+        if controller.used_guide:          # watched a solution: capped at 1 star
+            stars = 1
+        flow.save.record(entry.level_id, controller.moves, stars)
+        flow.save.save()
+        self.release_later()
+        width, height = flow.size
+        cw, ch = 400, 310
+        x, y = (width - cw) / 2, (height - ch) / 2
+        self.card(x, y, cw, ch, alpha=.97)
+        self.label('Level Complete!', 36, width / 2, y + 62, align='center')
+        for k in range(3):
+            self.own(ui.make_star(self.root, width / 2 + (k - 1) * 74, y + 125, 30, on=k < stars))
+        detail = f'Moves {controller.moves}' + (f'     Par {par}' if par else '')
+        self.label(detail, 20, width / 2, y + 190, color=ui.MUTED, align='center')
+        nxt = controller.level_index + 1
+        has_next = nxt < len(flow.catalog) and flow.is_supported(nxt)
+        bw, gap = 112, 10
+        bx, by = x + (cw - (3 * bw + 2 * gap)) / 2, y + 222
+        self.button('Next', bx, by, bw, 52, lambda: flow.start_level(nxt), primary=True, enabled=has_next)
+        self.button('Retry', bx + bw + gap, by, bw, 52, controller.restart_level)
+        self.button('Levels', bx + 2 * (bw + gap), by, bw, 52, lambda: flow.show('levels'))
+        self.result_visible = True
+
+    def show_fail(self):
+        """Khung thua: block rơi khỏi bản đồ. Retry hoặc Exit về chọn màn."""
+        flow, controller = self.flow, self.flow.controller
+        self.release_later()
+        width, height = flow.size
+        cw, ch = 400, 250
+        x, y = (width - cw) / 2, (height - ch) / 2
+        self.card(x, y, cw, ch, alpha=.97)
+        self.label('Level Failed', 36, width / 2, y + 62, align='center')
+        self.label(f'Moves {controller.moves}', 20, width / 2, y + 108,
+                   color=ui.MUTED, align='center')
+        bw, gap = 150, 12
+        bx, by = x + (cw - (2 * bw + gap)) / 2, y + 150
+        self.button('Retry', bx, by, bw, 52, controller.restart_level, primary=True)
+        self.button('Exit', bx + bw + gap, by, bw, 52, lambda: flow.show('levels'))
+        self.result_visible = True
+
+
+class UIFlow:
+    LEFT_SHARE = .4          # main menu: buttons on the left 40%, scene on the right
+    HINT_DELAY = 30.0        # seconds without a move before the AI Solver button appears
+
+    def __init__(self, app, controller, catalog, save, audio, attract):
+        self.app, self.controller, self.catalog = app, controller, catalog
+        self.save, self.audio, self.attract = save, audio, attract
+        self.size = (app.win.getXSize(), app.win.getYSize())
+        self.name = None
+        self._supported, self._disposed = {}, False
+        self._idle, self.hint_ready = 0.0, False
+
+        ui.set_theme(save.settings.theme)
+        self.apply_scene_theme(save.settings.theme)
+        # Created before the screens so the particles sit underneath the menus.
+        self.ambient = Ambient(app.pixel2d, app.taskMgr, lambda: self.size)
+        self.ambient.set_theme(ui.CURRENT)
+
+        self.screens = {cls.name: cls(self)
+                        for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
+        self.intro = LevelIntro(app, self._intro_done)
+        self.arrows = MoveArrows(app, controller, self._arrows_visible)
+
+        self._listener = DirectObject()
+        self._listener.accept('window-event', self._window_event)
+        self._listener.accept('escape', self.back)
+        self._listener.accept('mouse1', self._click)
+        self._listener.accept('m', self.toggle_music)      # phím tắt bật/tắt nhạc
+        hud = app.dashboard.hud
+        hud.restyle()
+        hud.bind_action('Exit', self._with_click(lambda: self.show('levels')))
+        hud.bind_action('Restart', self._with_click(controller.restart_level))
+        hud.bind_action('Guide', self._with_click(self.toggle_guide))
+        app.taskMgr.add(self._idle_tick, 'ui-idle')
+
+    # ---------------------------------------------------------------- helpers
+    def _with_click(self, command):
+        def run():
+            self.audio.play('click')
+            command()
+        return run
+
+    def later(self, function):
+        def run(task):
+            function()
+            return task.done
+        self.app.taskMgr.doMethodLater(0.0, run, 'ui-later')
+
+    def is_supported(self, index):
+        """Levels the current Basic adapter can render (others show as locked)."""
+        entry = self.catalog[index]
+        if entry.level_id not in self._supported:
+            try:
+                from src.core.board import Board
+                from src.gui.render_adapter import build_board_data
+                build_board_data(Board(str(entry.path)), level_id=entry.level_id)
+                self._supported[entry.level_id] = True
+            except Exception:
+                self._supported[entry.level_id] = False
+        return self._supported[entry.level_id]
+
+    def _ensure_par(self):
+        """Optimal move count (BFS) is the 3-star threshold; cached in the save file."""
+        entry = self.catalog[self.controller.level_index]
+        if entry.level_id in self.save.par:
+            return
+        try:
+            from src.solvers.bfs import BFSSolver
+            result = BFSSolver(self.controller.board).solve()
+        except Exception:
+            return
+        if result.success:
+            self.save.par[entry.level_id] = result.solution_length
+            self.save.save()
+
+    def apply_scene_theme(self, theme):
+        """Recolour the 3D backdrop (SceneStyle is found by type inside the presentation)."""
+        from src.gui.scene_style import SceneStyle
+        try:
+            values = list(vars(self.app.presentation).values())
+        except TypeError:
+            return
+        for value in values:
+            if isinstance(value, SceneStyle):
+                value.set_theme(theme)
+
+    # ---------------------------------------------------------------- idle hint
+    def _idle_tick(self, task):
+        from panda3d.core import ClockObject
+        c = self.controller
+        if (self.name == 'game' and not self.hint_ready and not c.guide_active
+                and not self.intro.active and not self.screens['game'].result_visible):
+            self._idle += ClockObject.getGlobalClock().getDt()
+            if self._idle >= self.HINT_DELAY:
+                self.hint_ready = True
+                self.app.dashboard.hud.set_hint_ready(True)
+        return task.cont
+
+    def reset_idle(self):
+        self._idle = 0.0
+        if self.hint_ready:
+            self.hint_ready = False
+            self.app.dashboard.hud.set_hint_ready(False)
+
+    # ---------------------------------------------------------------- intro / arrows
+    def _intro_done(self):
+        self.controller.input_enabled = self.name == 'game'
+
+    def _arrows_visible(self):
+        c = self.controller
+        return (self.name == 'game' and self.save.settings.control_mode == 'mouse'
+                and not self.intro.active and not self.screens['game'].result_visible
+                and c.manager is not None and c.is_idle and c.phase == 'READY'
+                and not c.guide_active)
+
+    # ---------------------------------------------------------------- navigation
+    def _left_region(self, width, height):
+        left = int(width * self.LEFT_SHARE)
+        return Rect(left, 0, width - left, height)
+
+    @staticmethod
+    def _full_region(width, height):
+        return Rect(0, 0, width, height)
+
+    def show(self, name):
+        if self._disposed:
+            return
+        self.intro.finish(notify=False)
+        if self.name:
+            self.screens[self.name].hide()
+        self.name = name
+        game = name == 'game'
+        if not game:
+            self.controller.cancel_guide()      # leaving the level drops any guide state
+        self.reset_idle()
+        self.ambient.set_intensity(.45 if game else 1.0)
+        self.ambient.show()
+        hud, viewport = self.app.dashboard.hud, self.app.dashboard.viewport
+        hud.root.show() if game else hud.root.hide()
+        viewport.set_region_override({'main': self._left_region, 'levels': self._full_region,
+                                      'settings': self._full_region,
+                                      'game': self._full_region}.get(name))
+        self.controller.input_enabled = game
+        self.controller.keyboard_enabled = self.save.settings.control_mode == 'keyboard'
+        hud.set_guide_visible(False)
+        if game:
+            hud.restyle()
+            self.attract.stop()
+        elif name == 'levels':
+            self.attract.stop()                 # background stays, animation stops
+            self.controller.restart_level()     # put the block back at the start
+        else:
+            self.attract.start()
+        scene = (self.app.static_board_root, self.app.dynamic_tile_root, self.app.block_root)
+        for node in scene:                      # chọn level: ẩn block + map 3D phía sau
+            node.hide() if name == 'levels' else node.show()
+        self.audio.start_music()
+        self.screens[name].show()
+
+    def back(self):
+        target = {'levels': 'main', 'settings': 'main', 'game': 'levels'}.get(self.name)
+        if target:
+            self.show(target)
+
+    def toggle_music(self):
+        """Phím M: bật/tắt nhạc ở mọi màn hình và lưu lại lựa chọn."""
+        on = self.audio.toggle_music()
+        self.save.settings.music = on
+        self.save.save()
+        if self.name == 'settings':
+            self.screens['settings'].rebuild()   # cập nhật nút On/Off
+
+    def start_level(self, index):
+        if not self.is_supported(index):
+            return
+        self.attract.stop()
+        self.screens['game'].hide_result()
+        if self.controller.load_level(index):
+            self._ensure_par()
+            self.show('game')
+            board = self.controller.board_data
+            self.intro.play(board.rows, board.cols)
+            self.controller.input_enabled = False      # unlocked by _intro_done
+
+    def toggle_guide(self):
+        hud = self.app.dashboard.hud
+        hud.set_guide_visible(not hud.guide_open)
+
+    def _finish_guide(self):
+        """Solution finished: the block goes back to the start for the player."""
+        self.controller.end_guide()
+        self.app.dashboard.hud.set_guide_visible(False)
+        self.reset_idle()
+
+    # ---------------------------------------------------------------- events
+    def on_game_event(self, name):
+        if name in ('roll', 'restart'):
+            self.reset_idle()
+        if name == 'restart':
+            self.screens['game'].hide_result()
+            return
+        if self.name != 'game':
+            return                       # attract mode stays silent
+        if name in ('roll', 'goal', 'fall'):
+            self.audio.play(name)
+        if name == 'fall':
+            self.screens['game'].show_fail()            # khung thua: Retry / Exit
+        if name == 'goal':
+            if self.controller.guide_active:
+                self.later(self._finish_guide)          # solution done: give the block back
+            else:
+                self.screens['game'].show_result()      # the player finished it
+
+    def _window_event(self, window):
+        if window != self.app.win:
+            return
+        size = (window.getXSize(), window.getYSize())
+        if size[0] > 0 and size[1] > 0 and size != self.size:
+            self.size = size
+            if self.name:
+                self.screens[self.name].resize()
+
+    def _click(self):
+        controller = self.controller
+        if (self.name != 'game' or self.save.settings.control_mode != 'mouse'
+                or self.intro.active
+                or self.screens['game'].result_visible or controller.manager is None
+                or controller.manager.is_busy or controller.phase != 'READY'):
+            return
+        action = pick_action(self.app, self.app.dashboard.viewport.region,
+                             self.app.presentation.camera.current_fit,
+                             controller.state.get_occupied_cells(),
+                             controller.board_data.rows, controller.board_data.cols)
+        if action:
+            controller.manual_move(action)
+
+    def dispose(self):
+        if self._disposed:
+            return
+        self._disposed = True
+        self._listener.ignoreAll()
+        self.app.taskMgr.remove('ui-idle')
+        self.attract.stop()
+        self.intro.finish(notify=False)
+        self.arrows.dispose()
+        self.ambient.dispose()
+        for screen in self.screens.values():
+            screen.dispose()

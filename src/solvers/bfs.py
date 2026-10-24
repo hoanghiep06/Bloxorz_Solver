@@ -4,7 +4,11 @@ from src.solvers.base_solver import BaseSolver
 from src.core.board import ACTIONS
 
 class BFSSolver(BaseSolver):
-    """FIFO graph search with unit action costs and first-discovery parents."""
+    """FIFO graph search with unit action costs and first-discovery parents.
+
+    Supports basic boards as well as advanced mechanics (fragile tiles,
+    bridges/switches, and split cubes via 'SPACE' cube switching).
+    """
 
     def _search(self) -> Optional[List[str]]:
         initial_state = self.board.get_initial_state()
@@ -29,7 +33,8 @@ class BFSSolver(BaseSolver):
                 path.reverse()
                 return path
 
-            for action in ACTIONS:
+            actions = self.board.get_actions(current_state) if hasattr(self.board, 'get_actions') else ACTIONS
+            for action in actions:
                 next_state = self.board.transition(current_state, action)
                 if next_state is not None and next_state not in visited:
                     parent[next_state] = (current_state, action)
