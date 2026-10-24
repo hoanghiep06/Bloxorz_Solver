@@ -39,7 +39,6 @@ NHIEM_VU_*.md
 docs/PHASE_*.md
 
 # ---------- Thư mục dữ liệu sinh cục bộ ----------
-trajectories/
 
 # ---------- Kết quả benchmark (bỏ comment nếu không muốn commit) ----------
 # benchmark_results.csv
