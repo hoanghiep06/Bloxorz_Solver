@@ -1,9 +1,8 @@
 import json
-from typing import Optional
-from typing import Optional
+from typing import Dict, List, Optional, Set, Tuple
 from src.core.state import BloxorzState, Orientation
 
-# Định nghĩa các hành động
+# Định nghĩa các hành động chuẩn
 ACTIONS = ['U', 'D', 'L', 'R']
 ALL_ACTIONS = ['U', 'D', 'L', 'R', 'SPACE']
 VALID_ACTIONS = ('U', 'D', 'L', 'R', 'SPACE', 'SWITCH')
@@ -149,14 +148,21 @@ class Board:
                 self.split_switches[sp_key] = sw
 
     def get_initial_state(self) -> BloxorzState:
-        return BloxorzState(self.start_r, self.start_c, Orientation.STANDING)
+        return BloxorzState(
+            self.start_r,
+            self.start_c,
+            Orientation.STANDING,
+            self.initial_bridges_state
+        )
 
     def is_goal(self, state: BloxorzState) -> bool:
-        """Đích chỉ được chấp nhận khi khối đứng thẳng trên ô Goal."""
+        """Đích chỉ được chấp nhận khi khối nguyên vẹn đứng thẳng trên ô Goal."""
+        if state.is_split():
+            return False
         return state.is_standing() and state.r == self.goal_r and state.c == self.goal_c
 
-    def is_valid_cell(self, r: int, c: int) -> bool:
-        """Kiểm tra ô nằm trong sàn và không rơi vào vực (0: void)."""
+    def is_valid_cell(self, r: int, c: int, bridges_state: Optional[Tuple[bool, ...]] = None) -> bool:
+        """Kiểm tra ô nằm trong sàn và không rơi vào vực (0: void) hoặc cầu đang đóng."""
         if type(r) is not int or type(c) is not int:
             raise TypeError("Cell coordinates r and c must be integers (not booleans).")
         if not (0 <= r < self.rows and 0 <= c < self.cols):
@@ -197,7 +203,7 @@ class Board:
 
         cells = state.get_occupied_cells()
         for r, c in cells:
-            if not self.is_valid_cell(r, c):
+            if not self.is_valid_cell(r, c, state.bridges_state):
                 return False
 
         # Kiểm tra ô cam Fragile:
@@ -293,7 +299,7 @@ class Board:
 
         The source must be a valid BloxorzState on this board and is never mutated.
         """
-        if action not in ACTIONS:
+        if action not in VALID_ACTIONS:
             raise ValueError(f"Unsupported action {action!r}; expected one of {ACTIONS}.")
 
         # --- Xử lý đổi khối điều khiển khi đang SPLIT ('SPACE' hoặc 'SWITCH') ---

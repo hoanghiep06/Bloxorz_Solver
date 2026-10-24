@@ -23,7 +23,6 @@ class BaseCostFunction(ABC):
                 f"UCS yêu cầu trọng số dương hữu hạn, {cost!r}"
             )
         return value
-    
 
 
 class UniformCost(BaseCostFunction):
@@ -43,7 +42,6 @@ class PhysicsBasedCost(BaseCostFunction):
             raise ValueError("Base_cost phải > 0 và stand_up_penalty >= 0")
         self.base_cost = float(base_cost)
         self.stand_up_penalty = float(stand_up_penalty)
-
 
     @property
     def name(self) -> str:
@@ -68,8 +66,6 @@ class RiskSafetyCost(BaseCostFunction):
         self.fragile_penalty = float(fragile_penalty)
         self.edge_penalty = float(edge_penalty)
 
-
-
     @property
     def name(self) -> str:
         return "Risk-Safety (Terrain-aware)"
@@ -79,8 +75,11 @@ class RiskSafetyCost(BaseCostFunction):
         occupied_cells = set(next_state.get_occupied_cells())
 
         for r, c in occupied_cells:
-            # Kiểm tra ô dễ vỡ (Fragile tile - giá trị 3 dạng int hoặc '3' dạng str)
-            if board.grid[r][c] in (3, '3'):
+            # Kiểm tra ô dễ vỡ (Fragile tile)
+            is_fragile = (board.grid[r][c] in (3, '3')) or (
+                hasattr(board, 'is_fragile_tile') and board.is_fragile_tile(r, c)
+            )
+            if is_fragile:
                 cost += self.fragile_penalty  # Phạt nặng do rủi ro gãy vỡ sàn
 
             # Kiểm tra có nằm sát bờ vực (ô void = 0 hoặc nằm ngoài biên)
@@ -95,13 +94,12 @@ class RiskSafetyCost(BaseCostFunction):
                 cost += self.edge_penalty  # Phạt nhẹ khi đi sát bờ vực hiểm trở
 
         return self._validate_cost(cost)
-    
 
 
 class LearnedWeightCost(BaseCostFunction):
     # Mô hình 4: Bộ trọng số tuyến tính
     def __init__(self, w_step: float = 1.0, w_tilt: float = 1.4, w_risk: float = 2.8):
-        if w_step <= 0 or w_tilt < 0 or w_risk <0:
+        if w_step <= 0 or w_tilt < 0 or w_risk < 0:
             raise ValueError("w_step > 0, w_tilt và w_risk >= 0")
         
         self.w_step = float(w_step)
@@ -120,6 +118,9 @@ class LearnedWeightCost(BaseCostFunction):
         if not state.is_standing() and next_state.is_standing():
             cost += self.w_tilt
         for r, c in next_state.get_occupied_cells():
-            if board.grid[r][c] in (3, '3'):
+            is_fragile = (board.grid[r][c] in (3, '3')) or (
+                hasattr(board, 'is_fragile_tile') and board.is_fragile_tile(r, c)
+            )
+            if is_fragile:
                 cost += self.w_risk
         return self._validate_cost(cost)
