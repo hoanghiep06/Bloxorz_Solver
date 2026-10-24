@@ -45,10 +45,11 @@ MIN_WIDTH, MIN_HEIGHT = 1024, 720
 PANEL_PADDING, CONTROL_GAP, CONTROL_HEIGHT = 16, 8, 32
 # All panel control geometry lives here, in local top-left pixels.
 CONTROL_ROWS = (
-    ('New Game', 'Restart', 42), ('Select Level', None, 82),
+    ('Exit', 'Restart', 42), ('Guide', None, 82),
     ('BFS', 'DFS', 156), ('IDS', 'UCS', 196), ('Greedy', 'A*', 236),
     ('Play', 'Pause', 310), ('Step', 'Stop', 350),
 )
+GUIDE_CONTROLS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*', 'Play', 'Pause', 'Step', 'Stop')
 SECTION_LABELS = (('GAME', 28), ('AI SOLVERS', 144), ('PLAYBACK', 296))
 SPEED_RECT = Rect(16, 428, 250, 28)
 SPEED_LABEL_Y, SPEED_VALUE_Y, PANEL_FOOTER_Y = 412, 478, 508

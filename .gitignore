@@ -1,40 +1,41 @@
-# Môi trường ảo
+# ---------- Môi trường ảo ----------
 venv/
 .venv/
 env/
+ENV/
 
-# Python cache / build
+# ---------- Python cache / build ----------
 __pycache__/
 *.py[cod]
+*$py.class
 *.egg-info/
+.eggs/
 build/
 dist/
 
-# Test / coverage
+# ---------- Test / coverage / linter ----------
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
 htmlcov/
 
-# IDE / editor
+# ---------- IDE / editor ----------
 .vscode/
 .idea/
 *.swp
+.~lock.*#          # file khóa tạm của LibreOffice
 
-# File khóa tạm của trình soạn thảo
-.~lock.*#
-
-# OS
+# ---------- OS ----------
 .DS_Store
 Thumbs.db
 
-# Biến môi trường
+# ---------- Biến môi trường / log ----------
 .env
+*.log
 
-# Kết quả sinh ra khi chạy benchmark (bỏ comment nếu không muốn commit)
+# ---------- Kết quả benchmark (bỏ comment nếu không muốn commit) ----------
 # benchmark_results.csv
 
-# Quy tắc bổ sung từ nhánh Greedy
-*$py.class
-.venv
-ENV/
-*.pdf
+# ---------- Khác ----------
+*.pdf              # bỏ qua mọi PDF; nếu cần commit báo cáo thì thêm: !docs/*.pdf

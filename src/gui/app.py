@@ -12,16 +12,11 @@ BACKGROUND_RGB = (241 / 255, 244 / 255, 247 / 255)
 class BloxorzPreviewApp(ShowBase):
     """Own the single application window and the empty renderer scene roots."""
 
-    def __init__(self) -> None:
-        # Configure before ShowBase creates the window, never during import.
-        loadPrcFileData(
-            "bloxorz-foundation",
-            f"window-title {WINDOW_TITLE}\n"
-            f"win-size {WINDOW_SIZE[0]} {WINDOW_SIZE[1]}\n"
-            "fullscreen false\n"
-            "win-fixed-size false\n"
-            "audio-library-name null\n",
-        )
+    def __init__(self, *, audio: bool = False) -> None:
+        audio_line = "" if audio else "audio-library-name null\n"
+        loadPrcFileData("bloxorz-foundation", f"window-title {WINDOW_TITLE}\n"
+                                              f"win-size {WINDOW_SIZE[0]} {WINDOW_SIZE[1]}\nfullscreen false\n"
+                                              "win-fixed-size false\n" + audio_line)
         super().__init__(windowType="onscreen")
         self.disableMouse()
         self.setBackgroundColor(*BACKGROUND_RGB, 1.0)

@@ -1,11 +1,13 @@
-"""Disabled DirectGUI shell and pure presentation data. No gameplay ownership."""
+"""DirectGUI HUD: a row of buttons at the top-left and the level name at the top-right.
+
+No side panel. Controls are bound by the host (bind_action/bind_speed). The
+solver/playback rows are collapsible (set_guide_visible).
+"""
 
 from dataclasses import dataclass
 import math
 
-from src.gui.layout import (PANEL_FOOTER_Y, SECTION_LABELS, SPEED_LABEL_Y,
-                            SPEED_RECT, SPEED_VALUE_Y, panel_controls)
-
+from src.gui import ui_theme as ui
 
 UNKNOWN = '—'
 
@@ -53,6 +55,7 @@ def _color(hex_value):
     return tuple(int(hex_value[index:index + 2], 16) / 255 for index in (0, 2, 4)) + (1,)
 
 
+# Kept for modules/tests that still import them.
 BG_MAIN = _color('F1F4F7')
 BG_SECONDARY = _color('E7EFF5')
 HUD_SURFACE = (1, 1, 1, 1)
@@ -61,85 +64,200 @@ TEXT_PRIMARY = _color('273B50')
 TEXT_SECONDARY = _color('61778B')
 METRIC_LABELS = ('Moves', 'Search Time', 'Expanded Nodes', 'Solution Length', 'Peak Python Memory')
 
+# ---- layout constants (pixels) ----
+MARGIN, GAP, BTN_H, TEXT = 20, 10, 46, 22
+TOP_ROW = (('Exit', 90), ('Restart', 110), ('Guide', 130))
+SOLVERS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*')
+PLAYBACK = (('Play', 110), ('Step', 110), ('Close', 190))
+SOLVER_W = 100
+ROW2_Y, ROW3_Y = MARGIN + BTN_H + GAP, MARGIN + 2 * (BTN_H + GAP)
+LEFT_END = MARGIN + sum(w for _, w in TOP_ROW) + GAP * (len(TOP_ROW) - 1)
+DISPLAY = {'Guide': 'AI Solver', 'Close': 'Hide Solution'}
+LEVEL_SIZE, STATUS_SIZE = 30, 18
+
 
 class HudShell:
-    """Own one pixel2d subtree. Construct widgets once; update geometry/text in place."""
+    """Own one pixel2d subtree. Construct widgets once; update text in place."""
 
     def __init__(self, pixel2d, model=HudViewModel()):
-        from direct.gui.DirectGui import DirectButton, DirectFrame, DirectLabel, DirectSlider
+        from direct.gui.DirectGui import DirectSlider
         from direct.gui import DirectGuiGlobals as DGG
         from panda3d.core import TextNode
 
-        self._Frame, self._Label = DirectFrame, DirectLabel
         self._TextNode = TextNode
         self._widgets = []
+        self._solvers = []        # row 2: algorithm buttons
+        self._playback = []       # row 3: Play/Step/Hide Solution + speed
+        self._guide_open = False
+        self._selected = None
+        self._hint_ready = False
+        self._guide_mode = False
         self._disposed = False
         self.layout = None
         self.model = model
-        self.root = pixel2d.attachNewNode('DashboardHUD')
-        self.surfaces, self._inners = {}, {}
+        self.surfaces = {}        # legacy attribute, intentionally empty
         self.buttons = {}
+        self.root = pixel2d.attachNewNode('DashboardHUD')
+        self.bar = self.root.attachNewNode('HUDBar')
         try:
-            for name in ('header', 'panel', 'status'):
-                outer = self._own(DirectFrame(parent=self.root, relief=DGG.FLAT, frameColor=HUD_BORDER))
-                inner = self._own(DirectFrame(parent=outer, relief=DGG.FLAT, frameColor=HUD_SURFACE))
-                self.surfaces[name], self._inners[name] = outer, inner
-            header, panel, status = (self.surfaces[name] for name in ('header', 'panel', 'status'))
-            self.title = self._label(header, 'Bloxorz Solver', 24, 16, 26)
-            self.subtitle = self._label(header, '3D Puzzle & AI Search', 14, 16, 45, secondary=True)
-            self.level = self._label(header, '', 16, 0, 33, align=TextNode.ACenter)
-            self.runtime = self._label(header, '', 16, 0, 25, align=TextNode.ARight)
-            self.caption = self._label(header, 'Controls not connected', 14, 0, 45,
-                                       align=TextNode.ARight, secondary=True)
-            for text, baseline in SECTION_LABELS:
-                self._label(panel, text, 14, 16, baseline, secondary=True)
-            for name, rect in panel_controls().items():
-                button = self._own(DirectButton(
-                    parent=panel, text=name, text_scale=16,
-                    text_fg=TEXT_SECONDARY, text_align=TextNode.ACenter,
-                    text_pos=(rect.width / 2, -rect.height / 2 - 5),
-                    pos=(rect.x, 0, -rect.y), frameSize=(0, rect.width, -rect.height, 0),
-                    frameColor=BG_SECONDARY, relief=DGG.FLAT, borderWidth=(1, 1),
-                    state=DGG.DISABLED))
-                self.buttons[name] = button
-            self._label(panel, 'Playback Speed', 14, 16, SPEED_LABEL_Y, secondary=True)
+            x = MARGIN
+            for name, width in TOP_ROW:
+                self._add_button(name, x, MARGIN, width)
+                x += width + GAP
+            for i, name in enumerate(SOLVERS):
+                self._add_button(name, MARGIN + i * (SOLVER_W + GAP), ROW2_Y, SOLVER_W,
+                                 group=self._solvers)
+            x = MARGIN
+            for name, width in PLAYBACK:
+                self._add_button(name, x, ROW3_Y, width, group=self._playback)
+                x += width + GAP
+
+            sx = x + 10
+            base = ROW3_Y + BTN_H / 2 + 7
+            self.speed_label = self._label('Speed', 20, sx, base, muted=True)
+            self._playback.append(self.speed_label)
+            sw, sh, sx2 = 180, 14, sx + 80
             self.speed = self._own(DirectSlider(
-                parent=panel, pos=(SPEED_RECT.x, 0, -SPEED_RECT.y),
-                frameSize=(0, SPEED_RECT.width, -SPEED_RECT.height, 0),
-                frameColor=BG_SECONDARY, relief=DGG.FLAT, range=(.25, 4), value=1,
+                parent=self.bar, pos=(sx2 + sw / 2, 0, -(ROW3_Y + BTN_H / 2)),
+                frameSize=(-sw / 2, sw / 2, -sh / 2, sh / 2),
+                frameColor=ui.LINE, relief=DGG.FLAT, range=(.25, 4), value=1,
                 pageSize=0, state=DGG.DISABLED, thumb_state=DGG.DISABLED,
-                thumb_relief=DGG.FLAT, thumb_frameColor=HUD_BORDER,
-                thumb_frameSize=(-6, 6, -10, 10)))
-            self._label(panel, '1.0x', 16, 141, SPEED_VALUE_Y,
-                        align=TextNode.ACenter, secondary=True)
-            self._label(panel, 'Controls not connected', 14, 141, PANEL_FOOTER_Y,
-                        align=TextNode.ACenter, secondary=True)
-            self.metric_labels = [self._label(status, text, 14, 0, 21, secondary=True)
-                                  for text in METRIC_LABELS]
-            self.metric_values = [self._label(status, UNKNOWN, 18, 0, 46) for _ in METRIC_LABELS]
-            self.warning = self._label(self.root, 'Minimum window size: 1024 x 720',
-                                       16, 0, 0, align=TextNode.ACenter)
+                thumb_relief=DGG.FLAT, thumb_frameColor=ui.PRIMARY,
+                thumb_frameSize=(-9, 9, -15, 15)))
+            self._playback.append(self.speed)
+            self.speed_text = self._label('1.0x', 20, sx2 + sw + 20, base, muted=True)
+            self._playback.append(self.speed_text)
+
+            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 30, align='right')
+            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 52, align='right', muted=True)
+            self.warning = self._label('Minimum window size: 1024 x 720', 16, 0, 0, align='center',
+                                       parent=self.root)
             self.warning.hide()
+            self.set_guide_visible(False)
             self.update_view_model(model)
         except BaseException:
             self.dispose()
             raise
 
+    # ------------------------------------------------------------ builders
     def _own(self, widget):
         self._widgets.append(widget)
         return widget
 
-    def _label(self, parent, text, size, x, baseline, *, align=None, secondary=False):
-        return self._own(self._Label(
-            parent=parent, text=text, text_scale=size, text_fg=TEXT_SECONDARY if secondary else TEXT_PRIMARY,
-            text_align=self._TextNode.ALeft if align is None else align,
-            pos=(x, 0, -baseline), relief=None, frameColor=(0, 0, 0, 0),
-            state='disabled'))
+    def _label(self, text, size, x, baseline, *, align='left', muted=False, parent=None):
+        return self._own(ui.make_label(parent or self.bar, text, size, x, baseline,
+                                       color=ui.MUTED if muted else ui.INK, align=align))
 
-    def _fit_text(self, label, text, max_width):
-        """Elide unusually long caller data; never shrink all HUD text on resize."""
+    def _add_button(self, name, x, y, width, group=None):
+        button = ui.make_button(self.bar, DISPLAY.get(name, name), x, y, width, BTN_H,
+                                lambda: None, size=TEXT, enabled=False)
+        self._own(button.border)
+        self._own(button)
+        self.buttons[name] = button
+        if group is not None:
+            group.append(button.border)
+
+    # ------------------------------------------------------------ host wiring
+    def bind_action(self, name, callback):
+        """Enable one button and run callback() when it is clicked."""
+        from direct.gui import DirectGuiGlobals as DGG
+        button = self.buttons[name]
+        original = callback
+        if name in SOLVERS:
+            def callback():
+                if original() is not False:
+                    self.select_solver(name)
+        elif name == 'Close':
+            def callback():
+                original()
+                self.set_guide_visible(False)
+        button['command'] = callback
+        button['state'] = DGG.NORMAL
+        ui.style_button(button, primary=False)
+
+    def bind_speed(self, callback):
+        """Enable the playback-speed slider; callback(value) gets 0.25..4.0."""
+        from direct.gui import DirectGuiGlobals as DGG
+
+        def changed():
+            value = float(self.speed['value'])
+            self.speed_text['text'] = f'{value:.1f}x'
+            callback(value)
+
+        self.speed['command'] = changed
+        self.speed['state'] = DGG.NORMAL
+        self.speed.thumb['state'] = DGG.NORMAL
+
+    # ------------------------------------------------------------ guide UI state
+    @property
+    def guide_open(self):
+        return self._guide_open
+
+    def set_guide_visible(self, visible):
+        """AI Solver toggled: show the algorithm row. Closing clears everything."""
+        self._guide_open = bool(visible)
+        for widget in self._solvers:
+            widget.show() if visible else widget.hide()
+        if not visible:
+            self._selected = None
+            self._set_playback(False)
+        self._style_dynamic()
+
+    def select_solver(self, name):
+        """Algorithm chosen: highlight it and reveal Play/Step/Hide Solution."""
+        self._selected = name
+        self._set_playback(True)
+        self._style_dynamic()
+
+    def set_playing(self, playing):
+        self.buttons['Play']['text'] = 'Pause' if playing else 'Play'
+
+    def set_guide_mode(self, active):
+        """While a solution runs, hide Restart and AI Solver."""
+        self._guide_mode = bool(active)
+        self._refresh_top()
+
+    def set_hint_ready(self, ready):
+        """AI Solver only appears after the player has been idle for a while."""
+        self._hint_ready = bool(ready)
+        self._refresh_top()
+
+    def _refresh_top(self):
+        restart, guide = self.buttons['Restart'].border, self.buttons['Guide'].border
+        restart.hide() if self._guide_mode else restart.show()
+        show_guide = not self._guide_mode and (self._hint_ready or self._guide_open)
+        guide.show() if show_guide else guide.hide()
+    def _set_playback(self, visible):
+        for widget in self._playback:
+            widget.show() if visible else widget.hide()
+
+    def _style_dynamic(self):
+        ui.style_button(self.buttons['Guide'], primary=self._guide_open)
+        for name in SOLVERS:
+            ui.style_button(self.buttons[name], primary=name == self._selected)
+
+    def restyle(self):
+        """Re-apply the current ui_theme palette to already-built widgets."""
+        if self._disposed:
+            return
+        from direct.gui import DirectGuiGlobals as DGG
+        for button in self.buttons.values():
+            enabled = button['state'] == DGG.NORMAL
+            ui.style_button(button, primary=False)
+            if not enabled:
+                button['text_fg'] = ui.DISABLED_TEXT
+        self._style_dynamic()
+        self.level['text_fg'] = ui.INK
+        self.runtime['text_fg'] = ui.MUTED
+        self.speed_label['text_fg'] = ui.MUTED
+        self.speed_text['text_fg'] = ui.MUTED
+        self.warning['text_fg'] = ui.INK
+        self.speed['frameColor'] = ui.LINE
+        self.speed.thumb['frameColor'] = ui.PRIMARY
+
+    # ------------------------------------------------------------ layout/data
+    def _fit_text(self, label, text, size, max_width):
         node = self._TextNode('HUDTextMeasure')
-        size = label['text_scale'][0]
         if node.calcWidth(text) * size <= max_width:
             label['text'] = text
             return
@@ -147,34 +265,26 @@ class HudShell:
             text = text[:-1]
         label['text'] = text + '…'
 
+    def _refresh_texts(self):
+        width = self.layout.width if self.layout else 1024
+        self._fit_text(self.level, self.model.level_label, LEVEL_SIZE,
+                       max(80, width - LEFT_END - 3 * MARGIN))
+        self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
+
     def apply_layout(self, layout):
         if self._disposed:
             return
         self.layout = layout
-        for surface in self.surfaces.values():
-            surface.show() if layout.supported else surface.hide()
         if not layout.supported:
+            self.bar.hide()
             self.warning.setPos(layout.width / 2, 0, -layout.height / 2)
             self.warning.show()
             return
         self.warning.hide()
-        for name, surface in self.surfaces.items():
-            rect = getattr(layout, name)
-            surface.setPos(rect.x, 0, -rect.y)
-            surface['frameSize'] = (0, rect.width, -rect.height, 0)
-            self._inners[name]['frameSize'] = (1, rect.width - 1, 1 - rect.height, -1)
-        width = layout.header.width
-        self.level.setX(width / 2)
-        self.runtime.setX(width - 16)
-        self.caption.setX(width - 16)
-        self._fit_text(self.level, self.model.level_label, width - 680)
-        self._fit_text(self.runtime, self.model.runtime_status, 230)
-        cell = (layout.status.width - 32) / 5
-        for index, (label, value, text) in enumerate(zip(
-                self.metric_labels, self.metric_values, metric_values(self.model))):
-            label.setX(16 + index * cell)
-            value.setX(16 + index * cell)
-            self._fit_text(value, text, cell - 12)
+        self.bar.show()
+        self.level.setX(layout.width - MARGIN)
+        self.runtime.setX(layout.width - MARGIN)
+        self._refresh_texts()
 
     def update_view_model(self, model):
         if not isinstance(model, HudViewModel):
@@ -182,11 +292,7 @@ class HudShell:
         if self._disposed:
             raise RuntimeError('HUD is disposed.')
         self.model = model
-        self.level['text'], self.runtime['text'] = model.level_label, model.runtime_status
-        for label, value in zip(self.metric_values, metric_values(model)):
-            label['text'] = value
-        if self.layout is not None:
-            self.apply_layout(self.layout)
+        self._refresh_texts()
 
     def dispose(self):
         if self._disposed:
@@ -195,5 +301,7 @@ class HudShell:
         for widget in reversed(self._widgets):
             widget.destroy()
         self._widgets.clear()
+        self._solvers.clear()
+        self._playback.clear()
         self.buttons.clear()
         self.root.removeNode()
