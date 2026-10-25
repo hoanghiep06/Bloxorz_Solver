@@ -16,12 +16,12 @@ are not reinterpreted or weakened.
 
 Start → select a level. Arrow keys/WASD roll; Space changes the active split cube;
 R restarts. Settings offers mouse control, theme and audio. Space remains available
-in mouse mode to switch the active cube. AI Solver appears after 30 seconds without
-a move. For inspection without that wait:
-
-```bash
-.venv/bin/python -B -c "from src.gui.screens import UIFlow; UIFlow.HINT_DELAY=0; from src.gui.game_app import main; main()"
-```
+in mouse mode to switch the active cube. AI Solver is available immediately on
+entering a level, after manual moves and after Restart/Retry. Opening its panel
+during the level intro completes the intro before solver controls are shown.
+Selecting a solver starts a fresh attempt and clears any previous win/failure dialog.
+During an active guide, Play/Pause, Step and Hide Solution provide playback
+controls; AI Solver returns as soon as the guide ends or is hidden.
 
 Ten original project levels are under `levels/`. They cover the existing Basic
 map, fragile crossing/detour, soft/heavy switches, toggle/permanent bridges,

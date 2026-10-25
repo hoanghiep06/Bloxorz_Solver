@@ -81,6 +81,17 @@ class HudWidgetTests(unittest.TestCase):
         self.assertEqual(self.hud.metric_values[2]['text'], '24')
         self.assertEqual(self.hud.metric_values[1]['text'], UNKNOWN)
 
+    def test_ai_button_is_immediate_and_returns_after_guide_mode(self):
+        button = self.hud.buttons['Guide'].border
+        self.assertFalse(button.isHidden())
+        self.hud.set_guide_mode(True)
+        self.assertTrue(button.isHidden())
+        self.hud.set_guide_mode(False)
+        self.assertFalse(button.isHidden())
+        self.hud.set_guide_visible(True)
+        self.hud.set_guide_visible(False)
+        self.assertFalse(button.isHidden())
+
     def test_resize_retains_widgets_and_labels_fit(self):
         identities = tuple(id(widget) for widget in self.hud._widgets)
         from panda3d.core import TextNode

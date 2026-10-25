@@ -394,7 +394,6 @@ class GameScreen(Screen):
 
 class UIFlow:
     LEFT_SHARE = .4          # main menu: buttons on the left 40%, scene on the right
-    HINT_DELAY = 30.0        # seconds without a move before the AI Solver button appears
 
     def __init__(self, app, controller, catalog, save, audio, attract):
         self.app, self.controller, self.catalog = app, controller, catalog
@@ -402,7 +401,6 @@ class UIFlow:
         self.size = (app.win.getXSize(), app.win.getYSize())
         self.name = None
         self._supported, self._disposed = {}, False
-        self._idle, self.hint_ready = 0.0, False
         self._later_tasks = set()
         self._retired = []
         self._par_job = self._par_task = None
@@ -428,7 +426,6 @@ class UIFlow:
         hud.bind_action('Exit', self._with_click(lambda: self.show('levels')))
         hud.bind_action('Restart', self._with_click(controller.restart_level))
         hud.bind_action('Guide', self._with_click(self.toggle_guide))
-        app.taskMgr.add(self._idle_tick, 'ui-idle')
 
     # ---------------------------------------------------------------- helpers
     def _with_click(self, command):
@@ -511,24 +508,6 @@ class UIFlow:
             if isinstance(value, SceneStyle):
                 value.set_theme(theme)
 
-    # ---------------------------------------------------------------- idle hint
-    def _idle_tick(self, task):
-        from panda3d.core import ClockObject
-        c = self.controller
-        if (self.name == 'game' and not self.hint_ready and not c.guide_active
-                and not self.intro.active and not self.screens['game'].result_visible):
-            self._idle += ClockObject.getGlobalClock().getDt()
-            if self._idle >= self.HINT_DELAY:
-                self.hint_ready = True
-                self.app.dashboard.hud.set_hint_ready(True)
-        return task.cont
-
-    def reset_idle(self):
-        self._idle = 0.0
-        if self.hint_ready:
-            self.hint_ready = False
-            self.app.dashboard.hud.set_hint_ready(False)
-
     # ---------------------------------------------------------------- intro / arrows
     def _intro_done(self):
         self.controller.input_enabled = self.name == 'game'
@@ -560,7 +539,6 @@ class UIFlow:
         if not game:
             self._cancel_par()
             self.controller.cancel_guide()      # leaving the level drops any guide state
-        self.reset_idle()
         self.ambient.set_intensity(.45 if game else 1.0)
         self.ambient.show()
         hud, viewport = self.app.dashboard.hud, self.app.dashboard.viewport
@@ -617,18 +595,17 @@ class UIFlow:
             self.controller.deselect_solver()
             hud.set_guide_visible(False)
         else:
+            if self.intro.active:
+                self.intro.finish()
             hud.set_guide_visible(True)
 
     def _finish_guide(self):
         """Solution finished: the block goes back to the start for the player."""
         self.controller.end_guide()
         self.app.dashboard.hud.set_guide_visible(False)
-        self.reset_idle()
 
     # ---------------------------------------------------------------- events
     def on_game_event(self, name):
-        if name in ('roll', 'restart'):
-            self.reset_idle()
         if name == 'restart':
             self.screens['game'].hide_result()
             return
@@ -684,7 +661,6 @@ class UIFlow:
             destroy_items(items)
         self._retired.clear()
         self._listener.ignoreAll()
-        self.app.taskMgr.remove('ui-idle')
         self.attract.stop()
         self.intro.finish(notify=False)
         self.arrows.dispose()

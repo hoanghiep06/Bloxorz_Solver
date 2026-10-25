@@ -97,7 +97,7 @@ def main(argv=None):
             indices=() if args.interactions_only else range(len(c._catalog)) if args.all else (2,4,5,9)
             for index in indices:
                 for name in SOLVER_SPECS:
-                    enter(index);hud.set_hint_ready(True);hud.set_guide_visible(True)
+                    enter(index);hud.set_guide_visible(True)
                     click(name);hud.speed['value']=4;hud.speed['command']()
                     before=len(goals);started=time.monotonic();click('Play')
                     wait_for(lambda:len(goals)>before,timeout=30)

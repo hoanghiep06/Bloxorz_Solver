@@ -47,6 +47,53 @@ class GameUiStateTests(SceneFixture):
         return [str(widget['text']) for widget in self.screen._owned
                 if isinstance(widget, DirectLabel)]
 
+    def test_ai_button_is_immediate_on_level_entry_and_skips_intro_when_opened(self):
+        with patch.object(self.flow, '_ensure_par'):
+            for index in (0, 1, len(self.catalog) - 1):
+                self.flow.start_level(index)
+                self.assertTrue(self.flow.intro.active)
+                self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
+                self.flow.toggle_guide()
+                self.assertFalse(self.flow.intro.active)
+                self.assertTrue(self.c.input_enabled)
+                self.assertTrue(self.hud.guide_open)
+                for name in ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*'):
+                    self.assertFalse(self.hud.buttons[name].isHidden())
+
+    def test_ai_button_stays_available_after_manual_move_and_restart(self):
+        self.assertTrue(self.c.manual_move('R'))
+        self.c.manager.advance(2)
+        self.assertEqual(self.c.moves, 1)
+        self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
+        self.c.restart_level()
+        self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
+
+    def test_ai_button_returns_immediately_after_completed_replay(self):
+        self.flow.toggle_guide()
+        self.hud.buttons['BFS']['command']()
+        self.hud.buttons['Play']['command']()
+        for _ in range(100):
+            if not self.c.manager.is_busy:
+                break
+            self.c.manager.advance(2)
+        self.app.taskMgr.tick(deferred_only=True)
+        self.assertIsNotNone(self.c.search)
+        self.assertFalse(self.c.guide_active)
+        self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
+
+    def test_immediate_solver_selection_clears_previous_result_dialog(self):
+        for outcome in ('win', 'fail'):
+            with self.subTest(outcome=outcome):
+                self.c.phase = 'GOAL' if outcome == 'win' else 'FELL'
+                self.screen.show_result() if outcome == 'win' else self.screen.show_fail()
+                self.assertTrue(self.screen.result_visible)
+                self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
+                self.flow.toggle_guide()
+                self.hud.buttons['BFS']['command']()
+                self.assertEqual(self.c.phase, 'READY')
+                self.assertFalse(self.screen.result_visible)
+                self.flow.toggle_guide()
+
     def buttons(self):
         from direct.gui.DirectGui import DirectButton
         return {str(widget['text']): widget for widget in self.screen._owned

@@ -430,6 +430,7 @@ class GameController:
         self._reset_to_start(keep_solution=False)
         self.selected, self.guide_active = (name, False)
         self._refresh_hud()
+        self._emit('restart')
         return True
 
     def deselect_solver(self):

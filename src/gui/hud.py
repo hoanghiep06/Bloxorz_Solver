@@ -90,7 +90,6 @@ class HudShell:
         self._playback = []       # row 3: Play/Step/Hide Solution + speed
         self._guide_open = False
         self._selected = None
-        self._hint_ready = False
         self._guide_mode = False
         self._disposed = False
         self.layout = None
@@ -225,16 +224,10 @@ class HudShell:
         self._guide_mode = bool(active)
         self._refresh_top()
 
-    def set_hint_ready(self, ready):
-        """AI Solver only appears after the player has been idle for a while."""
-        self._hint_ready = bool(ready)
-        self._refresh_top()
-
     def _refresh_top(self):
         restart, guide = self.buttons['Restart'].border, self.buttons['Guide'].border
         restart.hide() if self._guide_mode else restart.show()
-        show_guide = not self._guide_mode and (self._hint_ready or self._guide_open)
-        guide.show() if show_guide else guide.hide()
+        guide.hide() if self._guide_mode else guide.show()
     def _set_playback(self, visible):
         for widget in self._playback:
             widget.show() if visible else widget.hide()
