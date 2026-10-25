@@ -36,6 +36,17 @@ merged, mouse input and arrows use the full 1x1x2 footprint again. The native
 `split_mouse_smoke` check clicks all four directions for both cubes on horizontal,
 vertical and diagonal layouts, then verifies rejoining and unified movement.
 
+Win/failure dialogs capture their outcome in an immutable `ResultDialog`.
+`GameScreen.build()` redraws that same outcome on resize; it does not record stars,
+save progress, run a solver or emit another completion event. Restart/Retry and
+leaving the game clear the dialog so later resizes cannot restore a stale result.
+
+Closing the AI Solver panel calls `GameController.deselect_solver()`. This clears
+the controller selection along with the HUD selection, so Enter/P cannot start a
+hidden replay. Manual state and in-flight manual rolls are preserved. If a guide
+or solver is active, closing cancels it through the existing cancellation path.
+Reopening the panel requires selecting a solver before Play/Step can start work.
+
 ## Ownership and data flow
 
 ```

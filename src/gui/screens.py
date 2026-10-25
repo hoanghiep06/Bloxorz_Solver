@@ -5,6 +5,7 @@ attract-mode solver demo, Level Select keeps the scene still, and the Game scree
 hands the scene to the player and shows the HUD.
 """
 import math
+from dataclasses import dataclass
 
 from direct.gui import DirectGuiGlobals as DGG
 from direct.showbase.DirectObject import DirectObject
@@ -294,17 +295,38 @@ class SettingsScreen(Screen):
         self.flow.audio.play('click')     # nghe thử mức tiếng hiệu ứng
 
 
+@dataclass(frozen=True)
+class ResultDialog:
+    """Captured outcome; resizing only redraws it, without recording progress."""
+    kind: str
+    moves: int
+    stars: int = 0
+    par: int | None = None
+    next_level: int | None = None
+
+
 class GameScreen(Screen):
-    """The HUD belongs to HudShell; this screen only hosts the level-complete card."""
+    """The HUD belongs to HudShell; this screen hosts win/failure dialogs."""
     name = 'game'
-    result_visible = False
+
+    def __init__(self, flow):
+        super().__init__(flow)
+        self._result = None
+
+    @property
+    def result_visible(self):
+        return self._result is not None
 
     def build(self, width, height):
-        pass
+        if self._result is not None:
+            if self._result.kind == 'win':
+                self._build_win(width, height, self._result)
+            else:
+                self._build_fail(width, height, self._result)
 
     def show(self):
         self.visible = True
-        self.release_later()
+        self.hide_result()
         self.root.show()
 
     def hide(self):
@@ -313,7 +335,7 @@ class GameScreen(Screen):
         self.root.hide()
 
     def hide_result(self):
-        self.result_visible = False
+        self._result = None
         self.release_later()
 
     def show_result(self):
@@ -325,41 +347,49 @@ class GameScreen(Screen):
             stars = 1
         flow.save.record(entry.level_id, controller.moves, stars)
         flow.save.save()
+        nxt = controller.level_index + 1
+        has_next = nxt < len(flow.catalog) and flow.is_supported(nxt)
+        self._result = ResultDialog('win', controller.moves, stars, par, nxt if has_next else None)
         self.release_later()
-        width, height = flow.size
+        self.build(*flow.size)
+
+    def _build_win(self, width, height, result):
+        flow, controller = self.flow, self.flow.controller
         cw, ch = 400, 310
         x, y = (width - cw) / 2, (height - ch) / 2
         self.card(x, y, cw, ch, alpha=.97)
         self.label('Level Complete!', 36, width / 2, y + 62, align='center')
         for k in range(3):
-            self.own(ui.make_star(self.root, width / 2 + (k - 1) * 74, y + 125, 30, on=k < stars))
-        detail = f'Moves {controller.moves}' + (f'     Par {par}' if par else '')
+            self.own(ui.make_star(self.root, width / 2 + (k - 1) * 74, y + 125, 30, on=k < result.stars))
+        detail = f'Moves {result.moves}' + (f'     Par {result.par}' if result.par is not None else '')
         self.label(detail, 20, width / 2, y + 190, color=ui.MUTED, align='center')
-        nxt = controller.level_index + 1
-        has_next = nxt < len(flow.catalog) and flow.is_supported(nxt)
         bw, gap = 112, 10
         bx, by = x + (cw - (3 * bw + 2 * gap)) / 2, y + 222
-        self.button('Next', bx, by, bw, 52, lambda: flow.start_level(nxt), primary=True, enabled=has_next)
+        self.button('Next', bx, by, bw, 52,
+                    lambda: flow.start_level(result.next_level) if result.next_level is not None else None,
+                    primary=True, enabled=result.next_level is not None)
         self.button('Retry', bx + bw + gap, by, bw, 52, controller.restart_level)
         self.button('Levels', bx + 2 * (bw + gap), by, bw, 52, lambda: flow.show('levels'))
-        self.result_visible = True
 
     def show_fail(self):
         """Khung thua: block rơi khỏi bản đồ. Retry hoặc Exit về chọn màn."""
         flow, controller = self.flow, self.flow.controller
+        self._result = ResultDialog('fail', controller.moves)
         self.release_later()
-        width, height = flow.size
+        self.build(*flow.size)
+
+    def _build_fail(self, width, height, result):
+        flow, controller = self.flow, self.flow.controller
         cw, ch = 400, 250
         x, y = (width - cw) / 2, (height - ch) / 2
         self.card(x, y, cw, ch, alpha=.97)
         self.label('Level Failed', 36, width / 2, y + 62, align='center')
-        self.label(f'Moves {controller.moves}', 20, width / 2, y + 108,
+        self.label(f'Moves {result.moves}', 20, width / 2, y + 108,
                    color=ui.MUTED, align='center')
         bw, gap = 150, 12
         bx, by = x + (cw - (2 * bw + gap)) / 2, y + 150
         self.button('Retry', bx, by, bw, 52, controller.restart_level, primary=True)
         self.button('Exit', bx + bw + gap, by, bw, 52, lambda: flow.show('levels'))
-        self.result_visible = True
 
 
 class UIFlow:
@@ -583,7 +613,11 @@ class UIFlow:
 
     def toggle_guide(self):
         hud = self.app.dashboard.hud
-        hud.set_guide_visible(not hud.guide_open)
+        if hud.guide_open:
+            self.controller.deselect_solver()
+            hud.set_guide_visible(False)
+        else:
+            hud.set_guide_visible(True)
 
     def _finish_guide(self):
         """Solution finished: the block goes back to the start for the player."""

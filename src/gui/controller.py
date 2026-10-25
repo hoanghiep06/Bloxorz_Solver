@@ -432,6 +432,14 @@ class GameController:
         self._refresh_hud()
         return True
 
+    def deselect_solver(self):
+        """Close AI selection without rewinding manual play; cancel active work."""
+        if self.guide_active or self.phase == 'SOLVING' or self._mode is not Replay.IDLE:
+            self.cancel_guide()
+        else:
+            self.selected = None
+            self._refresh_hud()
+
     def start_guide(self, mode):
         if self.selected is None or self.phase == 'ERROR':
             return
