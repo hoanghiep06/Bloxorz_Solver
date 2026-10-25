@@ -15,41 +15,63 @@ Dự án cài đặt và giải trò chơi giải đố **Bloxorz** bằng các 
 
 ## 1. Yêu cầu hệ thống & Cài đặt
 
-* **Python:** Phiên bản `>= 3.9` (Khuyến nghị 3.10 hoặc 3.11).
-* **Môi trường ảo (khuyến khích):**
+* **Python:** Khuyến nghị Python **3.12**. Code sử dụng cú pháp Python 3.10 trở lên; không dùng Python 3.9.
+* **Giao diện:** Panda3D **1.10.16**, được cài tự động từ `requirements.txt`. Các module `direct.*` nằm trong cùng gói Panda3D.
+* **Hiển thị:** Cần môi trường desktop và driver OpenGL để mở cửa sổ game. Kích thước cửa sổ tối thiểu là **1024 × 720**.
+* Chạy các lệnh bên dưới tại thư mục gốc của repo. Dùng môi trường ảo riêng cho dự án.
+
+Đã kiểm tra quy trình cài mới trên Linux với Python **3.12.14** và Panda3D **1.10.16**: mở GUI, di chuyển, Restart, chạy BFS và toàn bộ 431 test đều đạt.
+
+**Linux / macOS:**
 
 ```bash
-# 1. Tạo môi trường ảo
-python -m venv venv
-
-# 2. Kích hoạt môi trường ảo
-# Trên Windows:
-venv\Scripts\activate
-# Trên macOS / Linux:
-source venv/bin/activate
-
-# 3. Cài đặt các thư viện phụ thuộc
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
+
+**Windows (Command Prompt):**
+
+```bat
+py -3.12 -m venv .venv
+.venv\Scripts\activate.bat
+python -m pip install -r requirements.txt
+```
+
+Trên Windows PowerShell, có thể gọi trực tiếp `.venv\Scripts\python.exe -m pip install -r requirements.txt` và `.venv\Scripts\python.exe -B main.py` mà không cần kích hoạt môi trường.
+
+Nếu Ubuntu/Debian báo thiếu `ensurepip` khi tạo môi trường, cài gói venv tương ứng với phiên bản Python đang dùng (ví dụ `python3.12-venv` cho Python 3.12), rồi tạo lại `.venv`.
+
+Kiểm tra thư viện sau khi cài:
+
+```bash
+python -m pip check
+python -c "from panda3d.core import PandaSystem; print(PandaSystem.getVersionString())"
+```
+
+Lệnh cuối phải in `1.10.16`. Nếu báo `No module named 'panda3d'`, kiểm tra đang dùng đúng Python của `.venv` và chạy lại lệnh cài thư viện ở trên.
 
 ---
 
 ## 2. Hướng dẫn chạy chương trình
 
-### A. Chạy kiểm thử nhanh trên Terminal (CLI)
-Sau khi hoàn thiện thuật toán của mình, mở file `main.py`, bỏ comment phần import solver bạn phụ trách và chạy:
+### A. Chạy game 3D
+
+Sau khi cài đặt và kích hoạt môi trường ảo:
 
 ```bash
-python main.py
+python -B main.py
 ```
 
-Kết quả in ra sẽ tự động chứa đủ 4 chỉ số thực nghiệm:
-* **Trạng thái:** Thành công / Thất bại.
-* **Chuỗi bước đi (Solution Path):** Dãy các thao tác `U`, `D`, `L`, `R`.
-* **Độ dài lời giải (Solution Length):** Số bước đi tối ưu hoặc tìm được.
-* **Số node đã mở (Expanded Nodes):** Số trạng thái được lấy ra khỏi Frontier.
-* **Thời gian tìm kiếm (Search Time):** Đơn vị giây ($s$).
-* **Bộ nhớ đỉnh (Peak RAM):** Đơn vị $KB$ (đo bằng `tracemalloc`).
+`main.py` mở GUI hiện tại; không cần sửa import hoặc bỏ comment solver. Bấm **Start → chọn level** để chơi. Dùng **WASD / phím mũi tên** để di chuyển, **Space** để đổi khối khi tách, **R** để chơi lại. Vào **Settings → Mouse** để điều khiển bằng chuột.
+
+Nút **AI Solver** xuất hiện sau 30 giây không di chuyển. Mở nút này để chọn BFS, DFS, IDS, UCS, Greedy hoặc A*, sau đó dùng Play / Step. HUD hiển thị số bước, thời gian tìm kiếm, số node, độ dài nghiệm và bộ nhớ đỉnh của các allocation Python (`Peak Python Memory`, không phải toàn bộ RAM tiến trình).
+
+Chạy bộ test trong cùng môi trường:
+
+```bash
+python -B -m unittest discover -s tests
+```
 
 ### B. Chạy Benchmark hàng loạt (Giai đoạn 2)
 ```bash
