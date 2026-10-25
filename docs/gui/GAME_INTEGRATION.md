@@ -11,6 +11,7 @@ are not reinterpreted or weakened.
 .venv/bin/python -B main.py --shadows
 .venv/bin/python -B -m unittest discover -s tests
 .venv/bin/python -B -m tools.game_integration_smoke --all
+.venv/bin/python -B -m tools.split_mouse_smoke
 ```
 
 Start → select a level. Arrow keys/WASD roll; Space changes the active split cube;
@@ -26,6 +27,14 @@ Ten original project levels are under `levels/`. They cover the existing Basic
 map, fragile crossing/detour, soft/heavy switches, toggle/permanent bridges,
 split/Space/merge, cube movement on fragile and combined mechanics.
 These are authoritative game levels, not the older visual-only animation fixtures.
+
+In split mode, mouse directions, arrow placement and hover all use only the
+selected cube's cell. Space changes that selection; the other cube remains still.
+Core automatically merges cubes after a move makes them share a horizontal or
+vertical edge. Distance alone or diagonal contact does not merge them. Once
+merged, mouse input and arrows use the full 1x1x2 footprint again. The native
+`split_mouse_smoke` check clicks all four directions for both cubes on horizontal,
+vertical and diagonal layouts, then verifies rejoining and unified movement.
 
 ## Ownership and data flow
 

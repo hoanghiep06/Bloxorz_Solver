@@ -72,13 +72,28 @@ class GameMenuTests(SceneFixture):
             pick.assert_not_called()
         self.c.manual_move.assert_not_called()
     def test_mouse_click_over_scene_reaches_controller(self):
+        from src.core.state import BloxorzState, Orientation
         self.flow.name='game'
         self.flow.save.settings.control_mode='mouse'
         self.c.manager=Mock(is_busy=False)
+        self.c.state=BloxorzState(0,0,Orientation.STANDING)
         self.app.mouseWatcherNode=Mock()
         self.app.mouseWatcherNode.getOverRegion.return_value=None
         with patch('src.gui.screens.pick_action',return_value='R'):
             self.flow._click()
         self.c.manual_move.assert_called_once_with('R')
+
+    def test_mouse_click_uses_only_the_selected_split_cube(self):
+        from src.core.state import BloxorzState
+        self.flow.name='game'
+        self.flow.save.settings.control_mode='mouse'
+        self.c.manager=Mock(is_busy=False)
+        self.app.mouseWatcherNode=Mock()
+        self.app.mouseWatcherNode.getOverRegion.return_value=None
+        for active in (0,1):
+            self.c.state=BloxorzState.create_split((0,6),(0,4),active)
+            with patch('src.gui.screens.pick_action',return_value='R') as pick:
+                self.flow._click()
+                self.assertEqual(pick.call_args.args[3],[self.c.state.cubes[active]])
 
 if __name__=='__main__':unittest.main()

@@ -14,7 +14,7 @@ from src.gui import ui_theme as ui
 from src.gui.ambient import Ambient
 from src.gui.layout import Rect
 from src.gui.level_intro import LevelIntro
-from src.gui.mouse_control import pick_action
+from src.gui.mouse_control import controlled_cells, pick_action
 from src.gui.move_arrows import MoveArrows
 from src.gui.profile import star_rating
 from src.gui.game_adapter import prepare_level
@@ -633,7 +633,7 @@ class UIFlow:
             return
         action = pick_action(self.app, self.app.dashboard.viewport.region,
                              self.app.presentation.camera.current_fit,
-                             controller.state.get_occupied_cells(),
+                             controlled_cells(controller.state),
                              controller.board_data.rows, controller.board_data.cols)
         if action:
             controller.manual_move(action)

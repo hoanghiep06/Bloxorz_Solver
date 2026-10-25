@@ -7,6 +7,17 @@ keyboard rolls and mouse picking.
 import math
 
 
+def controlled_cells(state):
+    """Footprint of the actor receiving input, not all occupied board cells.
+
+    Split cubes keep independent positions. Only the selected cube determines
+    mouse directions and arrow placement; a merged block uses its full footprint.
+    """
+    if state.is_split():
+        return [state.cubes[state.active_cube]]
+    return state.get_occupied_cells()
+
+
 def direction_from_click(click, center, projected, aspect, dead_zone=.03):
     """click/center are viewport NDC (x, y); projected maps action -> NDC of the
     block centre moved one cell along that action. Returns an action or None."""

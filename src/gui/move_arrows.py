@@ -1,6 +1,8 @@
 """Floor arrows around the block for mouse control (one per roll direction)."""
 import math
 
+from src.gui.mouse_control import controlled_cells, pick_action
+
 ARROW_Z = .04
 COLD, HOT = (.96, .72, .24, .75), (1.0, .9, .35, 1.0)
 POINTS = ((.38, 0), (.02, .3), (.02, -.3), (.02, .1), (-.3, .1), (-.3, -.1), (.02, -.1))
@@ -53,18 +55,17 @@ class MoveArrows:
         c = self.controller
         bd = c.board_data
         points = [cell_to_world(r, col, rows=bd.rows, cols=bd.cols, pitch=1.0)
-                  for r, col in c.state.get_occupied_cells()]
+                  for r, col in controlled_cells(c.state)]
         for action, (_, dx, dy) in self._arrows.items():
             far = max(points, key=lambda p: p[0] * dx + p[1] * dy)
             self._base[action] = (far[0] + dx, far[1] + dy)
 
     def _hover(self):
-        from src.gui.mouse_control import pick_action
         c, app = self.controller, self.app
         try:
             return pick_action(app, app.dashboard.viewport.region,
                                app.presentation.camera.current_fit,
-                               c.state.get_occupied_cells(), c.board_data.rows,
+                               controlled_cells(c.state), c.board_data.rows,
                                c.board_data.cols)
         except Exception:
             return None

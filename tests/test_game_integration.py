@@ -53,6 +53,59 @@ class GamePipelineTests(GameIntegrationCase):
         self.move('R')
         self.assertEqual(c.phase,'GOAL')
 
+    def test_split_moves_only_selected_cube_in_core_and_animation(self):
+        grid=[[1]*13 for _ in range(9)]
+        grid[4][3]=6;grid[8][12]=2
+        index=self.custom({'grid':grid,'start':[4,0],'goal':[8,12],
+            'split_switch':{'cell':[4,3],'split_positions':[[4,5],[4,9]]}})
+        self.assertTrue(self.controller.load_level(index))
+        self.move('R');self.move('R')
+        c=self.controller
+        for active in (0,1):
+            if c.state.active_cube!=active:self.move('SPACE')
+            for action in ('R','L','U','D'):
+                with self.subTest(active=active,action=action):
+                    old=c.state
+                    poses=dict(c.manager.current_visual_poses)
+                    self.assertTrue(c.manual_move(action))
+                    c.manager.advance(.1)
+                    during=dict(c.manager.current_visual_poses)
+                    self.assertEqual(during[f'cube-{1-active}'],poses[f'cube-{1-active}'])
+                    self.assertNotEqual(during[f'cube-{active}'],poses[f'cube-{active}'])
+                    self.drain()
+                    self.assertTrue(c.state.is_split())
+                    self.assertEqual(c.state.cubes[1-active],old.cubes[1-active])
+                    self.assertNotEqual(c.state.cubes[active],old.cubes[active])
+
+    def test_cubes_merge_only_at_shared_edge_then_move_as_one_block(self):
+        from src.core.state import Orientation
+        cases=(
+            ([(4,5),(4,9)],('L','L','L'),Orientation.HORIZONTAL,'R',(4,7)),
+            ([(2,5),(6,5)],('U','U','U'),Orientation.VERTICAL,'D',(4,5)),
+            ([(2,3),(4,5)],('U','L','U'),Orientation.HORIZONTAL,'R',(2,5)),
+        )
+        for positions,actions,orientation,whole_action,anchor in cases:
+            with self.subTest(positions=positions):
+                grid=[[1]*13 for _ in range(9)]
+                grid[4][3]=6;grid[8][12]=2
+                index=self.custom({'grid':grid,'start':[4,0],'goal':[8,12],
+                    'split_switch':{'cell':[4,3],'split_positions':positions}})
+                self.assertTrue(self.controller.load_level(index))
+                self.move('R');self.move('R');self.move('SPACE')
+                c=self.controller
+                for action in actions[:-1]:
+                    self.move(action)
+                    self.assertTrue(c.state.is_split())
+                    self.assertEqual(len(c.manager.current_visual_poses),2)
+                self.move(actions[-1])
+                self.assertFalse(c.state.is_split())
+                self.assertEqual(c.state.orientation,orientation)
+                self.assertEqual([key for key,_ in c.manager.current_visual_poses],[None])
+                self.move(whole_action)
+                self.assertEqual((c.state.r,c.state.c),anchor)
+                self.assertEqual(c.state.orientation,Orientation.STANDING)
+                self.assertIsNone(c._snapshot().active_cube_id)
+
     def test_bridge_flags_ids_and_switch_visuals_match_core(self):
         self.load('level_03_soft_bridge')
         self.move('R');self.move('R')
