@@ -498,15 +498,18 @@ class UIFlow:
         self._par_job = self._par_task = None
 
     def apply_scene_theme(self, theme):
-        """Recolour the 3D backdrop (SceneStyle is found by type inside the presentation)."""
-        from src.gui.scene_style import SceneStyle
+        """Recolour backdrop, lights, floor and block for the theme."""
+        from src.gui.scene_style import SceneStyle, FLOOR_TINT, BLOCK_TINT
+        from src.gui.scene_lighting import SceneLightingController
         try:
             values = list(vars(self.app.presentation).values())
         except TypeError:
             return
         for value in values:
-            if isinstance(value, SceneStyle):
+            if isinstance(value, (SceneStyle, SceneLightingController)):
                 value.set_theme(theme)
+        self.app.static_board_root.setColorScale(*FLOOR_TINT.get(theme, FLOOR_TINT['light']))
+        self.app.block_root.setColorScale(*BLOCK_TINT.get(theme, BLOCK_TINT['light']))
 
     # ---------------------------------------------------------------- intro / arrows
     def _intro_done(self):

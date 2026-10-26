@@ -1,12 +1,17 @@
-"""DirectGUI HUD: a row of buttons at the top-left and the level name at the top-right.
+"""DirectGUI HUD: icon toolbar at the top-left and the level name at the top-right.
 
-No side panel. Controls are bound by the host (bind_action/bind_speed). The
-solver/playback rows are collapsible (set_guide_visible).
+Row 1: square icon buttons (Exit | Restart, AI Solver, View, Help). Hovering an
+icon shows its name next to the toolbar.
+Row 2 (only while AI Solver is open): algorithm chips, then Play/Step icons and
+the speed slider once an algorithm is chosen. There is no "Hide Solution"
+button: pressing the AI Solver icon again closes the solver and its solution.
+Controls are bound by the host (bind_action/bind_speed).
 """
 
 from dataclasses import dataclass
 import math
 
+from src.gui import icons
 from src.gui import ui_theme as ui
 
 UNKNOWN = '—'
@@ -66,14 +71,38 @@ METRIC_LABELS = ('Moves', 'Search Time', 'Expanded Nodes', 'Solution Length', 'P
 
 # ---- layout constants (pixels) ----
 MARGIN, GAP, BTN_H, TEXT = 20, 10, 46, 22
-TOP_ROW = (('Exit', 90), ('Restart', 110), ('Guide', 130))
+SQ = BTN_H                 # icon buttons are squares
+ICON_HALF = 14             # icon half-size in pixels
+DIVIDER = 24               # extra space separating Exit from the other tools
+TOP_ROW = (('Exit', SQ), ('Restart', SQ), ('Guide', SQ), ('View', SQ), ('Tutorial', SQ))
 SOLVERS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*')
-PLAYBACK = (('Play', 110), ('Step', 110), ('Close', 190))
-SOLVER_W = 100
-ROW2_Y, ROW3_Y = MARGIN + BTN_H + GAP, MARGIN + 2 * (BTN_H + GAP)
-LEFT_END = MARGIN + sum(w for _, w in TOP_ROW) + GAP * (len(TOP_ROW) - 1)
-DISPLAY = {'Guide': 'AI Solver', 'Close': 'Hide Solution'}
+PLAYBACK = (('Play', SQ), ('Step', SQ))
+SOLVER_W = 84
+ROW2_Y = MARGIN + BTN_H + GAP
 LEVEL_SIZE, STATUS_SIZE = 30, 18
+TIP_SPACE = 170            # room reserved for the hover name next to the toolbar
+
+
+def _top_positions():
+    xs, x = [], MARGIN
+    for index, (_, width) in enumerate(TOP_ROW):
+        xs.append(x)
+        x += width + (DIVIDER if index == 0 else GAP)
+    return xs
+
+
+TOP_X = _top_positions()
+LEFT_END = TOP_X[-1] + TOP_ROW[-1][1]
+
+# Button name -> icon variants (first one is shown by default).
+ICONS = {
+    'Exit': ('exit',), 'Restart': ('restart',), 'Guide': ('ai',), 'View': ('view',),
+    'Tutorial': ('help',), 'Play': ('play', 'pause'), 'Step': ('step',),
+}
+TIPS = {
+    'Exit': 'Exit', 'Restart': 'Restart (R)', 'Guide': 'AI Solver', 'View': 'View: Iso (C)',
+    'Tutorial': 'Help (H)', 'Play': 'Play / Pause', 'Step': 'Step',
+}
 
 
 class HudShell:
@@ -86,8 +115,12 @@ class HudShell:
 
         self._TextNode = TextNode
         self._widgets = []
-        self._solvers = []        # row 2: algorithm buttons
-        self._playback = []       # row 3: Play/Step/Hide Solution + speed
+        self._solvers = []        # row 2: algorithm chips
+        self._playback = []       # row 2: Play/Step icons + speed slider
+        self._holders = {}        # button name -> icon holder NodePath
+        self._variants = {}       # button name -> {icon key: NodePath}
+        self._tips = dict(TIPS)
+        self._close_callback = None
         self._guide_open = False
         self._selected = None
         self._guide_mode = False
@@ -107,34 +140,31 @@ class HudShell:
                                   for text in METRIC_LABELS]
             self.metric_values = [self._label(UNKNOWN, 20, 0, 0, parent=self.metrics)
                                   for _ in METRIC_LABELS]
-            x = MARGIN
-            for name, width in TOP_ROW:
+            for (name, width), x in zip(TOP_ROW, TOP_X):
                 self._add_button(name, x, MARGIN, width)
-                x += width + GAP
             for i, name in enumerate(SOLVERS):
                 self._add_button(name, MARGIN + i * (SOLVER_W + GAP), ROW2_Y, SOLVER_W,
                                  group=self._solvers)
-            x = MARGIN
+            x = MARGIN + len(SOLVERS) * (SOLVER_W + GAP) + 8
             for name, width in PLAYBACK:
-                self._add_button(name, x, ROW3_Y, width, group=self._playback)
+                self._add_button(name, x, ROW2_Y, width, group=self._playback)
                 x += width + GAP
 
-            sx = x + 10
-            base = ROW3_Y + BTN_H / 2 + 7
-            self.speed_label = self._label('Speed', 20, sx, base, muted=True)
-            self._playback.append(self.speed_label)
-            sw, sh, sx2 = 180, 14, sx + 80
+            sx = x + 8
+            sw, sh = 150, 14
             self.speed = self._own(DirectSlider(
-                parent=self.bar, pos=(sx2 + sw / 2, 0, -(ROW3_Y + BTN_H / 2)),
+                parent=self.bar, pos=(sx + sw / 2, 0, -(ROW2_Y + BTN_H / 2)),
                 frameSize=(-sw / 2, sw / 2, -sh / 2, sh / 2),
                 frameColor=ui.LINE, relief=DGG.FLAT, range=(.25, 4), value=1,
                 pageSize=0, state=DGG.DISABLED, thumb_state=DGG.DISABLED,
                 thumb_relief=DGG.FLAT, thumb_frameColor=ui.PRIMARY,
                 thumb_frameSize=(-9, 9, -15, 15)))
             self._playback.append(self.speed)
-            self.speed_text = self._label('1.0x', 20, sx2 + sw + 20, base, muted=True)
+            self.speed_text = self._label('1.0x', 20, sx + sw + 18, ROW2_Y + BTN_H / 2 + 7,
+                                          muted=True)
             self._playback.append(self.speed_text)
 
+            self.tip = self._label('', 18, LEFT_END + 16, MARGIN + 30, muted=True)
             self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 30, align='right')
             self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 52, align='right', muted=True)
             self.warning = self._label('Minimum window size: 1024 x 720', 16, 0, 0, align='center',
@@ -156,31 +186,98 @@ class HudShell:
                                        color=ui.MUTED if muted else ui.INK, align=align))
 
     def _add_button(self, name, x, y, width, group=None):
-        button = ui.make_button(self.bar, DISPLAY.get(name, name), x, y, width, BTN_H,
+        has_icon = name in ICONS
+        button = ui.make_button(self.bar, '' if has_icon else name, x, y, width, BTN_H,
                                 None, size=TEXT, enabled=False)
         self._own(button.border)
         self._own(button)
         self.buttons[name] = button
+        if has_icon:
+            self._add_icon(name, x + width / 2, y + BTN_H / 2)
+        self._bind_tip(name, button)
         if group is not None:
             group.append(button.border)
+            if has_icon:
+                group.append(self._holders[name])
+
+    def _add_icon(self, name, cx, cy):
+        holder = self.bar.attachNewNode(f'Icon-{name}')
+        holder.setPos(cx, 0, -cy)
+        holder.setScale(ICON_HALF)
+        variants = {}
+        for index, key in enumerate(ICONS[name]):
+            node = icons.make_icon(key)
+            node.reparentTo(holder)
+            if index:
+                node.hide()
+            variants[key] = node
+        self._holders[name] = holder
+        self._variants[name] = variants
+
+    def _bind_tip(self, name, button):
+        from direct.gui import DirectGuiGlobals as DGG
+        try:
+            button.bind(DGG.ENTER, lambda _event, n=name: self._show_tip(n))
+            button.bind(DGG.EXIT, lambda _event: self._show_tip(None))
+        except Exception:
+            pass  # tooltips are optional
+
+    def _show_tip(self, name):
+        if not self._disposed:
+            self.tip['text'] = '' if name is None else self._tips.get(name, '')
+
+    def _show_variant(self, name, key):
+        for variant, node in self._variants.get(name, {}).items():
+            node.show() if variant == key else node.hide()
+
+    def _tint_icons(self):
+        """Icons follow the button's text colour (normal, primary or disabled)."""
+        for name, holder in self._holders.items():
+            color = ui.INK
+            try:
+                color = tuple(self.buttons[name]['text_fg'])
+            except Exception:
+                pass
+            holder.setColor(*color)
+
+    def _set_visible(self, name, visible):
+        widgets = [self.buttons[name].border]
+        if name in self._holders:
+            widgets.append(self._holders[name])
+        for widget in widgets:
+            widget.show() if visible else widget.hide()
 
     # ------------------------------------------------------------ host wiring
     def bind_action(self, name, callback):
-        """Enable one button and run callback() when it is clicked."""
+        """Enable one button and run callback() when it is clicked.
+
+        'Close' has no button any more: its callback runs when the AI Solver
+        icon is pressed while the solver is open.
+        """
         from direct.gui import DirectGuiGlobals as DGG
-        button = self.buttons[name]
+        if name == 'Close':
+            self._close_callback = callback
+            return
+        button = self.buttons.get(name)
+        if button is None:
+            return
         original = callback
         if name in SOLVERS:
             def callback():
                 if original() is not False:
                     self.select_solver(name)
-        elif name == 'Close':
+        elif name == 'Guide':
             def callback():
-                original()
-                self.set_guide_visible(False)
+                if self._guide_open:
+                    if self._close_callback is not None:
+                        self._close_callback()
+                    self.set_guide_visible(False)
+                else:
+                    original()
         button['command'] = callback
         button['state'] = DGG.NORMAL
         ui.style_button(button, primary=False)
+        self._style_dynamic()
 
     def bind_speed(self, callback):
         """Enable the playback-speed slider; callback(value) gets 0.25..4.0."""
@@ -211,23 +308,26 @@ class HudShell:
         self._style_dynamic()
 
     def select_solver(self, name):
-        """Algorithm chosen: highlight it and reveal Play/Step/Hide Solution."""
+        """Algorithm chosen: highlight it and reveal Play/Step and the speed slider."""
         self._selected = name
         self._set_playback(True)
         self._style_dynamic()
 
     def set_playing(self, playing):
-        self.buttons['Play']['text'] = 'Pause' if playing else 'Play'
+        self._show_variant('Play', 'pause' if playing else 'play')
+
+    def set_view_label(self, text):
+        """Camera view changed: the View icon's hover name shows the current view."""
+        self._tips['View'] = f'{text} (C)'
 
     def set_guide_mode(self, active):
-        """While a solution runs, hide Restart and AI Solver."""
+        """While a solution runs, hide Restart. The AI Solver icon stays as the way out."""
         self._guide_mode = bool(active)
         self._refresh_top()
 
     def _refresh_top(self):
-        restart, guide = self.buttons['Restart'].border, self.buttons['Guide'].border
-        restart.hide() if self._guide_mode else restart.show()
-        guide.hide() if self._guide_mode else guide.show()
+        self._set_visible('Restart', not self._guide_mode)
+
     def _set_playback(self, visible):
         for widget in self._playback:
             widget.show() if visible else widget.hide()
@@ -236,6 +336,7 @@ class HudShell:
         ui.style_button(self.buttons['Guide'], primary=self._guide_open)
         for name in SOLVERS:
             ui.style_button(self.buttons[name], primary=name == self._selected)
+        self._tint_icons()
 
     def restyle(self):
         """Re-apply the current ui_theme palette to already-built widgets."""
@@ -250,7 +351,7 @@ class HudShell:
         self._style_dynamic()
         self.level['text_fg'] = ui.INK
         self.runtime['text_fg'] = ui.MUTED
-        self.speed_label['text_fg'] = ui.MUTED
+        self.tip['text_fg'] = ui.MUTED
         self.speed_text['text_fg'] = ui.MUTED
         self.warning['text_fg'] = ui.INK
         self.speed['frameColor'] = ui.LINE
@@ -274,7 +375,7 @@ class HudShell:
     def _refresh_texts(self):
         width = self.layout.width if self.layout else 1024
         self._fit_text(self.level, self.model.level_label, LEVEL_SIZE,
-                       max(80, width - LEFT_END - 3 * MARGIN))
+                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE))
         self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
         cell = (width - 40) / 5
         for label, value in zip(self.metric_values, metric_values(self.model)):
@@ -320,5 +421,7 @@ class HudShell:
         self._widgets.clear()
         self._solvers.clear()
         self._playback.clear()
+        self._holders.clear()
+        self._variants.clear()
         self.buttons.clear()
         self.root.removeNode()

@@ -2,6 +2,7 @@
 
 from itertools import combinations, product
 import math
+import random
 
 from panda3d.core import (
     Geom, GeomNode, GeomTriangles, GeomVertexData, GeomVertexFormat,
@@ -19,8 +20,18 @@ FLOOR_EDGE = _rgb("91A8BB")
 BLOCK_MAIN = _rgb("527B9C")
 BLOCK_DARK = _rgb("354F68")
 BLOCK_HIGHLIGHT = _rgb("91ADC3")
-GOAL_RIM = _rgb("527B9C")
-GOAL_INTERIOR = _rgb("273B50")
+GOAL_RIM = _rgb("F5C230")        # viền vàng gold, nổi trên cả sàn be lẫn sàn xanh băng
+GOAL_INTERIOR = _rgb("10161F")   # lòng hố gần đen để tạo chiều sâu
+
+# Màu block theo theme. Màu đã "nướng" vào vertex color nên BLOCK_TINT phải là (1,1,1,1).
+#   light: khối nâu đất, dính từng mảng rêu xanh.
+#   dark : khối xanh dương, rải vài chấm tuyết trắng.
+BLOCK_THEME_COLORS = {
+    'light': dict(main=_rgb("8A5A34"), dark=_rgb("5C3B22"), edge=_rgb("B98A5C"),
+                  inlay=_rgb("C9A074"), spot=_rgb("5F8A2E"), spot2=_rgb("86AD43")),
+    'dark': dict(main=_rgb("3F7BC8"), dark=_rgb("27508F"), edge=_rgb("9CCBF5"),
+                 inlay=_rgb("B9DCF8"), spot=_rgb("F7FBFF"), spot2=_rgb("DCEBFA")),
+}
 
 
 class _MeshBuilder:
@@ -65,11 +76,13 @@ def _pitch(value: float) -> None:
         raise ValueError("pitch must be finite and positive (not bool).")
 
 
-def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=False):
+def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=False,
+                 inlay_color=BLOCK_HIGHLIGHT, decorate=None):
     """Six inset faces + twelve chamfer strips + eight clipped corners.
 
     Outer support planes retain the nominal dimensions. Every edge/corner is
     real geometry, and all polygons share exact geometric boundary positions.
+    ``decorate(builder, half)`` may add thin raised polygons (moss / snow spots).
     """
     half = [dimension / 2 for dimension in dimensions]
     inset = [extent - bevel for extent in half]
@@ -97,7 +110,7 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
                 for i in range(4):
                     j = (i + 1) % 4
                     builder.face((points[i], points[j], patch[j], patch[i]), normal, color)
-                builder.face(patch, normal, BLOCK_HIGHLIGHT)
+                builder.face(patch, normal, inlay_color)
             else:
                 builder.face(points, normal, color)
     for axis_a, axis_b in combinations(range(3), 2):
@@ -119,7 +132,50 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
             points.append([signs[a] * (half[a] if a == axis else inset[a])
                            for a in range(3)])
         builder.face(points, signs, edge_color)
+    if decorate is not None:
+        decorate(builder, half)
     return builder.finish()
+
+
+def _spots(builder, half, bevel, colors, kind, skip_faces=()):
+    """Raised convex ellipses on every face. Deterministic (seeded per face).
+
+    kind 'moss': a few large irregular patches + small blobs.
+    kind 'snow': several small round dots.
+    """
+    inset = [h - bevel for h in half]
+    lift = min(half) * 0.012          # đủ cao để không z-fight, không lộ ra ngoài bounds đáng kể
+    for axis in range(3):
+        others = [a for a in range(3) if a != axis]
+        for sign in (-1, 1):
+            if (axis, sign) in skip_faces:
+                continue
+            rng = random.Random(100 + axis * 2 + (1 if sign > 0 else 0))
+            shapes = []
+            if kind == 'moss':
+                for _ in range(rng.randint(2, 3)):
+                    shapes.append((rng.uniform(.16, .34), rng.uniform(.16, .34)))
+                for _ in range(rng.randint(2, 3)):
+                    shapes.append((rng.uniform(.06, .11), rng.uniform(.06, .11)))
+            else:
+                for _ in range(rng.randint(4, 6)):
+                    r = rng.uniform(.07, .13)
+                    shapes.append((r, r))
+            for index, (ru, rv) in enumerate(shapes):
+                u0 = rng.uniform(-(1 - ru), 1 - ru)
+                v0 = rng.uniform(-(1 - rv), 1 - rv)
+                color = colors['spot'] if index % 2 == 0 else colors['spot2']
+                points = []
+                for k in range(12):
+                    angle = math.tau * k / 12
+                    point = [0.0] * 3
+                    point[axis] = sign * (half[axis] + lift)
+                    point[others[0]] = (u0 + ru * math.cos(angle)) * inset[others[0]]
+                    point[others[1]] = (v0 + rv * math.sin(angle)) * inset[others[1]]
+                    points.append(point)
+                normal = [0, 0, 0]
+                normal[axis] = sign
+                builder.face(points, normal, color)
 
 
 def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
@@ -167,6 +223,33 @@ def make_block_mesh(*, pitch: float = 1.0) -> GeomNode:
               for axis in range(3) for sign in (-1, 1)}
     return _beveled_box("MainBlockMesh", (pitch, pitch, 2 * pitch), 0.03 * pitch,
                         colors, BLOCK_HIGHLIGHT, inlay=True)
+
+
+def make_themed_block_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
+    """Khối s×s×2s theo theme: 'light' nâu + rêu, 'dark' xanh dương + chấm tuyết."""
+    _pitch(pitch)
+    c = BLOCK_THEME_COLORS[theme]
+    colors = {(axis, sign): (c['dark'] if (axis, sign) in ((0, -1), (2, -1)) else c['main'])
+              for axis in range(3) for sign in (-1, 1)}
+    bevel = 0.03 * pitch
+    kind = 'moss' if theme == 'light' else 'snow'
+    return _beveled_box(
+        f"MainBlockMesh-{theme}", (pitch, pitch, 2 * pitch), bevel, colors, c['edge'],
+        inlay=True, inlay_color=c['inlay'],
+        # Bỏ mặt (1,-1) vì mặt đó đã có miếng inlay.
+        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind, {(1, -1)}))
+
+
+def make_themed_cube_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
+    """Khối con 1x1x1 (sau khi tách) cùng bảng màu và hoa văn với khối chính."""
+    _pitch(pitch)
+    c = BLOCK_THEME_COLORS[theme]
+    colors = {(axis, sign): c['main'] for axis in range(3) for sign in (-1, 1)}
+    bevel = 0.02 * pitch
+    kind = 'moss' if theme == 'light' else 'snow'
+    return _beveled_box(
+        f"SplitCubeMesh-{theme}", (pitch, pitch, pitch), bevel, colors, c['edge'],
+        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind))
 
 
 class MeshBuilder(_MeshBuilder):

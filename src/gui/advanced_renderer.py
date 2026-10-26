@@ -8,10 +8,15 @@ from src.gui.advanced_contracts import (
 )
 from src.gui.advanced_mesh_factory import (
     make_fragile_mesh, make_bridge_mesh, make_switch_mesh,
-    make_split_cube_mesh, make_active_cube_mesh,
+    make_split_cube_mesh, make_active_cube_mesh, make_flag_mesh,
 )
+from src.gui.contracts import BasicOrientation
 from src.gui.geometry_math import block_pose, cell_to_world, logical_board_bounds
-from src.gui.mesh_factory import make_floor_mesh, make_goal_mesh, make_block_mesh
+from src.gui.mesh_factory import (
+    make_floor_mesh, make_goal_mesh, make_block_mesh,
+    make_themed_block_mesh, make_themed_cube_mesh,
+)
+from src.gui.scene_style import sync_block_theme
 
 
 class AdvancedSceneRenderer:
@@ -37,16 +42,21 @@ class AdvancedSceneRenderer:
             'active': make_active_cube_mesh(pitch=pitch), 'bridge': make_bridge_mesh(pitch=pitch),
             'intact': make_fragile_mesh(pitch=pitch),
             'broken': make_fragile_mesh(pitch=pitch, broken=True),
+            'flag': make_flag_mesh(pitch=pitch),
         }
         for kind in SwitchVisualKind:
             for activated in (False, True):
                 self._meshes[(kind, activated)] = make_switch_mesh(kind, activated=activated, pitch=pitch)
+        for theme in ('light', 'dark'):
+            self._meshes[('whole', theme)] = make_themed_block_mesh(theme, pitch=pitch)
+            self._meshes[('cube', theme)] = make_themed_cube_mesh(theme, pitch=pitch)
         self._contents = ()
         self._board_data = self._snapshot = None
         self._fragile = self._bridges = self._switches = {}
         self._whole = None
         self._cubes = self._indicators = ()
         self._cube_slots = {}
+        self._flags = {}
         self._actor_visuals_visible = True
         self._disposed = False
 
@@ -63,6 +73,14 @@ class AdvancedSceneRenderer:
             x, y = cell_to_world(*cell, rows=board.rows, cols=board.cols, pitch=self._pitch)
             node.setPos(x, y, 0)
             node.setTag('cell', f'{cell[0]},{cell[1]}')
+        return node
+
+    def _themed_instance(self, parent, name, base_key):
+        """Một node chứa cả 2 bản mesh theme; scene_style.sync_block_theme bật 1 bản, tắt bản kia."""
+        node = parent.attachNewNode(name)
+        for theme in ('light', 'dark'):
+            holder = node.attachNewNode('BlockTheme-' + theme)
+            holder.attachNewNode(self._meshes[(base_key, theme)])
         return node
 
     def load_board(self, board_data):
@@ -103,9 +121,15 @@ class AdvancedSceneRenderer:
                 for node in variants:
                     node.setTag('switch_id', switch.switch_id)
                 switches[switch.switch_id] = variants
-            whole = self._instance(blocks, 'WholeBlockVisual', 'whole')
-            cubes = tuple(self._instance(blocks, f'SplitCubeSlot-{i}', 'cube') for i in range(2))
+            flags = {cell: self._instance(dynamic, f'GoalFlag-{cell[0]}-{cell[1]}', 'flag',
+                                          cell=cell, board=board_data)
+                     for cell in board_data.goal_cells}
+            whole = self._themed_instance(blocks, 'WholeBlockVisual', 'whole')
+            cubes = tuple(self._themed_instance(blocks, f'SplitCubeSlot-{i}', 'cube') for i in range(2))
             indicators = tuple(self._instance(cube, 'ActiveCubeIndicator', 'active') for cube in cubes)
+            for indicator in indicators:
+                # Bỏ qua tint của block_root để khung chỉ thị giữ màu xanh lá.
+                indicator.setColorScaleOff(1)
             dynamic.hide()
             blocks.hide()
         except BaseException:
@@ -118,7 +142,9 @@ class AdvancedSceneRenderer:
         self._contents = contents
         self._board_data = board_data
         self._fragile, self._bridges, self._switches = fragile, bridges, switches
+        self._flags = flags
         self._whole, self._cubes, self._indicators = whole, cubes, indicators
+        sync_block_theme(self._roots[2])
 
     def show_snapshot(self, snapshot):
         """Apply a complete visual state, with validation before scene mutation."""
@@ -145,6 +171,17 @@ class AdvancedSceneRenderer:
                                 cols=self._board_data.cols, pitch=self._pitch)
             positions[cube.cube_id] = (x, y, self._pitch / 2)
         # Finish all data/pose work before changing any visibility or transform.
+        # Cờ ẩn khi khối đang nằm trên ô đích để cột cờ không xuyên vào khối.
+        occupied = {cube.cell for cube in snapshot.cubes}
+        if snapshot.whole_pose is not None:
+            r, c = snapshot.whole_pose.anchor_cell
+            occupied.add((r, c))
+            if snapshot.whole_pose.orientation is BasicOrientation.HORIZONTAL:
+                occupied.add((r, c + 1))
+            elif snapshot.whole_pose.orientation is BasicOrientation.VERTICAL:
+                occupied.add((r + 1, c))
+        for cell, flag in self._flags.items():
+            self._visible(flag, cell not in occupied)
         for cell, (intact, broken) in self._fragile.items():
             is_broken = cell in snapshot.broken_fragile_cells
             self._visible(intact, not is_broken)
@@ -204,6 +241,7 @@ class AdvancedSceneRenderer:
         self._contents = ()
         self._board_data = self._snapshot = self._whole = None
         self._fragile, self._bridges, self._switches = {}, {}, {}
+        self._flags = {}
         self._cubes = self._indicators = ()
         self._cube_slots = {}
 
