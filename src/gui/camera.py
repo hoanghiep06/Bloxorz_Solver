@@ -12,7 +12,7 @@ class CameraConfig:
     azimuth: float = 30.0
     elevation: float = 45.0
     vertical_fov: float = 45.0
-    padding: float = 0.13  # Fraction of full viewport on EACH edge.
+    padding: float = 0.1  # Fraction of full viewport on EACH edge.
 
     def __post_init__(self):
         for name in ('azimuth', 'elevation', 'vertical_fov', 'padding'):
@@ -154,13 +154,17 @@ class BoardCameraController:
         self.current_fit = None
         self._board = None
         self._pitch = 1.0
+        self._bounds = None
         self._dimensions = None
         self._window = self._provider = self._listener = None
         self._on_refit = None
         self._disposed = False
 
-    def fit_board(self, board_data, width, height, *, pitch=1.0, bounds=None):
-        """Fit on load/configuration changes. Invalid/minimized sizes keep the previous pose."""
+    def fit_board(self, board_data, width, height, *, pitch=1.0, bounds=None, notify=True):
+        """Fit on load/configuration changes. Invalid/minimized sizes keep the previous pose.
+
+        notify=False skips the on_refit callback (used by per-frame follow reframing).
+        """
         if self._disposed:
             raise RuntimeError('Camera controller is disposed.')
         if width == 0 or height == 0:
@@ -173,7 +177,7 @@ class BoardCameraController:
         self.lens.setNearFar(fit.near, fit.far)
         self.camera.setPos(*fit.position)
         self.camera.lookAt(*fit.target)
-        if self._on_refit:
+        if notify and self._on_refit:
             self._on_refit(fit)
         return True
 
@@ -200,6 +204,25 @@ class BoardCameraController:
         self.config = config
         if self._board is not None:
             self.fit_board(self._board, *self._dimensions, pitch=self._pitch, bounds=self._bounds)
+
+    def set_view(self, config: CameraConfig, *, bounds=None, notify=True):
+        """Switch viewing angle and refit (bounds=None frames the whole board)."""
+        if self._disposed:
+            raise RuntimeError('Camera controller is disposed.')
+        self.config = config
+        if self._board is None or self._dimensions is None:
+            return False
+        return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
+                              bounds=bounds, notify=notify)
+
+    def reframe(self, bounds, config: CameraConfig | None = None):
+        """Per-frame reframe for follow cameras (optionally rotating); skips on_refit."""
+        if self._disposed or self._board is None or self._dimensions is None:
+            return False
+        if config is not None:
+            self.config = config
+        return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
+                              bounds=bounds, notify=False)
 
     def bind_window(self, window, *, viewport_size=None, on_refit=None):
         """Subscribe once per event with a separate DirectObject owner.

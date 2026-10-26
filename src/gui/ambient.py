@@ -1,6 +1,6 @@
-"""Animated menu overlay: falling stars (dark theme) or drifting leaves (light theme).
+"""Animated menu overlay: falling snow (dark theme) or drifting leaves + light motes (light theme).
 
-Pure 2D particles on pixel2d, drawn behind the menu widgets. Cheap: ~40 nodes.
+Pure 2D particles on pixel2d, drawn behind the menu widgets. Cheap: ~60 nodes.
 """
 import math
 import random
@@ -31,13 +31,9 @@ def _shape(points, color):
     return path
 
 
-def _sparkle(r):
-    pts = []
-    for i in range(8):
-        a = i * math.pi / 4
-        k = r if i % 2 == 0 else r * .22
-        pts.append((k * math.cos(a), k * math.sin(a)))
-    return pts
+def _circle(r, segments=10):
+    return [(r * math.cos(i * math.tau / segments), r * math.sin(i * math.tau / segments))
+            for i in range(segments)]
 
 
 def _leaf(r):
@@ -45,7 +41,8 @@ def _leaf(r):
             for i in range(14)]
 
 
-NIGHT_COLORS = ((1, 1, 1, .9), (1, .95, .7, .9), (.7, .85, 1, .85))
+SNOW_COLORS = ((1, 1, 1, .9), (.85, .93, 1, .8), (.75, .88, 1, .7))
+MOTE_COLORS = ((1, .95, .6, .7), (1, 1, .85, .6))
 LEAF_COLORS = ((.36, .66, .30, .85), (.55, .75, .30, .85),
                (.93, .62, .20, .85), (.85, .40, .22, .85))
 
@@ -76,45 +73,69 @@ class Ambient:
 
     def _spawn(self, p, anywhere):
         w, h = self._size()
+        kind = p['kind']
         p['x'] = random.uniform(-40, w + 40)
-        p['y'] = random.uniform(-20, h) if anywhere else random.uniform(-80, -10)
-        night = self.theme == 'dark'
-        p['vy'] = random.uniform(70, 170) if night else random.uniform(40, 95)
-        p['vx'] = random.uniform(15, 60) if night else random.uniform(-10, 35)
         p['phase'] = random.uniform(0, 6.28)
-        p['spin'] = random.uniform(-60, 60) if not night else random.uniform(-20, 20)
+        if kind == 'mote':                      # bụi sáng bay lên chậm
+            p['y'] = random.uniform(-20, h) if anywhere else random.uniform(h + 10, h + 60)
+            p['vy'] = -random.uniform(8, 25)
+            p['vx'] = random.uniform(-6, 12)
+            p['spin'] = 0
+        elif kind == 'snow':                    # tuyết rơi chậm, lắc nhẹ
+            p['y'] = random.uniform(-20, h) if anywhere else random.uniform(-80, -10)
+            p['vy'] = random.uniform(35, 90)
+            p['vx'] = random.uniform(-12, 8)
+            p['spin'] = 0
+        else:                                   # lá
+            p['y'] = random.uniform(-20, h) if anywhere else random.uniform(-80, -10)
+            p['vy'] = random.uniform(40, 95)
+            p['vx'] = random.uniform(-10, 35)
+            p['spin'] = random.uniform(-60, 60)
+
+    def _plan(self):
+        if self.theme == 'dark':
+            return [('snow', self._count * 3 // 2)]
+        return [('leaf', self._count // 2), ('mote', self._count)]
 
     def _build(self):
         self._clear()
-        night = self.theme == 'dark'
-        for _ in range(self._count):
-            r = random.uniform(3, 8) if night else random.uniform(8, 15)
-            color = random.choice(NIGHT_COLORS if night else LEAF_COLORS)
-            node = _shape(_sparkle(r) if night else _leaf(r), color)
-            node.reparentTo(self.root)
-            p = {'node': node}
-            self._spawn(p, anywhere=True)
-            p['node'].setR(random.uniform(0, 360))
-            self._particles.append(p)
+        for kind, number in self._plan():
+            for _ in range(number):
+                if kind == 'snow':
+                    shape, color = _circle(random.uniform(1.8, 4.5)), random.choice(SNOW_COLORS)
+                elif kind == 'mote':
+                    shape, color = _circle(random.uniform(2, 4.5)), random.choice(MOTE_COLORS)
+                else:
+                    shape, color = _leaf(random.uniform(8, 15)), random.choice(LEAF_COLORS)
+                node = _shape(shape, color)
+                node.reparentTo(self.root)
+                p = {'node': node, 'kind': kind}
+                self._spawn(p, anywhere=True)
+                if kind == 'leaf':
+                    node.setR(random.uniform(0, 360))
+                self._particles.append(p)
 
     def _update(self, task):
         from panda3d.core import ClockObject
         dt = min(ClockObject.getGlobalClock().getDt(), .05)
         self._time += dt
         w, h = self._size()
-        night = self.theme == 'dark'
         for p in self._particles:
-            sway = 0 if night else math.sin(self._time * 1.6 + p['phase']) * 40
+            kind = p['kind']
+            amp = {'snow': 18, 'leaf': 40, 'mote': 10}[kind]
+            freq = {'snow': .9, 'leaf': 1.6, 'mote': .7}[kind]
+            sway = math.sin(self._time * freq + p['phase']) * amp
             p['x'] += (p['vx'] + sway) * dt
             p['y'] += p['vy'] * dt
-            if p['y'] > h + 30 or p['x'] > w + 50 or p['x'] < -50:
+            gone = (p['y'] < -30) if kind == 'mote' else (p['y'] > h + 30)
+            if gone or p['x'] > w + 50 or p['x'] < -50:
                 self._spawn(p, anywhere=False)
             node = p['node']
             node.setPos(p['x'], 0, -p['y'])
-            node.setR(node.getR() + p['spin'] * dt)
-            if night:   # twinkle
-                s = .6 + .4 * math.sin(self._time * 5 + p['phase'])
-                node.setScale(s)
+            if kind == 'leaf':
+                node.setR(node.getR() + p['spin'] * dt)
+            elif kind == 'mote':                # lấp lánh
+                node.setScale(.6 + .4 * math.sin(self._time * 3 + p['phase']))
         return task.cont
 
     def show(self):

@@ -9,6 +9,13 @@ from panda3d.core import (
 from src.gui.scene_style import SHADOW_MASK, _restore
 
 
+# (ambient, key, fill): nắng vàng ấm ban ngày, ánh trăng xanh lạnh ban đêm.
+LIGHT_THEMES = {
+    'light': ((.40, .42, .38), (.66, .60, .48), (.10, .12, .12)),
+    'dark': ((.30, .36, .50), (.50, .58, .78), (.10, .13, .22)),
+}
+
+
 class SceneLightingController:
     """Light one scene subtree without taking ownership of renderer/host nodes."""
 
@@ -19,6 +26,7 @@ class SceneLightingController:
         self._shader_owned = False
         self._lights = []
         self.shadow_status = 'DISABLED'
+        self.theme = 'light'
         self._fit = fit
         try:
             ambient = AmbientLight('PresentationAmbient')
@@ -38,6 +46,17 @@ class SceneLightingController:
         except BaseException:
             self.dispose()
             raise
+
+    def set_theme(self, theme):
+        """Đổi màu ánh sáng theo theme (không động tới vị trí đèn hay bóng đổ)."""
+        if self._rig is None:
+            return
+        theme = theme if theme in LIGHT_THEMES else 'light'
+        ambient, key, fill = LIGHT_THEMES[theme]
+        self.ambient.node().setColor((*ambient, 1))
+        self.key.node().setColor((*key, 1))
+        self.fill.node().setColor((*fill, 1))
+        self.theme = theme
 
     def fit_bounds(self, fit):
         """Place the key above-left in camera basis and bound its orthographic shadow lens."""

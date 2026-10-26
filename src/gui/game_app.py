@@ -15,6 +15,7 @@ from src.gui.app import BloxorzPreviewApp
 from src.gui.attract import AttractMode
 from src.gui.audio import AudioManager
 from src.gui.board_preview import dispose_presentation
+from src.gui.camera_views import CameraViewController
 from src.gui.controller import GameController, LevelCatalog
 from src.gui.dashboard_preview import DashboardPresentation
 from src.gui.hud import HudViewModel
@@ -22,6 +23,7 @@ from src.gui.profile import DEFAULT_SAVE, SaveData
 from src.gui.game_adapter import prepare_level
 from src.gui.game_scene import GameScene
 from src.gui.screens import UIFlow
+from src.gui.tutorial import TutorialOverlay
 
 DEFAULT_LEVELS = Path(__file__).resolve().parents[2] / 'levels'
 
@@ -39,7 +41,7 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
         app = BloxorzPreviewApp(audio=True)
     finally:
         unloadPrcFile(page)
-    renderer = controller = flow = None
+    renderer = controller = flow = views = None
     try:
         save = SaveData(save_path)
         audio = AudioManager(app, music_volume=save.settings.music_volume,
@@ -60,6 +62,8 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
             size = (max(1, round((right - left) * width)), max(1, round((top - bottom) * height)))
             # Refit also triggers background/light updates via on_refit.
             app.presentation.camera.fit_board(build_framing_data(board), *size)
+            if views is not None:
+                views.on_level_loaded()
 
         def prepare_scene(board_data, snapshot):
             return GameScene(app, board_data, snapshot, on_activate=load_visual_board)
@@ -73,6 +77,12 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
                                     on_event=on_event)
         controller.bind_hud()
         controller.bind_keys(app.accept)
+        views = CameraViewController(app, controller, app.presentation.camera, app.dashboard.hud)
+        app.game_views = views
+        app.dashboard.hud.bind_action('View', views.cycle)
+        tutorial = TutorialOverlay(app, controller)
+        app.game_tutorial = tutorial
+        app.dashboard.hud.bind_action('Tutorial', tutorial.toggle)
         if not controller.start(0):
             raise ValueError(controller._status)
         renderer = controller.manager.renderer
@@ -92,8 +102,14 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
 
 
 def dispose_game(app, renderer, controller):
-    """Menus/attract -> controller (animation) -> HUD -> presentation -> renderer -> host."""
+    """Tutorial -> views -> menus/attract -> controller (animation) -> HUD -> presentation -> renderer -> host."""
     try:
+        tutorial = getattr(app, 'game_tutorial', None)
+        if tutorial is not None:
+            tutorial.dispose()
+        views = getattr(app, 'game_views', None)
+        if views is not None:
+            views.dispose()
         flow = getattr(app, 'game_flow', None)
         if flow is not None:
             flow.dispose()
