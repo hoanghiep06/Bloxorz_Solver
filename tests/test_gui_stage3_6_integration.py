@@ -105,7 +105,7 @@ class PipelineIntegrationTests(SceneFixture):
         self.assertEqual(sum(kind is BasicTileKind.VOID for row in data.tiles for kind in row), 8)
         goal = static.find('**/Goal-1-6')
         self.assertEqual(tuple(goal.getPos()), (3, .5, 0))
-        self.assertFalse(goal.find('GoalMesh').isEmpty())
+        self.assertFalse(goal.find('GoalMesh-light').isEmpty())
         self.assertTrue(goal.find('FloorMesh').isEmpty())
         hud = self.app.dashboard.hud
         self.assertEqual(hud.level['text'], 'Level 01')

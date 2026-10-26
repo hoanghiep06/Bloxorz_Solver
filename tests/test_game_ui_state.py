@@ -229,3 +229,31 @@ class GameUiStateTests(SceneFixture):
 
 if __name__ == '__main__':
     unittest.main()
+
+    def test_assist_visibility_follows_manual_input_and_all_modal_states(self):
+        self.flow.intro.finish()
+        for mode in ('keyboard','mouse'):
+            self.flow.save.settings.control_mode=mode
+            self.c.input_enabled=True
+            self.assertTrue(self.flow._arrows_visible())
+            self.c.input_enabled=False
+            self.assertFalse(self.flow._arrows_visible())
+            self.c.input_enabled=True
+            self.c.manual_move('R')
+            self.assertFalse(self.flow._arrows_visible())
+            self.c.manager.advance(2)
+            self.assertTrue(self.flow._arrows_visible())
+            self.c.guide_active=True
+            self.assertFalse(self.flow._arrows_visible())
+            self.c.guide_active=False
+            self.c.phase='FELL';self.screen.show_fail()
+            self.assertFalse(self.flow._arrows_visible())
+            self.c.restart_level()
+
+    def test_passive_hud_bands_are_excluded_from_move_hover(self):
+        from src.gui.layout import calculate_layout
+        for width,height in ((1280,720),(1100,760),(1920,1080)):
+            self.hud.apply_layout(calculate_layout(width,height))
+            for x,y in ((30,40),(width-100,75),(width/2,height-50)):
+                self.assertTrue(self.hud.contains_pointer_pixels(x,y))
+            self.assertFalse(self.hud.contains_pointer_pixels(width/2,height/2))

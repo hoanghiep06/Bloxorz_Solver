@@ -62,3 +62,15 @@ def pick_action(app, region, fit, cells, rows, cols, pitch=1.0):
         dx, dy, _ = direction.value
         projected[action] = project_point((x + dx * pitch, y + dy * pitch, z), fit)[:2]
     return direction_from_click(click, center, projected, fit.aspect)
+
+
+def pointer_over_hud(app):
+    """HUD includes passive labels/metrics, which have no MouseWatcher region."""
+    hud = getattr(app.dashboard, 'hud', None)
+    watcher = app.mouseWatcherNode
+    if hud is None or not watcher.hasMouse():
+        return False
+    mouse = watcher.getMouse()
+    x = (mouse[0]+1)*app.win.getXSize()/2
+    y = (1-mouse[1])*app.win.getYSize()/2
+    return hud.contains_pointer_pixels(x,y)

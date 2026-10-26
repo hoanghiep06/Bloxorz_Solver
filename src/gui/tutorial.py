@@ -6,8 +6,8 @@ suspended and restored on close.
 """
 from src.gui import ui_theme as ui
 
-PANEL_W, PANEL_H = 760, 480
-ROW_START, ROW_STEP, TEXT_SIZE = 108, 34, 20
+PANEL_W, PANEL_H = 800, 540
+ROW_START, ROW_STEP, TEXT_SIZE = 108, 34, 18
 
 KEYBOARD = (
     ('W / Up', 'Roll up'),
@@ -22,8 +22,9 @@ KEYBOARD = (
 )
 MOUSE = (
     ('Click', 'Roll toward click'),
-    ('Hover', 'Arrow lights up'),
-    ('Hover icon', 'Shows its name'),
+    ('Hover', 'Preview landing cells'),
+    ('OK / ! / X', 'Safe / fall / blocked'),
+    ('Yellow edge', 'Near edge; moves allowed'),
 )
 BUTTONS = (
     ('Back arrow', 'Exit to menu'),
@@ -33,7 +34,7 @@ BUTTONS = (
     ('Play / Step', 'Replay solution'),
 )
 LEFT_KEY_X, LEFT_DESC_X = 30, 150
-RIGHT_KEY_X, RIGHT_DESC_X = 400, 540
+RIGHT_KEY_X, RIGHT_DESC_X = 390, 525
 
 
 class TutorialOverlay:
@@ -114,14 +115,12 @@ class TutorialOverlay:
         self.controller.input_enabled = False
         self._visible = True
         self.root.show()
-        self.app.accept('escape', self.hide)
 
     def hide(self):
         if self._disposed or not self._visible:
             return
         self._visible = False
         self.root.hide()
-        self.app.ignore('escape')
         self.controller.input_enabled = self._restore_input
 
     def dispose(self):

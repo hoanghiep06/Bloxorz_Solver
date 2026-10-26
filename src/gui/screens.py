@@ -15,8 +15,8 @@ from src.gui import ui_theme as ui
 from src.gui.ambient import Ambient
 from src.gui.layout import Rect
 from src.gui.level_intro import LevelIntro
-from src.gui.mouse_control import controlled_cells, pick_action
-from src.gui.move_arrows import MoveArrows
+from src.gui.mouse_control import controlled_cells, pick_action, pointer_over_hud
+from src.gui.move_arrows import MoveAssistLayer
 from src.gui.profile import star_rating
 from src.gui.game_adapter import prepare_level
 from src.gui.solver_worker import SolverJob
@@ -414,7 +414,7 @@ class UIFlow:
         self.screens = {cls.name: cls(self)
                         for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
         self.intro = LevelIntro(app, self._intro_done)
-        self.arrows = MoveArrows(app, controller, self._arrows_visible)
+        self.arrows = MoveAssistLayer(app, controller, self._arrows_visible)
 
         self._listener = DirectObject()
         self._listener.accept('window-event', self._window_event)
@@ -520,10 +520,10 @@ class UIFlow:
 
     def _arrows_visible(self):
         c = self.controller
-        return (self.name == 'game' and self.save.settings.control_mode == 'mouse'
+        return (self.name == 'game' and c.input_enabled
                 and not self.intro.active and not self.screens['game'].result_visible
                 and c.manager is not None and c.is_idle and c.phase == 'READY'
-                and not c.guide_active)
+                and not c.guide_active and self.app.dashboard.viewport.layout.supported)
 
     # ---------------------------------------------------------------- navigation
     def _left_region(self, width, height):
@@ -570,6 +570,11 @@ class UIFlow:
         self.screens[name].show()
 
     def back(self):
+        # One Escape dispatcher: closing help must not also leave the level.
+        tutorial = getattr(self.app, 'game_tutorial', None)
+        if tutorial is not None and tutorial.visible:
+            tutorial.hide()
+            return
         target = {'levels': 'main', 'settings': 'main', 'game': 'levels'}.get(self.name)
         if target:
             self.show(target)
@@ -638,7 +643,8 @@ class UIFlow:
 
     def _click(self):
         controller = self.controller
-        if (self.name != 'game' or self.save.settings.control_mode != 'mouse'
+        if (self.name != 'game' or not controller.input_enabled
+                or self.save.settings.control_mode != 'mouse'
                 or self.intro.active
                 or self.screens['game'].result_visible or controller.manager is None
                 or controller.manager.is_busy or controller.phase != 'READY'):
@@ -646,7 +652,8 @@ class UIFlow:
         # A DirectGUI click must not also become a move on the board behind it.
         from direct.gui.DirectGuiBase import DirectGuiWidget
         region = self.app.mouseWatcherNode.getOverRegion()
-        if region is not None and region.getName() in DirectGuiWidget.guiDict:
+        if (region is not None and region.getName() in DirectGuiWidget.guiDict
+                or pointer_over_hud(self.app)):
             return
         action = pick_action(self.app, self.app.dashboard.viewport.region,
                              self.app.presentation.camera.current_fit,

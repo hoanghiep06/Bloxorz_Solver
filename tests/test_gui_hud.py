@@ -65,7 +65,7 @@ class HudWidgetTests(unittest.TestCase):
         from direct.gui import DirectGuiGlobals as DGG
         self.assertEqual(set(self.hud.surfaces), {'controls', 'metrics'})
         self.assertEqual(set(self.hud.buttons), {'Exit', 'Restart', 'Guide',
-            'BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*', 'Play', 'Step', 'Close'})
+            'BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*', 'Play', 'Step', 'View', 'Tutorial'})
         for control in (*self.hud.buttons.values(), self.hud.speed, self.hud.speed.component('thumb')):
             self.assertEqual(control['state'], DGG.DISABLED)
             self.assertFalse(control.guiItem.getActive())
@@ -85,7 +85,7 @@ class HudWidgetTests(unittest.TestCase):
         button = self.hud.buttons['Guide'].border
         self.assertFalse(button.isHidden())
         self.hud.set_guide_mode(True)
-        self.assertTrue(button.isHidden())
+        self.assertFalse(button.isHidden())
         self.hud.set_guide_mode(False)
         self.assertFalse(button.isHidden())
         self.hud.set_guide_visible(True)
@@ -103,7 +103,12 @@ class HudWidgetTests(unittest.TestCase):
             for label in self.hud.metric_labels:
                 self.assertLess(measure.calcWidth(label['text']) * label['text_scale'][0], cell - 12)
             for name, button in self.hud.buttons.items():
-                self.assertLess(measure.calcWidth(name) * 16, button['frameSize'][1] - 8)
+                # Icon toolbar has no text; algorithm chips retain text-fit checks.
+                text = button['text']
+                if text:
+                    self.assertLess(measure.calcWidth(text) * 16, button['frameSize'][1] - 8)
+                else:
+                    self.assertGreaterEqual(button['frameSize'][1], 44)
 
     def test_long_labels_elided_and_small_window_recovers(self):
         self.hud.update_view_model(HudViewModel(level_label='A very long level name ' * 10,

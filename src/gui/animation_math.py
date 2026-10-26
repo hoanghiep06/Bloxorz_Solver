@@ -145,7 +145,10 @@ class RollPlan:
         return (-y, x, 0)
 
     def sample(self, progress):
-        angle = math.pi/2*smoothstep(progress)
+        # Deliberate lift, faster weight transfer after the balance point,
+        # firm landing without bounce. The exact edge pivot never changes.
+        t = smoothstep(progress)
+        angle = math.pi/2*(t*t*(2-t))
         q = axis_angle(self.axis, angle)
         return VisualPose(add(self.pivot, rotate(q, sub(self.start.center, self.pivot))),
                           normalized(qmul(q, self.start.quaternion)), self.start.nominal_dimensions)

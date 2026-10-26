@@ -404,6 +404,15 @@ class HudShell:
         self.runtime.setX(layout.width - MARGIN)
         self._refresh_texts()
 
+    def contains_pointer_pixels(self, x, y):
+        """Reserve visible toolbar/status and metric bands for the HUD."""
+        if self.layout is None or not self.layout.supported:
+            return True
+        if not (0 <= x <= self.layout.width and 0 <= y <= self.layout.height):
+            return False
+        top = ROW2_Y + BTN_H + GAP if self._guide_open else 92
+        return y <= top or y >= self.layout.height - 94
+
     def update_view_model(self, model):
         if not isinstance(model, HudViewModel):
             raise ValueError('Expected HudViewModel.')

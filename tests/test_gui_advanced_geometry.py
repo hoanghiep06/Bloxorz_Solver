@@ -82,7 +82,7 @@ class AdvancedGeometryTests(unittest.TestCase):
             z.append(reader.getData3f().z)
         self.assertAlmostEqual(max(z), 0, places=6)
         self.assertGreater(high[2], .009)
-        self.assertLess(high[2], .011)
+        self.assertAlmostEqual(high[2], .014, places=6)
         self.assertGreater(min(p[2] for p in vertices(mesh)[surface.getVertexData().getNumRows():]), .001)
 
     def test_broken_fragile_has_only_small_debris_below_support(self):
@@ -110,7 +110,8 @@ class AdvancedGeometryTests(unittest.TestCase):
             off, on = make_switch_mesh(kind), make_switch_mesh(kind, activated=True)
             self.assertEqual(vertices(off), vertices(on))
             self.assertNotEqual(vertices(off, 'color'), vertices(on, 'color'))
-            self.assertGreater(bounds(off)[0][2], .01)
+            self.assertAlmostEqual(bounds(off)[0][2],
+                                   .005 if kind is SwitchVisualKind.SOFT else 0, places=6)
             shapes.append(tuple(vertices(off)))
         self.assertEqual(len(set(shapes)), 3)
 

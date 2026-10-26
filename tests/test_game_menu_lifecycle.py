@@ -79,6 +79,7 @@ class GameMenuTests(SceneFixture):
         self.c.state=BloxorzState(0,0,Orientation.STANDING)
         self.app.mouseWatcherNode=Mock()
         self.app.mouseWatcherNode.getOverRegion.return_value=None
+        self.app.mouseWatcherNode.getMouse.return_value=(0,0)
         with patch('src.gui.screens.pick_action',return_value='R'):
             self.flow._click()
         self.c.manual_move.assert_called_once_with('R')
@@ -90,6 +91,7 @@ class GameMenuTests(SceneFixture):
         self.c.manager=Mock(is_busy=False)
         self.app.mouseWatcherNode=Mock()
         self.app.mouseWatcherNode.getOverRegion.return_value=None
+        self.app.mouseWatcherNode.getMouse.return_value=(0,0)
         for active in (0,1):
             self.c.state=BloxorzState.create_split((0,6),(0,4),active)
             with patch('src.gui.screens.pick_action',return_value='R') as pick:
