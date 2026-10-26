@@ -69,6 +69,8 @@ python -B main.py
 
 Nút **AI Solver** hiện ngay khi vào màn chơi. Mở nút này để chọn BFS, DFS, IDS, UCS, Greedy hoặc A*, sau đó dùng Play / Step. HUD hiển thị số bước, thời gian tìm kiếm, số node, độ dài nghiệm và bộ nhớ đỉnh của các allocation Python (`Peak Python Memory`, không phải toàn bộ RAM tiến trình).
 
+Hỗ trợ di chuyển bật sẵn cho cả phím và chuột: bốn mũi tên `OK / ! / X`, hover để xem vùng đáp, viền vàng khi sát biên. Cảnh báo đỏ vẫn cho thực hiện nước đi. Guide ẩn khi animation/replay/Tutorial đang chạy. Animation dùng lăn cứng, vỡ sáu mảnh, cầu trượt, teleport khi mờ và thu nhỏ rồi hút vào đích. Xem [thiết kế, API và kiểm thử](docs/gui/MOVE_ASSIST_ANIMATION.md).
+
 Chạy bộ test trong cùng môi trường:
 
 ```bash

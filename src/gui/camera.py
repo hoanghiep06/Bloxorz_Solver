@@ -12,7 +12,7 @@ class CameraConfig:
     azimuth: float = 30.0
     elevation: float = 45.0
     vertical_fov: float = 45.0
-    padding: float = 0.1  # Fraction of full viewport on EACH edge.
+    padding: float = 0.13  # Fraction of full viewport on EACH edge.
 
     def __post_init__(self):
         for name in ('azimuth', 'elevation', 'vertical_fov', 'padding'):

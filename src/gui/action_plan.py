@@ -45,8 +45,13 @@ def plan_action(board, state, board_data, before, action, next_id,
             broken_fragile_cells=current.broken_fragile_cells, **kwargs)
     def append(kind, after, events=(), **kwargs):
         nonlocal current
-        request = AnimationRequest(1, next_id(), current, after, kind,
-            terminal_duration if kind is K.TERMINAL else move_duration if kind is K.ROLL else effect_duration,
+        duration = (terminal_duration if kind is K.TERMINAL else
+                    move_duration if kind is K.ROLL else
+                    .12 if any(e.kind is E.FRAGILE_BREAK for e in events) else
+                    .4 if any(e.kind is E.SPLIT for e in events) else
+                    .3 if any(e.kind is E.MERGE for e in events) else
+                    .15 if any(e.kind is E.ACTIVE_CUBE_CHANGE for e in events) else effect_duration)
+        request = AnimationRequest(1, next_id(), current, after, kind, duration,
             events=tuple(events), **kwargs)
         requests.append(request)
         if after is not None:
@@ -84,5 +89,11 @@ def plan_action(board, state, board_data, before, action, next_id,
                                  else target_state.active_cube]
                         if target_state.is_split() else None)
         append(K.TERMINAL, None, (Event(E.FALL),),
-               terminal=TerminalVisualOutcome(E.FALL, actor_id=failed_actor))
+               terminal=TerminalVisualOutcome(E.FALL, actor_id=failed_actor,
+                   collapse_cell=cell if outcome.failure_reason == 'fragile' else None))
+    elif board.is_goal(outcome.next_state):
+        # Goal suction is the last phase of this action, so Core commit, Moves
+        # and the result notification happen together after its completion.
+        append(K.TERMINAL, None, (Event(E.GOAL_COMPLETE),),
+               terminal=TerminalVisualOutcome(E.GOAL_COMPLETE))
     return ActionPlan(outcome.next_state, tuple(requests), outcome.next_state is None)

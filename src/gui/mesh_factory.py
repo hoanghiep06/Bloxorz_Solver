@@ -82,7 +82,7 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
 
     Outer support planes retain the nominal dimensions. Every edge/corner is
     real geometry, and all polygons share exact geometric boundary positions.
-    ``decorate(builder, half)`` may add thin raised polygons (moss / snow spots).
+    ``decorate(builder, half)`` adds flush face markings within the cuboid.
     """
     half = [dimension / 2 for dimension in dimensions]
     inset = [extent - bevel for extent in half]
@@ -132,19 +132,25 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
             points.append([signs[a] * (half[a] if a == axis else inset[a])
                            for a in range(3)])
         builder.face(points, signs, edge_color)
+    node = builder.finish()
     if decorate is not None:
-        decorate(builder, half)
-    return builder.finish()
+        from panda3d.core import DepthOffsetAttrib, RenderState
+        decals = _MeshBuilder(name + '-Markings')
+        decorate(decals, half)
+        markings = decals.finish()
+        for index in range(markings.getNumGeoms()):
+            node.addGeom(markings.modifyGeom(index), RenderState.make(DepthOffsetAttrib.make(1)))
+    return node
 
 
 def _spots(builder, half, bevel, colors, kind, skip_faces=()):
-    """Raised convex ellipses on every face. Deterministic (seeded per face).
+    """Flush convex ellipses on every face. Deterministic (seeded per face).
 
     kind 'moss': a few large irregular patches + small blobs.
     kind 'snow': several small round dots.
     """
     inset = [h - bevel for h in half]
-    lift = min(half) * 0.012          # đủ cao để không z-fight, không lộ ra ngoài bounds đáng kể
+    lift = 0.0  # flush decals keep the rigid support envelope exact
     for axis in range(3):
         others = [a for a in range(3) if a != axis]
         for sign in (-1, 1):

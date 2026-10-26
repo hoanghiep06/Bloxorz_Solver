@@ -4,37 +4,17 @@ SurfaceLayer supplies a dedicated renderer_root to AdvancedSceneRenderer. During
 an effect only that borrowed layer is hidden; animated_root owns all replacement
 surface instances. Host roots and foreign nodes are never hidden or removed.
 """
-from panda3d.core import NodePath, Quat, TransparencyAttrib, GeomVertexReader, GeomVertexRewriter
+from panda3d.core import NodePath, Quat, TransparencyAttrib
 
 from src.gui.animation_math import smoothstep
 from src.gui.animation_contracts import EventKind
 from src.gui.advanced_contracts import AdvancedBoardData, SwitchVisualKind
 from src.gui.advanced_mesh_factory import (
-    make_active_cube_mesh, make_split_cube_mesh, make_fragile_mesh,
+    make_active_cube_mesh, make_fragile_mesh,
     make_bridge_mesh, make_switch_mesh, FRAGILE,
 )
-from src.gui.mesh_factory import make_block_mesh
-
-
-def _marked_cube_mesh(pitch):
-    """Tint one local bevel strip, keeping every vertex inside the exact cuboid.
-
-    A raised face decal would protrude below Z=0 when that face rolls downward.
-    This fresh factory result belongs only to the rig, never Stage 4 prototypes.
-    """
-    mesh = make_split_cube_mesh(pitch=pitch)
-    for index in range(mesh.getNumGeoms()):
-        data = mesh.modifyGeom(index).modifyVertexData()
-        normals = GeomVertexReader(data, 'normal')
-        colors = GeomVertexRewriter(data, 'color')
-        row = 0
-        while not normals.isAtEnd():
-            normal = normals.getData3f()
-            if abs(normal.x) < 1e-6 and normal.y < -.6 and normal.z > .6:
-                colors.setRow(row)
-                colors.setData4f(*FRAGILE)
-            row += 1
-    return mesh
+from src.gui.mesh_factory import (make_beveled_box_mesh,
+                                  make_themed_block_mesh, make_themed_cube_mesh)
 from src.gui.geometry_math import cell_to_world
 
 
@@ -53,24 +33,51 @@ class AnimatedActorRig:
         self._disposed = False
         self.pitch = pitch
         self._slots = {}
-        self._whole, self._whole_model = self._actor(self.root, 'AnimatedWhole', make_block_mesh(pitch=pitch))
-        cube_mesh = _marked_cube_mesh(pitch)
-        cubes = [self._actor(self.root, 'AnimatedCube', cube_mesh) for _ in range(2)]
+        self._meshes = {(kind,theme): factory(theme,pitch=pitch)
+                        for kind,factory in (('whole',make_themed_block_mesh),('cube',make_themed_cube_mesh))
+                        for theme in ('light','dark')}
+        self._whole, self._whole_model = self._actor(self.root, 'AnimatedWhole', 'whole')
+        cubes = [self._actor(self.root, 'AnimatedCube', 'cube') for _ in range(2)]
         self._cubes = tuple(node for node, model in cubes)
         self._models = {None: self._whole_model}
         self._cube_models = tuple(model for node, model in cubes)
         self._indicators = tuple(node.attachNewNode(make_active_cube_mesh(pitch=pitch)) for node in self._cubes)
+        # Persistent soft contact patches, clipped to real supporting tiles by
+        # apply(). They never cast another shadow or create a floor over void.
+        from panda3d.core import Geom, GeomNode, GeomTriangles, GeomVertexData, GeomVertexFormat, GeomVertexWriter
+        from src.gui.scene_style import SHADOW_MASK
+        import math
+        data = GeomVertexData('ContactShadow', GeomVertexFormat.getV3c4(), Geom.UHStatic)
+        vertex, color = GeomVertexWriter(data, 'vertex'), GeomVertexWriter(data, 'color')
+        vertex.addData3(0, 0, 0); color.addData4(.02,.03,.05,.23)
+        for i in range(25):
+            a = math.tau*i/24
+            vertex.addData3(math.cos(a),math.sin(a),0)
+            color.addData4(.02,.03,.05,0)
+        triangles = GeomTriangles(Geom.UHStatic)
+        for i in range(24):triangles.addVertices(0,i+1,i+2)
+        geom=Geom(data);geom.addPrimitive(triangles)
+        mesh=GeomNode('ContactShadow');mesh.addGeom(geom)
+        self._shadow_root=self.root.attachNewNode('ContactShadows')
+        self._shadow_root.setLightOff(1);self._shadow_root.setShaderOff(1)
+        self._shadow_root.setTransparency(TransparencyAttrib.MAlpha)
+        self._shadow_root.setDepthWrite(False);self._shadow_root.hide(SHADOW_MASK)
+        self._shadows=tuple(self._shadow_root.attachNewNode(f'Contact-{i}') for i in range(12))
+        for shadow in self._shadows:shadow.attachNewNode(mesh)
         self.root.hide()
 
-    @staticmethod
-    def _actor(parent, name, mesh):
+    def _actor(self, parent, name, kind):
         node = parent.attachNewNode(name)
         model = node.attachNewNode('LocalGeometry')
-        model.attachNewNode(mesh)
+        for theme in ('light','dark'):
+            holder = model.attachNewNode('BlockTheme-'+theme)
+            holder.attachNewNode(self._meshes[kind,theme])
+        from src.gui.scene_style import sync_block_theme
+        sync_block_theme(model)
         node.setTransparency(TransparencyAttrib.MAlpha)
         return node, model
 
-    def apply(self, poses, *, active_weights=None, opacity=None, scales=None):
+    def apply(self, poses, *, active_weights=None, opacity=None, scales=None, supports=()):
         if self._disposed:
             raise RuntimeError('Actor rig is disposed.')
         active_weights, opacity, scales = active_weights or {}, opacity or {}, scales or {}
@@ -106,6 +113,23 @@ class AnimatedActorRig:
                 # Active cue follows position and the world top, while the local
                 # local bevel marker follows the rigid orientation underneath it.
                 indicator.setZ(pose.extents[2]-self.pitch/2)
+        for shadow in self._shadows:shadow.hide()
+        slot = 0
+        for key, pose in poses.items():
+            scale = scales.get(key, 1)
+            bottom = pose.center[2]-pose.extents[2]*scale
+            if bottom < -.001 or opacity.get(key,1) <= 0:
+                continue
+            ex, ey = (v*scale for v in pose.extents[:2])
+            for x, y in supports:
+                lo_x,hi_x=max(x-.46*self.pitch,pose.center[0]-ex),min(x+.46*self.pitch,pose.center[0]+ex)
+                lo_y,hi_y=max(y-.46*self.pitch,pose.center[1]-ey),min(y+.46*self.pitch,pose.center[1]+ey)
+                if hi_x <= lo_x or hi_y <= lo_y or slot >= len(self._shadows):continue
+                shadow=self._shadows[slot];slot+=1
+                shadow.setPos((lo_x+hi_x)/2,(lo_y+hi_y)/2,.007*self.pitch)
+                shadow.setScale((hi_x-lo_x)/2,(hi_y-lo_y)/2,1)
+                shadow.setAlphaScale(opacity.get(key,1)/(1+max(0,pose.center[2]/self.pitch-.5)))
+                shadow.show()
         self.root.show()
 
     def dispose(self):
@@ -114,8 +138,11 @@ class AnimatedActorRig:
         self.root.removeNode()
         self._slots.clear()
         self._models.clear()
+        self._meshes.clear()
         self._whole = self._whole_model = None
         self._cubes = self._cube_models = self._indicators = ()
+        self._shadows = ()
+        self._shadow_root = None
         self._disposed = True
 
 
@@ -137,7 +164,7 @@ class AnimatedSurfaceLayer:
         self.renderer_root = self.root.attachNewNode('StaticSurfaceLease')
         self.animated_root = self.root.attachNewNode('AnimatedSurfaceContent')
         self.animated_root.hide()
-        self._fragile, self._bridges, self._switches = {}, {}, {}
+        self._fragile, self._bridges, self._switches, self._debris = {}, {}, {}, {}
         self._leased = False
         self._prior_hidden = False
         self._disposed = False
@@ -149,6 +176,19 @@ class AnimatedSurfaceLayer:
             for cell in board_data.fragile_cells:
                 self._fragile[cell] = tuple(self._instance(self.animated_root, mesh, cell)
                                             for mesh in (intact, broken))
+                # Six reusable pieces per fragile tile. No nodes are allocated
+                # by timeline sampling, pause, or cancellation.
+                group = self.animated_root.attachNewNode('CollapseFragments')
+                group.hide()
+                mesh = make_beveled_box_mesh(name='FragileFragment',
+                    dimensions=(.30*pitch, .46*pitch, .16*pitch), bevel=.012*pitch,
+                    top_color=FRAGILE, side_color=(.66,.39,.16,1),
+                    edge_color=(1,.8,.5,1))
+                pieces = tuple(group.attachNewNode(f'Fragment-{i}') for i in range(6))
+                for piece in pieces:piece.attachNewNode(mesh)
+                for piece in pieces:
+                    piece.setTransparency(TransparencyAttrib.MAlpha)
+                self._debris[cell] = group, pieces
             for bridge in board_data.bridges:
                 group = self.animated_root.attachNewNode('AnimatedBridge-' + bridge.bridge_id)
                 for cell in bridge.cells:
@@ -168,7 +208,7 @@ class AnimatedSurfaceLayer:
         wrapper.setPos(x, y, 0)
         return wrapper
 
-    def sample(self, before, events, progress):
+    def sample(self, before, events, progress, *, collapse_cell=None):
         if self._disposed:
             raise RuntimeError('Surface layer is disposed.')
         if not self._leased:
@@ -176,11 +216,14 @@ class AnimatedSurfaceLayer:
             self._leased = True
         self.renderer_root.hide()
         self.animated_root.show()
+        for group, _ in self._debris.values():
+            group.hide()
         for cell, (intact, broken) in self._fragile.items():
             is_broken = cell in before.broken_fragile_cells
             visible(intact, not is_broken)
             visible(broken, is_broken)
             intact.clearColorScale()
+            intact.setZ(0)
             broken.setZ(0)
         for state in before.bridge_states:
             node = self._bridges[state.bridge_id]
@@ -199,16 +242,18 @@ class AnimatedSurfaceLayer:
             u = smoothstep(event_progress(event, progress))
             if event.kind is EventKind.FRAGILE_BREAK:
                 intact, broken = self._fragile[event.cell]
-                visible(intact, u < .12)
-                visible(broken, u >= .12)
-                intact.setColorScale(1-.18*u, 1-.18*u, 1-.18*u, 1)
-                broken.setZ(.25*self.pitch*(1-u))
+                # This phase is the brief crack/sag; terminal collapse owns the
+                # simultaneous free fall of the actor and individual fragments.
+                visible(intact, True)
+                visible(broken, False)
+                intact.setColorScale(1-.35*u, 1-.35*u, 1-.35*u, 1)
+                intact.setZ(-.025*self.pitch*u)
             elif event.kind in (EventKind.BRIDGE_PRESENT, EventKind.BRIDGE_ABSENT):
                 node = self._bridges[event.target_id]
                 amount = u if event.kind is EventKind.BRIDGE_PRESENT else 1-u
                 visible(node, amount > 0)
                 node.setZ(-.65*self.pitch*(1-amount))
-                node.setScale(1, 1, max(.02, amount))
+                node.setScale(1)  # translate a rigid platform; never squash its thickness
             elif event.kind in (EventKind.SWITCH_ACTIVATE, EventKind.SWITCH_DEACTIVATE):
                 target = event.kind is EventKind.SWITCH_ACTIVATE
                 active = target if u >= .5 else not target
@@ -219,12 +264,38 @@ class AnimatedSurfaceLayer:
                 off.setZ(-.035*self.pitch*math.sin(math.pi*u))
                 on.setZ(-.035*self.pitch*math.sin(math.pi*u))
 
+        if collapse_cell is not None:
+            intact, broken = self._fragile[collapse_cell]
+            intact.hide()
+            broken.hide()
+            group, pieces = self._debris[collapse_cell]
+            group.show()
+            x, y = cell_to_world(*collapse_cell, rows=self.board.rows,
+                                 cols=self.board.cols, pitch=self.pitch)
+            # Deterministic ballistic paths with different spin and horizontal
+            # drift; all pieces start inside the original tile footprint.
+            for i, piece in enumerate(pieces):
+                dx = (i % 3 - 1)*.32
+                dy = (i // 3 - .5)*.48
+                t = progress
+                piece.setPos(x+self.pitch*(dx+dx*.5*t),
+                             y+self.pitch*(dy+dy*.4*t),
+                             self.pitch*(-.08-(2.8+i*.16)*t*t))
+                piece.setHpr((i-2)*45*t, (i%2*2-1)*110*t, (i-3)*37*t)
+                piece.setAlphaScale(1-smoothstep(min(1, max(0,(t-.65)/.35))))
+
     def release(self):
         if self._disposed:
             return
         if self._leased:
             visible(self.renderer_root, not self._prior_hidden)
         self.animated_root.hide()
+        for group,pieces in self._debris.values():
+            group.hide()
+            for piece in pieces:
+                piece.setHpr(0,0,0)
+                piece.setScale(1)
+                piece.setAlphaScale(1)
         self._leased = False
 
     def dispose(self):
@@ -237,4 +308,5 @@ class AnimatedSurfaceLayer:
         self._fragile.clear()
         self._bridges.clear()
         self._switches.clear()
+        self._debris.clear()
         self._disposed = True

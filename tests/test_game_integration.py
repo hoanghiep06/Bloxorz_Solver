@@ -303,3 +303,35 @@ class GamePipelineTests(GameIntegrationCase):
         self.assertFalse(c.guide_active);self.assertFalse(scheduler.tasks)
 
 if __name__=='__main__':unittest.main()
+
+
+@unittest.skipUnless(HAS_PANDA,'Panda3D required for game scene integration.')
+class GoalActionTimingTests(GameIntegrationCase):
+    def test_goal_commit_and_move_count_wait_for_suction_phase(self):
+        index=self.custom({'grid':[[1,1,1,2]],'start':[0,0],'goal':[0,3]})
+        self.assertTrue(self.controller.load_level(index))
+        self.move('R');c=self.controller;old=c.state
+        self.assertEqual(c.moves,1)
+        self.assertTrue(c.manual_move('R'))
+        c.manager.advance(c.MOVE_DURATION)
+        self.assertTrue(c.manager.is_busy)
+        self.assertEqual(c.manager._request.terminal.kind,EventKind.GOAL_COMPLETE)
+        self.assertEqual(c.moves,1);self.assertIs(c.state,old)
+        self.assertNotIn('goal',self.events)
+        c.manager.advance(c.TERMINAL_DURATION*.5)
+        self.assertEqual(c.moves,1);self.assertIs(c.state,old)
+        c.manager.pause();pose=c.manager.current_visual_poses
+        c.manager.advance(20)
+        self.assertEqual(c.manager.current_visual_poses,pose)
+        c.manager.resume();self.drain()
+        self.assertEqual(c.moves,2);self.assertTrue(c.board.is_goal(c.state))
+        self.assertEqual(c.phase,'GOAL');self.assertEqual(self.events.count('goal'),1)
+
+    def test_restart_in_goal_phase_discards_the_uncommitted_action(self):
+        index=self.custom({'grid':[[1,1,1,2]],'start':[0,0],'goal':[0,3]})
+        self.assertTrue(self.controller.load_level(index))
+        self.move('R');c=self.controller;c.manual_move('R')
+        c.manager.advance(c.MOVE_DURATION);c.manager.advance(.2)
+        c.restart_level();c.manager.advance(10)
+        self.assertEqual(c.moves,0);self.assertEqual(c.phase,'READY')
+        self.assertFalse(c.board.is_goal(c.state));self.assertNotIn('goal',self.events)

@@ -49,6 +49,8 @@ def main(argv=None):
             if request is not None:
                 observed.update(event.kind.value for event in request.events)
             app.taskMgr.step()
+            if c.guide_active and flow.name=='game':
+                assert flow.arrows.root.isHidden(),'Manual assistance leaked into replay.'
             time.sleep(.001)
         def wait_for(predicate,timeout=15):
             deadline=time.monotonic()+timeout
@@ -156,7 +158,7 @@ def main(argv=None):
             click('Step');wait_for(lambda:not c.manager.is_busy)
             assert c.moves==2 and c.state.is_split() and c._mode is Replay.PAUSED,(c.moves,c.state,c._mode)
             image('split-step-paused')
-            click('Close');assert c.moves==0 and not c.manager.is_busy
+            click('Guide');assert c.moves==0 and not c.manager.is_busy
             report['manual']['pause_step_split_and_cancel']='PASS'
             # Resize: verify the actual native size and the fallback warning.
             report['resize']={}
