@@ -73,6 +73,9 @@ class BasicSceneRenderer:
                     instance.setPos(x, y, 0)
                     # Instance transforms live on unique parents, never shared mesh nodes.
                     instance.attachNewNode(self._goal_mesh if is_goal else self._floor_mesh)
+                    if is_goal:
+                        instance.setLightOff(1)        # ô đích không bị bóng làm tối
+                        instance.setColorScaleOff(1)   # bỏ qua tint theme
         except Exception:
             content.removeNode()
             raise

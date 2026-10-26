@@ -20,8 +20,17 @@ FLOOR_EDGE = _rgb("91A8BB")
 BLOCK_MAIN = _rgb("527B9C")
 BLOCK_DARK = _rgb("354F68")
 BLOCK_HIGHLIGHT = _rgb("91ADC3")
-GOAL_RIM = _rgb("F5C230")        # viền vàng gold, nổi trên cả sàn be lẫn sàn xanh băng
-GOAL_INTERIOR = _rgb("10161F")   # lòng hố gần đen để tạo chiều sâu
+
+# Ô đích theo theme: sáng = gỗ nâu, tối = tuyết trắng.
+GOAL_THEME_COLORS = {
+    'light': dict(rim=_rgb("A5683A"), wall=_rgb("6E4322"), floor=_rgb("C98F57")),
+    'dark': dict(rim=_rgb("FFFFFF"), wall=_rgb("C7DBEE"), floor=_rgb("EEF6FF")),
+}
+# Giữ tên cũ (bản sáng) để file/test khác import vẫn chạy.
+GOAL_RIM = GOAL_THEME_COLORS['light']['rim']
+GOAL_WALL = GOAL_THEME_COLORS['light']['wall']
+GOAL_FLOOR = GOAL_THEME_COLORS['light']['floor']
+GOAL_INTERIOR = GOAL_WALL
 
 # Màu block theo theme. Màu đã "nướng" vào vertex color nên BLOCK_TINT phải là (1,1,1,1).
 #   light: khối nâu đất, dính từng mảng rêu xanh.
@@ -191,10 +200,11 @@ def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
     return node
 
 
-def make_goal_mesh(*, pitch: float = 1.0) -> GeomNode:
-    """Return a real open-top square recess: 0.10s rim, 0.14s cavity depth."""
+def make_goal_mesh(*, pitch: float = 1.0, theme: str = 'light') -> GeomNode:
+    """Open-top square recess: 0.10s rim, 0.14s cavity depth; màu theo theme."""
     _pitch(pitch)
-    builder = _MeshBuilder("GoalMesh")
+    c = GOAL_THEME_COLORS[theme]
+    builder = _MeshBuilder(f"GoalMesh-{theme}")
     outer = [(-0.48, -0.48), (0.48, -0.48), (0.48, 0.48), (-0.48, 0.48)]
     inner = [(-0.38, -0.38), (0.38, -0.38), (0.38, 0.38), (-0.38, 0.38)]
     def point(xy, z):
@@ -202,15 +212,15 @@ def make_goal_mesh(*, pitch: float = 1.0) -> GeomNode:
     for i in range(4):
         j = (i + 1) % 4
         builder.face((point(outer[i], 0), point(outer[j], 0),
-                      point(inner[j], 0), point(inner[i], 0)), (0, 0, 1), GOAL_RIM)
+                      point(inner[j], 0), point(inner[i], 0)), (0, 0, 1), c['rim'])
         dx, dy = outer[j][0] - outer[i][0], outer[j][1] - outer[i][1]
         builder.face((point(outer[i], 0), point(outer[j], 0),
                       point(outer[j], -0.18), point(outer[i], -0.18)),
-                     (dy, -dx, 0), GOAL_RIM)
+                     (dy, -dx, 0), c['rim'])
         builder.face((point(inner[i], 0), point(inner[j], 0),
                       point(inner[j], -0.14), point(inner[i], -0.14)),
-                     (-dy, dx, 0), GOAL_INTERIOR)
-    builder.face([point(p, -0.14) for p in inner], (0, 0, 1), GOAL_INTERIOR)
+                     (-dy, dx, 0), c['wall'])
+    builder.face([point(p, -0.14) for p in inner], (0, 0, 1), c['floor'])
     builder.face([point(p, -0.18) for p in outer], (0, 0, -1), FLOOR_SIDE)
     return builder.finish()
 

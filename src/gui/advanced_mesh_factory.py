@@ -3,13 +3,10 @@
 Tiles have a supporting top at Z=0; raised markings are separated from that
 plane. Broken debris remains below it. No collision or state logic lives here.
 
-Mỗi loại ô đặc biệt có một màu nhận diện riêng, không trùng với sàn (xám xanh / be):
-    ô cam vỡ    : cam + vết nứt nâu đậm
-    cầu         : tím + gân sáng
-    nút tròn    : vàng, nằm trong vòng đen
-    nút chéo    : dấu cộng đỏ trên đế đen
-    nút tách    : hai tấm hồng/magenta trên đế đen
-    đã kích hoạt: xanh lá sáng (mọi loại nút)
+Mỗi theme có một bảng màu riêng cho ô đặc biệt (xem PALETTES):
+    Sáng (light): tone vàng - cam - trắng
+    Tối (dark)  : tone xanh - tím - trắng, điểm chút đỏ
+    đã kích hoạt: xanh lá (sáng) / xanh ngọc (tối)
 """
 
 import math
@@ -26,32 +23,54 @@ def _c(r, g, b):
     return (r / 255, g / 255, b / 255, 1.0)
 
 
-# Ô cam vỡ
-FRAGILE = _c(240, 160, 75)
-FRAGILE_SIDE = _c(168, 101, 40)
-FRAGILE_EDGE = _c(255, 205, 130)
-CRACK = _c(92, 52, 20)
+# Mỗi theme một bảng màu. Sáng: vàng - cam - trắng. Tối: xanh - tím - trắng, điểm chút đỏ.
+PALETTES = {
+    'light': dict(
+        FRAGILE=_c(214, 98, 52), FRAGILE_SIDE=_c(140, 62, 28),
+        FRAGILE_EDGE=_c(255, 190, 130), CRACK=_c(84, 36, 14),
+        BRIDGE_TOP=_c(255, 196, 64), BRIDGE_SIDE=_c(170, 112, 18),
+        BRIDGE_EDGE=_c(255, 230, 150), BRIDGE_RIB=_c(255, 248, 224),
+        SWITCH_BASE=_c(52, 38, 30), SWITCH_BASE_EDGE=_c(176, 142, 110),
+        SOFT_COLOR=_c(255, 250, 236), SOFT_SIDE=_c(176, 150, 110),
+        HEAVY_COLOR=_c(222, 58, 48),
+        SPLIT_COLOR=_c(244, 128, 28),
+        ACTIVE=_c(96, 204, 96), ACTIVE_SIDE=_c(40, 120, 50)),
+    'dark': dict(
+        FRAGILE=_c(228, 84, 108), FRAGILE_SIDE=_c(128, 38, 72),
+        FRAGILE_EDGE=_c(255, 165, 182), CRACK=_c(58, 14, 40),
+        BRIDGE_TOP=_c(166, 142, 255), BRIDGE_SIDE=_c(86, 66, 168),
+        BRIDGE_EDGE=_c(222, 212, 255), BRIDGE_RIB=_c(246, 242, 255),
+        SWITCH_BASE=_c(22, 20, 44), SWITCH_BASE_EDGE=_c(132, 132, 196),
+        SOFT_COLOR=_c(240, 244, 255), SOFT_SIDE=_c(112, 124, 186),
+        HEAVY_COLOR=_c(238, 66, 92),
+        SPLIT_COLOR=_c(110, 202, 255),
+        ACTIVE=_c(90, 228, 196), ACTIVE_SIDE=_c(30, 128, 118)),
+}
+THEMES = ('light', 'dark')
 
-# Cầu
-BRIDGE_TOP = _c(132, 100, 210)
-BRIDGE_SIDE = _c(74, 58, 128)
-BRIDGE_EDGE = _c(190, 172, 242)
-BRIDGE_RIB = _c(200, 186, 248)
 
-# Nút bấm
-SWITCH_BASE = _c(34, 36, 46)
-SWITCH_BASE_EDGE = _c(120, 124, 140)
-SOFT_COLOR = _c(250, 200, 30)
-SOFT_SIDE = _c(150, 112, 10)
-HEAVY_COLOR = _c(228, 70, 60)
-SPLIT_COLOR = _c(230, 82, 160)
-SUCCESS = _c(52, 200, 120)          # đã kích hoạt / khối đang chọn
+def _palette(theme):
+    if theme not in PALETTES:
+        raise ValueError('theme must be light or dark.')
+    return PALETTES[theme]
+
+
+# Giữ tên hằng cũ (bảng sáng) để code/test khác import vẫn chạy.
+FRAGILE, FRAGILE_SIDE, FRAGILE_EDGE, CRACK = (PALETTES['light'][k] for k in
+    ('FRAGILE', 'FRAGILE_SIDE', 'FRAGILE_EDGE', 'CRACK'))
+BRIDGE_TOP, BRIDGE_SIDE, BRIDGE_EDGE, BRIDGE_RIB = (PALETTES['light'][k] for k in
+    ('BRIDGE_TOP', 'BRIDGE_SIDE', 'BRIDGE_EDGE', 'BRIDGE_RIB'))
+SWITCH_BASE, SWITCH_BASE_EDGE = PALETTES['light']['SWITCH_BASE'], PALETTES['light']['SWITCH_BASE_EDGE']
+SOFT_COLOR, SOFT_SIDE = PALETTES['light']['SOFT_COLOR'], PALETTES['light']['SOFT_SIDE']
+HEAVY_COLOR, SPLIT_COLOR = PALETTES['light']['HEAVY_COLOR'], PALETTES['light']['SPLIT_COLOR']
+# Khung chỉ thị khối đang chọn (giữ xanh lá, không đổi theo theme)
+SUCCESS = _c(52, 200, 120)
 SUCCESS_SIDE = _c(24, 120, 70)
 
-# Cờ ở ô đích
-FLAG_POLE = _c(236, 240, 246)
-FLAG_CLOTH = _c(226, 50, 48)
-FLAG_GOLD = _c(245, 194, 48)
+# Cờ ở ô đích (màu sáng, rực; cờ được render không ăn đèn nên giữ đúng màu này)
+FLAG_POLE = _c(255, 255, 255)
+FLAG_CLOTH = _c(255, 38, 38)      # đỏ thuần, sáng
+FLAG_GOLD = _c(255, 214, 59)
 # Vị trí cột cờ trong ô đích: nằm trên phần viền (rim) ở góc, không chắn miệng hố.
 # Đổi dấu x/y nếu muốn cờ đứng ở góc khác.
 FLAG_POLE_XY = (-.43, .43)
@@ -85,35 +104,39 @@ def _combine(name, parts):
     return node
 
 
-def make_fragile_mesh(*, pitch=1.0, broken=False):
+def make_fragile_mesh(*, pitch=1.0, broken=False, theme='light'):
     _pitch(pitch)
     if type(broken) is not bool:
         raise TypeError('broken must be bool.')
+    p = _palette(theme)
     if broken:
         # Three small remnants below the vanished supporting plane; no full floor.
         return _combine('BrokenFragileMesh', [
-            _box('Debris', (.18, .13, .06), center, pitch, FRAGILE, CRACK, FRAGILE, angle)
+            _box('Debris', (.18, .13, .06), center, pitch,
+                 p['FRAGILE'], p['CRACK'], p['FRAGILE'], angle)
             for center, angle in (((-.32, -.30, -.14), 18),
                                   ((.29, .31, -.14), -23), ((.30, -.32, -.14), 37))])
     parts = [_box('FragileSurface', (.96, .96, .18), (0, 0, -.09), pitch,
-                  FRAGILE, FRAGILE_SIDE, FRAGILE_EDGE)]
+                  p['FRAGILE'], p['FRAGILE_SIDE'], p['FRAGILE_EDGE'])]
     # Vết nứt dày hơn, tối hơn để thấy rõ; đáy cách mặt đỡ .002.
     for a, b in (((-.36, -.32), (0, -.04)), ((0, -.04), (.32, .34)),
                  ((0, -.04), (-.24, .30)), ((.12, .10), (.37, .03))):
         length = math.dist(a, b)
         center = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, .008)
         angle = math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
-        parts.append(_box('Crack', (length, .045, .012), center, pitch, CRACK, CRACK, CRACK, angle))
+        parts.append(_box('Crack', (length, .045, .012), center, pitch,
+                          p['CRACK'], p['CRACK'], p['CRACK'], angle))
     return _combine('IntactFragileMesh', parts)
 
 
-def make_bridge_mesh(*, pitch=1.0):
+def make_bridge_mesh(*, pitch=1.0, theme='light'):
     _pitch(pitch)
+    p = _palette(theme)
     return _combine('BridgePlatformMesh', [
         _box('BridgePlatform', (.96, .96, .18), (0, 0, -.09), pitch,
-             BRIDGE_TOP, BRIDGE_SIDE, BRIDGE_EDGE),
+             p['BRIDGE_TOP'], p['BRIDGE_SIDE'], p['BRIDGE_EDGE']),
         *[_box('BridgeRib', (.78, .06, .02), (0, y, .011), pitch,
-               BRIDGE_RIB, BRIDGE_SIDE, BRIDGE_RIB) for y in (-.28, 0, .28)]])
+               p['BRIDGE_RIB'], p['BRIDGE_SIDE'], p['BRIDGE_RIB']) for y in (-.28, 0, .28)]])
 
 
 def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDisc'):
@@ -131,31 +154,31 @@ def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDi
     return builder.finish()
 
 
-def make_switch_mesh(kind, *, activated=False, pitch=1.0):
+def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
     _pitch(pitch)
     if type(kind) is not SwitchVisualKind or type(activated) is not bool:
         raise TypeError('Expected SwitchVisualKind and bool activated.')
+    p = _palette(theme)
+    base, base_edge = p['SWITCH_BASE'], p['SWITCH_BASE_EDGE']
     if kind is SwitchVisualKind.SOFT:
-        color, side = (SUCCESS, SUCCESS_SIDE) if activated else (SOFT_COLOR, SOFT_SIDE)
-        # Vòng đen bên ngoài làm nổi nút tròn trên mọi màu sàn.
+        color, side = ((p['ACTIVE'], p['ACTIVE_SIDE']) if activated
+                       else (p['SOFT_COLOR'], p['SOFT_SIDE']))
+        # Vòng tối bên ngoài làm nổi nút tròn trên mọi màu sàn.
         return _combine('SoftSwitchMesh', [
-            _disc(pitch, SWITCH_BASE, SWITCH_BASE, radius=.40, z0=.005, z1=.035,
-                  name='SoftSwitchRing'),
+            _disc(pitch, base, base, radius=.40, z0=.005, z1=.035, name='SoftSwitchRing'),
             _disc(pitch, color, side, radius=.29, z0=.03, z1=.105)])
     if kind is SwitchVisualKind.HEAVY:
-        color = SUCCESS if activated else HEAVY_COLOR
-        # Đế đen vuông + dấu cộng lớn: khác hẳn nút tròn và nút tách.
+        color = p['ACTIVE'] if activated else p['HEAVY_COLOR']
+        # Đế vuông + dấu cộng lớn: khác hẳn nút tròn và nút tách.
         return _combine('HeavySwitchMesh', [
-            _box('HeavyBase', (.74, .74, .06), (0, 0, .03), pitch,
-                 SWITCH_BASE, SWITCH_BASE, SWITCH_BASE_EDGE),
+            _box('HeavyBase', (.74, .74, .06), (0, 0, .03), pitch, base, base, base_edge),
             _box('HeavyCrossV', (.17, .56, .04), (0, 0, .08), pitch, color, color, color),
             _box('HeavyCrossH', (.56, .17, .04), (0, 0, .08), pitch, color, color, color)])
-    color = SUCCESS if activated else SPLIT_COLOR
+    color = p['ACTIVE'] if activated else p['SPLIT_COLOR']
     return _combine('SplitSwitchMesh', [
-        _box('SplitBase', (.76, .62, .04), (0, 0, .02), pitch,
-             SWITCH_BASE, SWITCH_BASE, SWITCH_BASE_EDGE),
+        _box('SplitBase', (.76, .62, .04), (0, 0, .02), pitch, base, base, base_edge),
         *[_box('SplitPlate', (.24, .50, .07), (x, 0, .07), pitch,
-               color, SWITCH_BASE, color) for x in (-.19, .19)]])
+               color, base, color) for x in (-.19, .19)]])
 
 
 def make_split_cube_mesh(*, pitch=1.0):
