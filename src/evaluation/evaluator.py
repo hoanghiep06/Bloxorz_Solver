@@ -204,26 +204,28 @@ class TrajectoryEvaluator:
 
         if not success:
             penalty += 100.0
-
-        # Quy doi ve thang diem 100
-        if optimal_penalty is None or optimal_penalty <= 0:
-            optimal_penalty = penalty
-
-        score = max(0.0, min(100.0, 100.0 - (penalty - optimal_penalty) * self.scale_k))
-
-        # Xep loai
-        if score >= 95:
-            rating = "Xuat sac (Toi uu)"
-        elif score >= 80:
-            rating = "Tot (An toan)"
-        elif score >= 65:
-            rating = "Kha (Trung binh kha)"
-        elif score >= 45:
-            rating = "Trung binh (Co loi thua)"
-        elif score >= 20:
-            rating = "Kem (Long vong)"
+            score = 0.0
+            rating = "That bai (Chua ve dich)"
         else:
-            rating = "Rat kem (Di lac)"
+            # Quy doi ve thang diem 100
+            if optimal_penalty is None or optimal_penalty <= 0:
+                optimal_penalty = penalty
+
+            score = max(0.0, min(100.0, 100.0 - (penalty - optimal_penalty) * self.scale_k))
+
+            # Xep loai
+            if score >= 95:
+                rating = "Xuat sac (Toi uu)"
+            elif score >= 80:
+                rating = "Tot (An toan)"
+            elif score >= 65:
+                rating = "Kha (Trung binh kha)"
+            elif score >= 45:
+                rating = "Trung binh (Co loi thua)"
+            elif score >= 20:
+                rating = "Kem (Long vong)"
+            else:
+                rating = "Rat kem (Di lac)"
 
         return TrajectoryReport(
             actions=actions,

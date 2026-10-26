@@ -93,7 +93,8 @@ def generate_perturbed_path(board: Board, perturb_steps: int = 2) -> List[str]:
         if board.is_goal(st):
             tail_path = p
             break
-        for m in ['U', 'R', 'D', 'L']:
+        actions = board.get_actions(st) if hasattr(board, 'get_actions') else ['U', 'R', 'D', 'L']
+        for m in actions:
             nxt = board.transition(st, m)
             if nxt and nxt not in visited:
                 visited.add(nxt)
@@ -101,7 +102,7 @@ def generate_perturbed_path(board: Board, perturb_steps: int = 2) -> List[str]:
 
     if tail_path is not None:
         return lead_path + tail_path
-    return lead_path
+    return []
 
 def generate_10_trajectories(level_path: str) -> List[Dict[str, Any]]:
     board = Board(level_path)
