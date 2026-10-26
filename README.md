@@ -65,6 +65,8 @@ python -B main.py
 
 `main.py` mở GUI hiện tại; không cần sửa import hoặc bỏ comment solver. Bấm **Start → chọn level** để chơi. Dùng **WASD / phím mũi tên** để di chuyển, **Space** để đổi khối khi tách, **R** để chơi lại. Vào **Settings → Mouse** để điều khiển bằng chuột.
 
+Để thử đủ cơ chế trên map rộng, chọn **màn 11 — Advanced Mechanics Sandbox (9 × 13)** ở trang 2 của menu level: có ô dễ vỡ, công tắc thường/nặng/tách khối, cầu mở/đóng, vực và đích.
+
 Nút **AI Solver** hiện ngay khi vào màn chơi. Mở nút này để chọn BFS, DFS, IDS, UCS, Greedy hoặc A*, sau đó dùng Play / Step. HUD hiển thị số bước, thời gian tìm kiếm, số node, độ dài nghiệm và bộ nhớ đỉnh của các allocation Python (`Peak Python Memory`, không phải toàn bộ RAM tiến trình).
 
 Chạy bộ test trong cùng môi trường:

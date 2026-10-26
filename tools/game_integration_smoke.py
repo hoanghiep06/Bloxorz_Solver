@@ -22,7 +22,7 @@ class DelayedSolver:
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--all',action='store_true',help='All 10 levels x all 6 solvers.')
+    parser.add_argument('--all',action='store_true',help='All levels x all 6 solvers.')
     parser.add_argument('--interactions-only',action='store_true',help='Skip repeated solver runs; check manual/UI lifecycle paths.')
     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-game-integration'))
     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
@@ -100,9 +100,13 @@ def main(argv=None):
                     enter(index);hud.set_guide_visible(True)
                     click(name);hud.speed['value']=4;hud.speed['command']()
                     before=len(goals);started=time.monotonic();click('Play')
-                    wait_for(lambda:len(goals)>before,timeout=30)
-                    assert len(goals)==before+1
+                    wait_for(lambda:c.search is not None,timeout=30)
                     expected=c.search.solution_length
+                    # Wide maps can produce long valid DFS paths. Allow both
+                    # roll/effect phases per action at the chosen replay speed.
+                    replay_timeout=max(30,expected*2*c.MOVE_DURATION/c.speed+10)
+                    wait_for(lambda:len(goals)>before,timeout=replay_timeout)
+                    assert len(goals)==before+1
                     assert goals[-1][1]==expected
                     wait_for(lambda:c.phase=='READY' and not c.guide_active)
                     assert c.search is not None
