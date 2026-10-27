@@ -1,0 +1,110 @@
+[
+  {
+    "level_id": "level_01",
+    "states": 113,
+    "edges": 293,
+    "graph_build_ms": 5.24940004106611
+  },
+  {
+    "level_id": "level_02",
+    "states": 281,
+    "edges": 738,
+    "graph_build_ms": 9.952899999916553
+  },
+  {
+    "level_id": "level_03",
+    "states": 225,
+    "edges": 533,
+    "graph_build_ms": 7.364000019151717
+  },
+  {
+    "level_id": "level_04",
+    "states": 381,
+    "edges": 980,
+    "graph_build_ms": 14.24430002225563
+  },
+  {
+    "level_id": "level_05",
+    "states": 213,
+    "edges": 576,
+    "graph_build_ms": 7.5175000238232315
+  },
+  {
+    "level_id": "level_06",
+    "states": 225,
+    "edges": 624,
+    "graph_build_ms": 9.015000017825514
+  },
+  {
+    "level_id": "level_07",
+    "states": 169,
+    "edges": 409,
+    "graph_build_ms": 6.034999969415367
+  },
+  {
+    "level_id": "level_08",
+    "states": 241,
+    "edges": 585,
+    "graph_build_ms": 7.723100017756224
+  },
+  {
+    "level_id": "level_09",
+    "states": 289,
+    "edges": 767,
+    "graph_build_ms": 11.197900050319731
+  },
+  {
+    "level_id": "level_10",
+    "states": 321,
+    "edges": 869,
+    "graph_build_ms": 12.493699963670224
+  },
+  {
+    "level_id": "level_11",
+    "states": 235,
+    "edges": 583,
+    "graph_build_ms": 8.51479999255389
+  },
+  {
+    "level_id": "level_12",
+    "states": 313,
+    "edges": 799,
+    "graph_build_ms": 10.56819997029379
+  },
+  {
+    "level_id": "level_13",
+    "states": 217,
+    "edges": 503,
+    "graph_build_ms": 9.43189999088645
+  },
+  {
+    "level_id": "level_14",
+    "states": 449,
+    "edges": 1193,
+    "graph_build_ms": 20.125799986999482
+  },
+  {
+    "level_id": "level_15",
+    "states": 1042,
+    "edges": 3601,
+    "graph_build_ms": 35.836299997754395
+  },
+  {
+    "level_id": "level_16",
+    "states": 16309,
+    "edges": 58266,
+    "graph_build_ms": 603.8830000325106
+  },
+  {
+    "level_id": "level_17",
+    "states": 10401,
+    "edges": 38431,
+    "graph_build_ms": 385.63629996497184
+  },
+  {
+    "level_id": "level_18",
+    "states": 19252,
+    "edges": 74768,
+    "graph_build_ms": 863.7778999982402
+  }
+]

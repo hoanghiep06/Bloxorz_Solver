@@ -1,0 +1,258 @@
+{
+  "alpha_grid": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "selected_alpha_full_data": 1.0,
+  "full_data_summary": [
+    {
+      "alpha": 0.0,
+      "all_levels_valid_and_optimal": true,
+      "mean_expanded_nodes": 1285.8333333333333,
+      "median_expanded_nodes": 216.0,
+      "mean_cached_graph_search_ms": 10.796055566364279
+    },
+    {
+      "alpha": 0.25,
+      "all_levels_valid_and_optimal": true,
+      "mean_expanded_nodes": 1211.388888888889,
+      "median_expanded_nodes": 211.0,
+      "mean_cached_graph_search_ms": 7.901827769172895
+    },
+    {
+      "alpha": 0.5,
+      "all_levels_valid_and_optimal": true,
+      "mean_expanded_nodes": 1136.3333333333333,
+      "median_expanded_nodes": 209.5,
+      "mean_cached_graph_search_ms": 7.57151111934541
+    },
+    {
+      "alpha": 0.75,
+      "all_levels_valid_and_optimal": true,
+      "mean_expanded_nodes": 1053.5555555555557,
+      "median_expanded_nodes": 199.5,
+      "mean_cached_graph_search_ms": 6.821744435001165
+    },
+    {
+      "alpha": 1.0,
+      "all_levels_valid_and_optimal": true,
+      "mean_expanded_nodes": 989.6666666666666,
+      "median_expanded_nodes": 187.0,
+      "mean_cached_graph_search_ms": 6.559144450067025
+    }
+  ],
+  "cv_mean_selected_alpha": 1.0,
+  "cv_selected_alphas": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "heldout_mean_expansion_improvement_vs_alpha0": 234.83333333333334,
+  "heuristic_checks": [
+    {
+      "level_id": "level_01",
+      "nodes": 113,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 113,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_02",
+      "nodes": 281,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 281,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_03",
+      "nodes": 225,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 225,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_04",
+      "nodes": 381,
+      "split_nodes": 0,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 381,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_05",
+      "nodes": 213,
+      "split_nodes": 0,
+      "goal_nodes": 3,
+      "reachable_to_goal_nodes": 213,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_06",
+      "nodes": 225,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 225,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_07",
+      "nodes": 169,
+      "split_nodes": 0,
+      "goal_nodes": 3,
+      "reachable_to_goal_nodes": 169,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_08",
+      "nodes": 241,
+      "split_nodes": 0,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 241,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_09",
+      "nodes": 289,
+      "split_nodes": 0,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 289,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_10",
+      "nodes": 321,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 321,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_11",
+      "nodes": 235,
+      "split_nodes": 0,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 235,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_12",
+      "nodes": 313,
+      "split_nodes": 0,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 313,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_13",
+      "nodes": 217,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 217,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_14",
+      "nodes": 449,
+      "split_nodes": 0,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 449,
+      "admissibility_violations": 0,
+      "base_cost_consistency_violations": 0,
+      "has_split_switches": false,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_15",
+      "nodes": 1042,
+      "split_nodes": 937,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 1000,
+      "admissibility_violations": 6,
+      "base_cost_consistency_violations": 38,
+      "has_split_switches": true,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_16",
+      "nodes": 16309,
+      "split_nodes": 15942,
+      "goal_nodes": 2,
+      "reachable_to_goal_nodes": 16217,
+      "admissibility_violations": 34,
+      "base_cost_consistency_violations": 402,
+      "has_split_switches": true,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_17",
+      "nodes": 10401,
+      "split_nodes": 10130,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 10393,
+      "admissibility_violations": 16,
+      "base_cost_consistency_violations": 322,
+      "has_split_switches": true,
+      "heuristic_eval": "actual_codebase_heuristic"
+    },
+    {
+      "level_id": "level_18",
+      "nodes": 19252,
+      "split_nodes": 18840,
+      "goal_nodes": 1,
+      "reachable_to_goal_nodes": 19231,
+      "admissibility_violations": 20,
+      "base_cost_consistency_violations": 348,
+      "has_split_switches": true,
+      "heuristic_eval": "actual_codebase_heuristic"
+    }
+  ],
+  "definition": "h=alpha*(min Manhattan distance over occupied cells / 2 + 0.5 if not standing), with h=0 on any board containing a split switch; w_step fixed to 1 and the selected cost model is shared with UCS."
+}

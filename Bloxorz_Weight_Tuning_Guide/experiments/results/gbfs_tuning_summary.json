@@ -1,0 +1,41 @@
+{
+  "grid_size": 256,
+  "baseline_original_gbfs_config_id": 144,
+  "best_full_data_config_id": 0,
+  "chosen_config_id": 144,
+  "chosen_params": {
+    "w_orientation": 1.0,
+    "w_split": 1.0,
+    "w_edge": 0.0,
+    "w_fragile": 0.0
+  },
+  "decision": "retain the original GreedySolver heuristic because grouped-CV did not improve on it",
+  "best_full_data_mean_rank_loss": 0.10423782416192283,
+  "original_gbfs_full_data_mean_rank_loss": 0.12239791974137325,
+  "mean_cv_selected_heldout_loss": 0.12296015180265654,
+  "mean_cv_original_gbfs_heldout_loss": 0.12239791974137325,
+  "cv_selected_configs": [
+    0,
+    94,
+    0,
+    0,
+    0,
+    0
+  ],
+  "cv_heldout_improvement": -0.0005622320612832984,
+  "quality_weights": {
+    "steps": 0.06451612903225806,
+    "backtracks": 0.1935483870967742,
+    "void_exposure": 0.12903225806451613,
+    "fragile_entries": 0.25806451612903225,
+    "switch_changes": 0.16129032258064516,
+    "bridge_entries": 0.1935483870967742
+  },
+  "baseline_params": {
+    "w_orientation": 1.0,
+    "w_split": 1.0,
+    "w_edge": 0.0,
+    "w_fragile": 0.0
+  },
+  "heuristic": "distance + w_orientation*orientation_indicator + w_split*split_indicator + w_edge*number_of_occupied_edge-risk cells + w_fragile*number_of_occupied_fragile cells; baseline (1,1,0,0) matches existing GreedySolver penalties; intended for GBFS ordering, no optimality guarantee."
+}

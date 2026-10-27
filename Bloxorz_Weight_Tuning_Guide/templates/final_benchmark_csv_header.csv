@@ -1,0 +1,1 @@
+level_id,algorithm,repeat_id,success,solution_valid,search_time_ms,peak_memory_kib,expanded_nodes,solution_length,total_path_cost,backtracks,void_exposure,fragile_entries,switch_changes,bridge_entries,actions
