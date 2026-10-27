@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 from src.core.board import Board
@@ -10,6 +9,7 @@ from src.solvers.UCS_Algorithm.cost_functions import (
     PhysicsBasedCost,
     RiskSafetyCost,
     LearnedWeightCost,
+    TunedWeightCost,
 )
 
 
@@ -24,6 +24,7 @@ def run_ucs_algorithm():
     board = Board(str(level_path))
 
     models = [
+        TunedWeightCost(),
         PhysicsBasedCost(),
         RiskSafetyCost(),
         LearnedWeightCost(

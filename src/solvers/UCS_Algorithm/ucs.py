@@ -2,20 +2,27 @@ from __future__ import annotations
 
 import heapq
 from itertools import count 
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 from src.core.board import ACTIONS
 from src.core.state import BloxorzState
 
 from src.solvers.base_solver import BaseSolver
-from src.solvers.UCS_Algorithm.cost_functions import BaseCostFunction, PhysicsBasedCost, RiskSafetyCost, UniformCost
+from src.solvers.UCS_Algorithm.cost_functions import (
+    BaseCostFunction,
+    PhysicsBasedCost,
+    RiskSafetyCost,
+    UniformCost,
+    TunedWeightCost,
+    INVERSE_ACTIONS,
+)
 
 
 class UCSSolver(BaseSolver):
     def __init__(self, board, cost_function: Optional[BaseCostFunction] = None):
         super().__init__(board)
-        # Mặc định dùng hàm chi phí vật lý
-        self.cost_function = cost_function or PhysicsBasedCost()
+        # Mặc định dùng hàm chi phí trọng số tối ưu (TunedWeightCost)
+        self.cost_function = cost_function or TunedWeightCost()
         self.total_cost = 0.0 # Tổng chi phí từ trạng thái bắt đầu đến trạng thái hiện tại
         self.solution: Optional[List[str]] = None
         self.solution_state: List[BloxorzState] = []
@@ -32,35 +39,43 @@ class UCSSolver(BaseSolver):
         self.solution_state = [start]
         self.solution_costs = [0.0]
 
-        # Priority Queue lưu tuple (g_score, insertion_order, current_state)
+        if self.board.is_goal(start):
+            return []
+
+        use_last_action = getattr(self.cost_function, 'depends_on_last_action', False)
+        start_node = (start, None) if use_last_action else start
+
+        # Priority Queue lưu tuple (g_score, insertion_order, current_node)
         sequence = count()
 
-        frontier: List[Tuple[float, int, BloxorzState]] = [(0.0, next(sequence), start)]
+        frontier: List[Tuple[float, int, Any]] = [(0.0, next(sequence), start_node)]
 
-        # best_g lưu chi phí đường đi nhỏ nhất từng biết để tới được state
-        best_g = {start: 0.0}
-        parent = {}    # state --> (previous_state, action)
+        # best_g lưu chi phí đường đi nhỏ nhất từng biết để tới được node
+        best_g = {start_node: 0.0}
+        parent = {}    # node --> (previous_node, action)
 
         while frontier:
             # 1. Lấy trạng thái có chi phí tích lũy g nhỏ nhất
-            current_g, _, current_state = heapq.heappop(frontier)
+            current_g, _, current_node = heapq.heappop(frontier)
 
-            # 2. Bỏ qua nếu thấy đường khác tốt hơn tới current_state
-            if current_g > best_g.get(current_state, float('inf')):
+            # 2. Bỏ qua nếu thấy đường khác tốt hơn tới current_node
+            if current_g > best_g.get(current_node, float('inf')):
                 continue
 
             self.expanded_nodes += 1
+            current_state = current_node[0] if use_last_action else current_node
+            last_action = current_node[1] if use_last_action else None
 
             # 3. Kiểm tra nếu đã tới trạng thái đích
             if self.board.is_goal(current_state):
                 actions = []
                 states = [current_state]
-                cursor = current_state
-                while cursor != start:
-                    previous, action = parent[cursor]
+                cursor = current_node
+                while cursor != start_node:
+                    previous_node, action = parent[cursor]
                     actions.append(action)
-                    cursor = previous
-                    states.append(cursor)
+                    cursor = previous_node
+                    states.append(cursor[0] if use_last_action else cursor)
 
                 actions.reverse()
                 states.reverse()
@@ -79,18 +94,25 @@ class UCSSolver(BaseSolver):
                 if successor is None:
                     continue
 
-                step_cost = self.cost_function.calculate_cost(
-                    current_state, action, successor, self.board
-                )
+                try:
+                    step_cost = self.cost_function.calculate_cost(
+                        current_state, action, successor, self.board, last_action=last_action
+                    )
+                except TypeError:
+                    step_cost = self.cost_function.calculate_cost(
+                        current_state, action, successor, self.board
+                    )
                 step_cost = BaseCostFunction._validate_cost(step_cost)
 
                 new_g = current_g + step_cost
+                next_last_action = action if action in INVERSE_ACTIONS else None
+                next_node = (successor, next_last_action) if use_last_action else successor
             
-                if new_g < best_g.get(successor, float("inf")):
-                    best_g[successor] = new_g
-                    parent[successor] = (current_state, action)
+                if new_g < best_g.get(next_node, float("inf")):
+                    best_g[next_node] = new_g
+                    parent[next_node] = (current_node, action)
 
-                    heapq.heappush(frontier, (new_g, next(sequence), successor))
+                    heapq.heappush(frontier, (new_g, next(sequence), next_node))
 
         self.total_cost = float("inf")
         self.solution = None
@@ -104,11 +126,19 @@ class UCSSolver(BaseSolver):
     ) -> List[float]:
         cumulative = [0.0]
         total = 0.0
+        last_action = None
         for i, action in enumerate(actions):
-            total += self.cost_function.calculate_cost(
-                states[i], action, states[i + 1], self.board
-            )
+            try:
+                step_cost = self.cost_function.calculate_cost(
+                    states[i], action, states[i + 1], self.board, last_action=last_action
+                )
+            except TypeError:
+                step_cost = self.cost_function.calculate_cost(
+                    states[i], action, states[i + 1], self.board
+                )
+            total += BaseCostFunction._validate_cost(step_cost)
             cumulative.append(total)
+            last_action = action if action in INVERSE_ACTIONS else None
 
         return cumulative
 
@@ -163,11 +193,12 @@ def visualize_ucs_solution(
         print("[UCS] Không tìm thấy đường đi tới đích")
         return 
 
-    model = cost_function or PhysicsBasedCost()
+    model = cost_function or TunedWeightCost()
     actions = list(solution)
     states = [board.get_initial_state()]
     current = states[0]
     cumulative = [0.0]
+    last_action = None
 
     for action in actions:
         nxt = board.transition(current, action)
@@ -176,13 +207,19 @@ def visualize_ucs_solution(
                 f"Đường đi không hợp lệ: Hành động {action!r} tại {_state_label(current)}"
             )
 
-        step_cost = BaseCostFunction._validate_cost(
-            model.calculate_cost(current, action, nxt, board)
-        )
+        try:
+            step_cost = BaseCostFunction._validate_cost(
+                model.calculate_cost(current, action, nxt, board, last_action=last_action)
+            )
+        except TypeError:
+            step_cost = BaseCostFunction._validate_cost(
+                model.calculate_cost(current, action, nxt, board)
+            )
 
         cumulative.append(cumulative[-1] + step_cost)
         states.append(nxt)
         current = nxt
+        last_action = action if action in INVERSE_ACTIONS else None
 
     print(f"\n[UCS VISUALISATION]: Cost model = {model.name}")
     print(f"Actions: {' -> '.join(actions) if actions else '(đã ở đích)'}")

@@ -5,6 +5,7 @@ from src.solvers.UCS_Algorithm.cost_functions import (
     PhysicsBasedCost,
     RiskSafetyCost,
     LearnedWeightCost,
+    TunedWeightCost,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     'PhysicsBasedCost',
     'RiskSafetyCost',
     'LearnedWeightCost',
+    'TunedWeightCost',
 ]
