@@ -10,9 +10,10 @@ from src.gui.animation_math import smoothstep
 from src.gui.animation_contracts import EventKind
 from src.gui.advanced_contracts import AdvancedBoardData, SwitchVisualKind
 from src.gui.advanced_mesh_factory import (
-    make_active_cube_mesh, make_fragile_mesh,
+    make_active_cube_mesh, make_fragile_mesh, make_flag_mesh,
     make_bridge_mesh, make_switch_mesh, PALETTES, THEMES,
 )
+from src.gui.contracts import BasicOrientation
 from src.gui.mesh_factory import (make_beveled_box_mesh,
                                   make_themed_block_mesh, make_themed_cube_mesh)
 from src.gui.geometry_math import cell_to_world
@@ -165,6 +166,7 @@ class AnimatedSurfaceLayer:
         self.animated_root = self.root.attachNewNode('AnimatedSurfaceContent')
         self.animated_root.hide()
         self._fragile, self._bridges, self._switches, self._debris = {}, {}, {}, {}
+        self._flags = {}
         self._tile_variants = {theme: [] for theme in THEMES}
         self._theme = None
         self._leased = False
@@ -204,6 +206,18 @@ class AnimatedSurfaceLayer:
             for switch in board_data.switches:
                 self._switches[switch.switch_id] = tuple(self._instance(self.animated_root,
                     switches[switch.kind, active], switch.cell) for active in (False, True))
+            # Cờ ở ô đích: AdvancedSceneRenderer đặt cờ trong renderer_root (bị ẩn
+            # khi animation chạy), nên layer phải giữ bản sao riêng để cờ không biến mất.
+            flag_mesh = make_flag_mesh(pitch=pitch)
+            for cell in board_data.goal_cells:
+                flag = self.animated_root.attachNewNode(f'GoalFlag-{cell[0]}-{cell[1]}')
+                flag.attachNewNode(flag_mesh)
+                x, y = cell_to_world(*cell, rows=board_data.rows,
+                                     cols=board_data.cols, pitch=pitch)
+                flag.setPos(x, y, 0)
+                flag.setLightOff(1)        # giống renderer: không bị tối bởi ánh sáng
+                flag.setColorScaleOff(1)   # không bị tint theo theme
+                self._flags[cell] = flag
             self._sync_theme()
         except BaseException:
             self.dispose()
@@ -261,6 +275,17 @@ class AnimatedSurfaceLayer:
             visible(active, on)
             inactive.setZ(0)
             active.setZ(0)
+        # Cờ ẩn khi khối đang nằm trên ô đích (cùng quy tắc với AdvancedSceneRenderer).
+        occupied = {cube.cell for cube in before.cubes}
+        if before.whole_pose is not None:
+            r, c = before.whole_pose.anchor_cell
+            occupied.add((r, c))
+            if before.whole_pose.orientation is BasicOrientation.HORIZONTAL:
+                occupied.add((r, c + 1))
+            elif before.whole_pose.orientation is BasicOrientation.VERTICAL:
+                occupied.add((r + 1, c))
+        for cell, flag in self._flags.items():
+            visible(flag, cell not in occupied)
         for event in events:
             if progress < event.start:
                 continue
@@ -334,5 +359,6 @@ class AnimatedSurfaceLayer:
         self._bridges.clear()
         self._switches.clear()
         self._debris.clear()
+        self._flags.clear()
         self._tile_variants.clear()
         self._disposed = True
