@@ -80,7 +80,32 @@ class GuideWidgetTests(SceneFixture):
             self.assertEqual(self.counts(),widgets)
             self.assertAlmostEqual(g._icons['soft_switch'].getColor()[0],0x4e/255,delta=1/1024)  # Panda ColorAttrib quantization
             self.assertFalse(g.card.isHidden())
-        self.assertEqual(g._ink[:3],tuple(v/255 for v in (0x18,0x32,0x4b)))
+        self.assertEqual(g._ink[:3],tuple(v/255 for v in (0x17,0x32,0x4d)))
+
+    def test_readable_text_has_private_font_weight_opaque_colours_and_fits_card(self):
+        from panda3d.core import TextNode
+        g=self.guide;default=TextNode.getDefaultFont()
+        self.assertEqual(g.heading['text'],'GUIDE')
+        self.assertEqual(g.heading.getX(),29)
+        self.assertEqual(g.heading['text_scale'],(12,12))
+        self.assertIsNot(g.title['text_font'],default)
+        self.assertGreater(g.title['text_font'].getOutlineWidth(),g.body['text_font'].getOutlineWidth())
+        for theme in ('dark','light'):
+            g.apply_theme(theme)
+            for widget in (g.heading,g.title,g.body,g.note,g.close_button):
+                self.assertEqual(widget.component('text0').textNode.getTextColor()[3],1)
+            for item in MECHANICS:
+                if g.selected==item.id:g.close_card()
+                g.show_mechanic(item.id)
+                self.assertEqual(g.body['text'],item.description)
+                self.assertEqual(g.note['text'],item.note)
+                for widget in (g.body,g.note):
+                    node=widget.component('text0').textNode
+                    self.assertEqual(node.getNumRows(),g._rows(widget['text'],widget['text_scale'][0]))
+                    self.assertLessEqual(node.getWidth()*widget['text_scale'][0],228.5)
+                heading=g.heading.component('text0').textNode
+                self.assertGreater(29+heading.getLeft()*12,0)
+                self.assertLess(29+heading.getRight()*12,58)
 
     def test_resize_keeps_selected_card_and_passive_click_guard(self):
         g=self.guide;g.show_mechanic('split_switch')

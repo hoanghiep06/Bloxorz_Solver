@@ -1,5 +1,6 @@
 """One small DirectGUI rail and one reusable help card; no gameplay bindings/tasks."""
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from panda3d.core import (CardMaker, Filename, Geom, GeomNode, GeomTriangles,
     GeomVertexData, GeomVertexFormat, GeomVertexWriter, NodePath, TextNode,
@@ -11,6 +12,21 @@ from src.gui.layout import Rect, MIN_WIDTH, MIN_HEIGHT
 from src.gui.mechanics_guide_data import MECHANICS, BY_ID
 
 RAIL_WIDTH, BUTTON_SIZE, STEP, CARD_WIDTH = 58, 40, 48, 260
+
+
+@lru_cache(maxsize=2)
+def _guide_font(semibold=False):
+    """Private copies of Panda's bundled face; never alter the global UI font.
+
+    A small same-colour outline supplies synthetic medium/semibold weight
+    without another asset. Outline units are points, not screen pixels.
+    """
+    font=TextNode.getDefaultFont().makeCopy()
+    font.clear()
+    font.setPixelsPerUnit(64)
+    font.setScaleFactor(4)
+    font.setOutline((1,1,1,1),.16 if semibold else .055,.1)
+    return font
 
 
 @dataclass(frozen=True)
@@ -84,7 +100,7 @@ class MechanicsGuide:
         self.backdrop=self.root.attachNewNode(cm.generate())
         self.backdrop.setLightOff(1);self.backdrop.setShaderOff(1)
         self.rail=self._own(DirectFrame(parent=self.root,relief=None,state=DGG.NORMAL))
-        self.heading=self._label(self.rail,'GUIDE',10,29,16,center=True)
+        self.heading=self._label(self.rail,'GUIDE',12,RAIL_WIDTH/2,17,center=True,semibold=True)
         self.buttons={};self._icons={}
         for i,item in enumerate(MECHANICS):
             button=self._own(DirectButton(parent=self.rail,relief=None,
@@ -99,12 +115,13 @@ class MechanicsGuide:
         self.card_border=self.card.attachNewNode('GuideCardBorder')
         self.large_icon=self.card.attachNewNode('LargeMechanicIcon')
         self.large_icon.setPos(34,-.03,-36);self.large_icon.setScale(18)
-        self.title=self._label(self.card,'',18,62,42)
+        self.title=self._label(self.card,'',18,62,42,semibold=True)
         self.body=self._label(self.card,'',16,16,82)
         self.body['text_wordwrap']=(CARD_WIDTH-32)/16
         self.note=self._label(self.card,'',14,16,150)
         self.note['text_wordwrap']=(CARD_WIDTH-32)/14
         self.close_button=self._own(DirectButton(parent=self.card,text='X',text_scale=14,
+            text_font=_guide_font(True),
             text_pos=(13,-18),frameSize=(0,26,-26,0),pos=(CARD_WIDTH-34,-.05,-8),
             relief=None,pressEffect=0,command=self.close_card))
         self.card.hide();self.shadow.hide()
@@ -113,14 +130,16 @@ class MechanicsGuide:
     def _own(self, widget):
         self._widgets.append(widget);return widget
 
-    def _label(self,parent,text,size,x,y,center=False):
+    def _label(self,parent,text,size,x,y,center=False,semibold=False):
         return self._own(DirectLabel(parent=parent,text=text,text_scale=size,
+            text_font=_guide_font(semibold),
             text_align=TextNode.ACenter if center else TextNode.ALeft,
             pos=(x,-.03,-y),frameColor=(0,0,0,0),relief=None,state=DGG.DISABLED))
 
     @staticmethod
     def _rows(text,size):
-        node=TextNode('GuideMeasure');node.setWordwrap((CARD_WIDTH-32)/size);node.setText(text)
+        node=TextNode('GuideMeasure');node.setFont(_guide_font())
+        node.setWordwrap((CARD_WIDTH-32)/size);node.setText(text)
         return node.getNumRows()
 
     def show_mechanic(self, mechanic_id):
@@ -158,9 +177,11 @@ class MechanicsGuide:
         self._panel=ui.rgba(palette['GUIDE_PANEL'],.94)
         self._border=ui.rgba(palette['GUIDE_BORDER'])
         self._ink=ui.rgba(palette['GUIDE_INK'])
+        self._body_ink=ui.rgba(palette['GUIDE_BODY'])
         self._muted=ui.rgba(palette['GUIDE_MUTED'])
         self.heading['text_fg']=self.title['text_fg']=self._ink
-        self.body['text_fg']=self.note['text_fg']=self._muted
+        self.body['text_fg']=self._body_ink
+        self.note['text_fg']=self._muted
         self.close_button['text_fg']=self._ink
         self._restyle()
         root=Path(__file__).resolve().parents[2]/'assets/backgrounds'
