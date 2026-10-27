@@ -12,6 +12,7 @@ import tempfile
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-assist-qa/manual'))
+    parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
     from panda3d.core import loadPrcFileData
     loadPrcFileData('assist-qa','audio-library-name null')
@@ -25,7 +26,7 @@ def main(argv=None):
     from tools.gui_stage3_6_smoke import _present,_resize
     report={'checks':[],'images':[],'input':'X11 XTest native keyboard and mouse'}
     with tempfile.TemporaryDirectory(prefix='assist-native-') as temp:
-        app,renderer,c=create_game(save_path=Path(temp)/'save.json')
+        app,renderer,c=create_game(args.levels,save_path=Path(temp)/'save.json')
         driver=NativeInput(app);flow=app.game_flow;hud=app.dashboard.hud
         assist=flow.arrows
         def check(name):
@@ -183,11 +184,11 @@ def main(argv=None):
             # Stable pools through repeated restart/move/cancel cycles.
             enter(rate=.25)
             hover('R');driver.pointer(600,350);driver.step(3)
-            baseline=len(app.taskMgr.getTasks())
+            baseline=len(app.taskMgr.getTasks())+len(app.taskMgr.getDoLaters())
             for _ in range(10):
                 driver.key('Right');driver.step(2);driver.key('r');driver.step(3)
                 assert not c.manager.is_busy and c.moves==0
-            assert len(app.taskMgr.getTasks())==baseline
+            assert len(app.taskMgr.getTasks())+len(app.taskMgr.getDoLaters())==baseline
             check('Ten native mid-animation restarts retain task count')
             report['status']='PASS'
         except BaseException:

@@ -1,0 +1,537 @@
+{
+  "solver_runs": [
+    {
+      "level": "level_01",
+      "solver": "BFS",
+      "moves": 7,
+      "seconds": 1.42,
+      "status": "PASS"
+    },
+    {
+      "level": "level_01",
+      "solver": "DFS",
+      "moves": 21,
+      "seconds": 3.345,
+      "status": "PASS"
+    },
+    {
+      "level": "level_01",
+      "solver": "IDS",
+      "moves": 7,
+      "seconds": 1.622,
+      "status": "PASS"
+    },
+    {
+      "level": "level_01",
+      "solver": "UCS",
+      "moves": 7,
+      "seconds": 1.641,
+      "status": "PASS"
+    },
+    {
+      "level": "level_01",
+      "solver": "Greedy",
+      "moves": 7,
+      "seconds": 1.596,
+      "status": "PASS"
+    },
+    {
+      "level": "level_01",
+      "solver": "A*",
+      "moves": 7,
+      "seconds": 1.776,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "BFS",
+      "moves": 4,
+      "seconds": 1.146,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "DFS",
+      "moves": 4,
+      "seconds": 1.105,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "IDS",
+      "moves": 4,
+      "seconds": 1.184,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "UCS",
+      "moves": 4,
+      "seconds": 0.985,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "Greedy",
+      "moves": 4,
+      "seconds": 1.175,
+      "status": "PASS"
+    },
+    {
+      "level": "level_02_fragile",
+      "solver": "A*",
+      "moves": 4,
+      "seconds": 1.137,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "BFS",
+      "moves": 4,
+      "seconds": 1.172,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "DFS",
+      "moves": 4,
+      "seconds": 1.245,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "IDS",
+      "moves": 4,
+      "seconds": 1.073,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "UCS",
+      "moves": 4,
+      "seconds": 1.041,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "Greedy",
+      "moves": 4,
+      "seconds": 1.252,
+      "status": "PASS"
+    },
+    {
+      "level": "level_03_soft_bridge",
+      "solver": "A*",
+      "moves": 4,
+      "seconds": 1.129,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "BFS",
+      "moves": 4,
+      "seconds": 1.249,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "DFS",
+      "moves": 4,
+      "seconds": 1.264,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "IDS",
+      "moves": 4,
+      "seconds": 1.136,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "UCS",
+      "moves": 4,
+      "seconds": 1.211,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "Greedy",
+      "moves": 4,
+      "seconds": 1.21,
+      "status": "PASS"
+    },
+    {
+      "level": "level_04_heavy_bridge",
+      "solver": "A*",
+      "moves": 4,
+      "seconds": 1.221,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "BFS",
+      "moves": 5,
+      "seconds": 1.394,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "DFS",
+      "moves": 19,
+      "seconds": 2.86,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "IDS",
+      "moves": 5,
+      "seconds": 1.397,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "UCS",
+      "moves": 5,
+      "seconds": 1.446,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "Greedy",
+      "moves": 5,
+      "seconds": 1.364,
+      "status": "PASS"
+    },
+    {
+      "level": "level_05_split",
+      "solver": "A*",
+      "moves": 5,
+      "seconds": 1.378,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "BFS",
+      "moves": 7,
+      "seconds": 2.03,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "DFS",
+      "moves": 21,
+      "seconds": 3.441,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "IDS",
+      "moves": 7,
+      "seconds": 1.862,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "UCS",
+      "moves": 7,
+      "seconds": 1.613,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "Greedy",
+      "moves": 7,
+      "seconds": 1.759,
+      "status": "PASS"
+    },
+    {
+      "level": "level_06_combined",
+      "solver": "A*",
+      "moves": 7,
+      "seconds": 1.843,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "BFS",
+      "moves": 6,
+      "seconds": 1.516,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "DFS",
+      "moves": 6,
+      "seconds": 1.368,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "IDS",
+      "moves": 6,
+      "seconds": 1.31,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "UCS",
+      "moves": 6,
+      "seconds": 1.322,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "Greedy",
+      "moves": 6,
+      "seconds": 1.314,
+      "status": "PASS"
+    },
+    {
+      "level": "level_07_fragile_detour",
+      "solver": "A*",
+      "moves": 6,
+      "seconds": 1.272,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "BFS",
+      "moves": 4,
+      "seconds": 1.121,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "DFS",
+      "moves": 4,
+      "seconds": 1.142,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "IDS",
+      "moves": 4,
+      "seconds": 1.116,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "UCS",
+      "moves": 4,
+      "seconds": 1.134,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "Greedy",
+      "moves": 4,
+      "seconds": 1.197,
+      "status": "PASS"
+    },
+    {
+      "level": "level_08_toggle_bridge",
+      "solver": "A*",
+      "moves": 4,
+      "seconds": 1.015,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "BFS",
+      "moves": 4,
+      "seconds": 1.051,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "DFS",
+      "moves": 4,
+      "seconds": 1.214,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "IDS",
+      "moves": 4,
+      "seconds": 1.097,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "UCS",
+      "moves": 4,
+      "seconds": 1.049,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "Greedy",
+      "moves": 4,
+      "seconds": 1.13,
+      "status": "PASS"
+    },
+    {
+      "level": "level_09_permanent_bridge",
+      "solver": "A*",
+      "moves": 4,
+      "seconds": 1.132,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "BFS",
+      "moves": 5,
+      "seconds": 1.345,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "DFS",
+      "moves": 19,
+      "seconds": 2.704,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "IDS",
+      "moves": 5,
+      "seconds": 1.367,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "UCS",
+      "moves": 5,
+      "seconds": 1.259,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "Greedy",
+      "moves": 5,
+      "seconds": 1.347,
+      "status": "PASS"
+    },
+    {
+      "level": "level_10_cube_fragile",
+      "solver": "A*",
+      "moves": 5,
+      "seconds": 1.375,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "BFS",
+      "moves": 8,
+      "seconds": 1.759,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "DFS",
+      "moves": 528,
+      "seconds": 65.735,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "IDS",
+      "moves": 8,
+      "seconds": 1.655,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "UCS",
+      "moves": 8,
+      "seconds": 1.85,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "Greedy",
+      "moves": 14,
+      "seconds": 2.327,
+      "status": "PASS"
+    },
+    {
+      "level": "level_11_advanced_sandbox",
+      "solver": "A*",
+      "moves": 8,
+      "seconds": 1.529,
+      "status": "PASS"
+    }
+  ],
+  "manual": {
+    "level_02_fragile": "PASS",
+    "level_03_soft_bridge": "PASS",
+    "level_04_heavy_bridge": "PASS",
+    "level_05_split": "PASS",
+    "level_06_combined": "PASS",
+    "level_08_toggle_bridge": "PASS",
+    "level_10_cube_fragile": "PASS",
+    "fragile_break_fall": "PASS",
+    "bridge_close_fall": "PASS",
+    "pause_step_split_and_cancel": "PASS",
+    "theme_and_mouse_mode": "PASS",
+    "space_in_mouse_mode": "PASS",
+    "mouse_over_hud_is_not_a_move": "PASS",
+    "native_mouse_direction_projection": "PASS",
+    "slow_solver_ui_responsive_and_restart_cancels": {
+      "status": "PASS",
+      "frames": 6
+    }
+  },
+  "images": [
+    "/tmp/jungle-completion-clock/main-menu.png",
+    "/tmp/jungle-completion-clock/combined-astar-metrics.png",
+    "/tmp/jungle-completion-clock/manual-4-cube-0.png",
+    "/tmp/jungle-completion-clock/manual-4-cube-1.png",
+    "/tmp/jungle-completion-clock/manual-5-cube-0.png",
+    "/tmp/jungle-completion-clock/manual-5-cube-1.png",
+    "/tmp/jungle-completion-clock/manual-9-cube-0.png",
+    "/tmp/jungle-completion-clock/manual-9-cube-1.png",
+    "/tmp/jungle-completion-clock/fragile-failed.png",
+    "/tmp/jungle-completion-clock/bridge-closed.png",
+    "/tmp/jungle-completion-clock/split-step-paused.png",
+    "/tmp/jungle-completion-clock/settings-dark.png",
+    "/tmp/jungle-completion-clock/solver-working-ui-responsive.png"
+  ],
+  "observed_events": [
+    "ACTIVE_CUBE_CHANGE",
+    "BRIDGE_ABSENT",
+    "BRIDGE_PRESENT",
+    "FALL",
+    "FRAGILE_BREAK",
+    "GOAL_COMPLETE",
+    "MERGE",
+    "SPLIT",
+    "SWITCH_ACTIVATE",
+    "SWITCH_DEACTIVATE"
+  ],
+  "resize": {
+    "(1024, 720)": "PASS",
+    "(800, 600)": "PASS",
+    "(1280, 720)": "PASS"
+  },
+  "menu_cycles": {
+    "cycles": 20,
+    "before": {
+      "widgets": 141,
+      "subscriptions": 89
+    },
+    "after": {
+      "widgets": 141,
+      "subscriptions": 89
+    },
+    "status": "PASS"
+  },
+  "after_dispose": {
+    "widgets": 0,
+    "subscriptions": 0,
+    "graphics_outputs": 0,
+    "tasks": 0
+  },
+  "status": "PASS"
+}

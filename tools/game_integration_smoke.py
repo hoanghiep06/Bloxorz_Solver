@@ -25,6 +25,7 @@ def main(argv=None):
     parser.add_argument('--all',action='store_true',help='All levels x all 6 solvers.')
     parser.add_argument('--interactions-only',action='store_true',help='Skip repeated solver runs; check manual/UI lifecycle paths.')
     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-game-integration'))
+    parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
     from panda3d.core import loadPrcFileData,GraphicsEngine,GraphicsWindow
     loadPrcFileData('game-qa-silent','audio-library-name null')
@@ -37,7 +38,7 @@ def main(argv=None):
     report={'solver_runs':[],'manual':{},'images':[],'observed_events':[]}
     observed=set();goals=[]
     with tempfile.TemporaryDirectory(prefix='game-native-qa-') as temp:
-        app,renderer,c=create_game(save_path=Path(temp)/'save.json')
+        app,renderer,c=create_game(args.levels,save_path=Path(temp)/'save.json')
         original=c._on_event
         def on_event(event):
             if event=='goal':goals.append((c.search_name,c.moves,c.session_id))

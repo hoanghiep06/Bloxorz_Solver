@@ -142,3 +142,28 @@ def make_icon(name):
     path.setShaderOff(1)
     path.setTransparency(TransparencyAttrib.MAlpha)
     return path
+
+def _clock():
+    return _band(_circle_points(.78), _circle_points(.62)) + _rect(-.08,0,.08,.58) + _rect(0,-.08,.45,.08) + _rect(-.23,.84,.23,.98)
+
+
+def _graph():
+    return _rect(-.8,-.8,-.45,.05)+_rect(-.2,-.8,.15,.85)+_rect(.4,-.8,.75,.42)
+
+
+def _chip():
+    tris=_band([(-.64,-.64),(.64,-.64),(.64,.64),(-.64,.64)], [(-.48,-.48),(.48,-.48),(.48,.48),(-.48,.48)])
+    for off in (-.4,0,.4):
+        tris+=_rect(off-.06,.68,off+.06,.95)+_rect(off-.06,-.95,off+.06,-.68)
+        tris+=_rect(.68,off-.06,.95,off+.06)+_rect(-.95,off-.06,-.68,off+.06)
+    return tris
+
+
+def _nodes():
+    return _rect(-.07,-.52,.07,.5)+_rect(-.6,-.5,.6,-.36)+_disc(0,.65,.23)+_disc(-.6,-.55,.23)+_disc(.6,-.55,.23)
+
+
+def _steps():
+    return _disc(-.42,.36,.28)+_disc(.4,-.22,.28)+_rect(-.57,-.3,-.27,.18)+_rect(.25,-.88,.55,-.4)
+
+BUILDERS.update(clock=_clock,graph=_graph,chip=_chip,nodes=_nodes,steps=_steps)

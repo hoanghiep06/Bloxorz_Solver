@@ -1,0 +1,120 @@
+....................................................................................E.E....E..E...E.EE..............................................................................................................................................................................................................................................................................................................................................E.E.....E..[SceneStyle] Missing background: /home/sv/Code/Bloxorz_Solver/assets/backgrounds/day.png
+........................
+======================================================================
+ERROR: test_bridge_flags_ids_and_switch_visuals_match_core (test_game_integration.GamePipelineTests.test_bridge_flags_ids_and_switch_visuals_match_core)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 110, in test_bridge_flags_ids_and_switch_visuals_match_core
+    self.load('level_03_soft_bridge')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_effect_submit_failure_rolls_back_core_and_visual_pose (test_game_integration.GamePipelineTests.test_effect_submit_failure_rolls_back_core_and_visual_pose)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 194, in test_effect_submit_failure_rolls_back_core_and_visual_pose
+    self.load('level_05_split');self.move('R')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_off_board_fall_rolls_in_requested_direction (test_game_integration.GamePipelineTests.test_off_board_fall_rolls_in_requested_direction)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 138, in test_off_board_fall_rolls_in_requested_direction
+    self.load('level_02_fragile')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_restart_during_split_cancels_phases_without_stale_commit (test_game_integration.GamePipelineTests.test_restart_during_split_cancels_phases_without_stale_commit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 147, in test_restart_during_split_cancels_phases_without_stale_commit
+    self.load('level_05_split');self.move('R')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_space_still_changes_cube_in_mouse_control_mode (test_game_integration.GamePipelineTests.test_space_still_changes_cube_in_mouse_control_mode)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 235, in test_space_still_changes_cube_in_mouse_control_mode
+    self.load('level_05_split');self.move('R');self.move('R')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_split_space_merge_commit_one_core_action_after_all_phases (test_game_integration.GamePipelineTests.test_split_space_merge_commit_one_core_action_after_all_phases)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 35, in test_split_space_merge_commit_one_core_action_after_all_phases
+    self.load('level_05_split')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_step_resumes_paused_roll_but_stops_after_whole_core_action (test_game_integration.GamePipelineTests.test_step_resumes_paused_roll_but_stops_after_whole_core_action)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_game_integration.py", line 203, in test_step_resumes_paused_roll_but_stops_after_whole_core_action
+    self.load('level_05_split');c=self.controller
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/sv/Code/Bloxorz_Solver/tests/game_integration_support.py", line 33, in load
+    index=next(i for i,e in enumerate(self.catalog.entries) if e.level_id==stem)
+StopIteration
+
+======================================================================
+ERROR: test_arrow_positions_and_hover_follow_space_and_merge (test_mouse_control.SplitArrowTests.test_arrow_positions_and_hover_follow_space_and_merge)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_mouse_control.py", line 62, in test_arrow_positions_and_hover_follow_space_and_merge
+    board = Board(str(Path(__file__).resolve().parents[1] / 'levels/level_11_advanced_sandbox.json'))
+  File "/home/sv/Code/Bloxorz_Solver/src/core/board.py", line 30, in __init__
+    with open(filepath, 'r', encoding='utf-8') as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/sv/Code/Bloxorz_Solver/levels/level_11_advanced_sandbox.json'
+
+======================================================================
+ERROR: test_cache_includes_board_session_bridges_and_selected_cube (test_move_assist.MovePredictionTests.test_cache_includes_board_session_bridges_and_selected_cube)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_move_assist.py", line 73, in test_cache_includes_board_session_bridges_and_selected_cube
+    board = self.board(); predictor = MovePredictor(); state=board.get_initial_state()
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_move_assist.py", line 21, in board
+    return Board(str(LEVELS / 'level_11_advanced_sandbox.json'))
+  File "/home/sv/Code/Bloxorz_Solver/src/core/board.py", line 30, in __init__
+    with open(filepath, 'r', encoding='utf-8') as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/sv/Code/Bloxorz_Solver/levels/level_11_advanced_sandbox.json'
+
+======================================================================
+ERROR: test_split_markers_and_final_merge_footprint (test_move_assist.MovePredictionTests.test_split_markers_and_final_merge_footprint)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_move_assist.py", line 108, in test_split_markers_and_final_merge_footprint
+    board=self.board(); state=board.get_initial_state()
+  File "/home/sv/Code/Bloxorz_Solver/tests/test_move_assist.py", line 21, in board
+    return Board(str(LEVELS / 'level_11_advanced_sandbox.json'))
+  File "/home/sv/Code/Bloxorz_Solver/src/core/board.py", line 30, in __init__
+    with open(filepath, 'r', encoding='utf-8') as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/sv/Code/Bloxorz_Solver/levels/level_11_advanced_sandbox.json'
+
+----------------------------------------------------------------------
+Ran 471 tests in 62.041s
+
+FAILED (errors=10)

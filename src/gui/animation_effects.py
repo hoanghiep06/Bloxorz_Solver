@@ -186,6 +186,9 @@ class AnimatedSurfaceLayer:
                 top_color=PALETTES[theme]['FRAGILE'],
                 side_color=PALETTES[theme]['FRAGILE_SIDE'],
                 edge_color=PALETTES[theme]['FRAGILE_EDGE']) for theme in THEMES}
+            from src.gui.visual_materials import apply as apply_material
+            for theme, mesh in fragments.items():
+                apply_material(mesh, 'fragile', theme)
             for cell in board_data.fragile_cells:
                 self._fragile[cell] = tuple(self._instance(self.animated_root, mesh, cell)
                                             for mesh in (intact, broken))

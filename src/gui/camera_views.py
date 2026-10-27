@@ -84,7 +84,9 @@ class CameraViewController:
             self._focus = target
             self.camera.set_view(spec.config, bounds=self._bounds(target))
         else:
-            self.camera.set_view(spec.config)   # whole board
+            from src.gui.temple_environment import visible_board_bounds
+            board = self.controller.board_data
+            self.camera.set_view(spec.config, bounds=visible_board_bounds(board) if board is not None else None)
         self._apply_keys(spec.follow)
         self._set_label()
 

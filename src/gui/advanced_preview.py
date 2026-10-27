@@ -19,8 +19,8 @@ from src.gui.hud import HudViewModel
 def build_framing_data(board):
     """Dimensions-only camera carrier. Never pass this to a scene renderer.
 
-    Full-grid camera bounds already include Z [-.18, 2.30] pitches; all Advanced
-    meshes stay inside that envelope. Real tile semantics remain in schema 2.
+    Game framing additionally supplies visible_board_bounds for decoration depth.
+    Real tile semantics remain in schema 2.
     """
     if type(board) is not AdvancedBoardData:
         raise TypeError('Expected AdvancedBoardData for framing.')
@@ -39,8 +39,11 @@ class AdvancedPreviewPresentation(PreviewPresentation):
 
     def __init__(self, app, board_data, **options):
         self._dynamic_states = []
+        self.atmosphere = None
         try:
             super().__init__(app, board_data, **options)
+            from src.gui.visual_materials import TempleAtmosphere
+            self.atmosphere=TempleAtmosphere(app)
             root = app.dynamic_tile_root
             for kind in (MaterialAttrib, AntialiasAttrib):
                 self._dynamic_states.append((root, kind, root.getAttrib(kind)))
@@ -50,6 +53,9 @@ class AdvancedPreviewPresentation(PreviewPresentation):
             raise
 
     def dispose(self):
+        if self.atmosphere is not None:
+            self.atmosphere.dispose()
+            self.atmosphere=None
         for root, kind, value in reversed(self._dynamic_states):
             if not root.isEmpty():
                 if value is None:
@@ -79,6 +85,9 @@ def create_advanced_preview(scenario='combined', state=None, *, shadows=False, a
         renderer.show_snapshot(variant.snapshot)
         app.presentation = AdvancedPreviewPresentation(app, framing, shadows=shadows,
                                                        antialiasing=antialiasing)
+        from src.gui.temple_environment import visible_board_bounds
+        app.presentation.camera.fit_board(framing,app.win.getXSize(),app.win.getYSize(),
+                                          bounds=visible_board_bounds(fixture.board))
         app.dashboard = DashboardPresentation(app, HudViewModel(
             level_label='VISUAL DEMO DATA / ' + scenario.upper(), runtime_status=variant.label))
         properties = WindowProperties()

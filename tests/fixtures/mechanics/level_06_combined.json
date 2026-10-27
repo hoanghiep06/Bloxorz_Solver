@@ -1,0 +1,69 @@
+{
+  "name": "Fragile Split Bridge",
+  "grid": [
+    [
+      1,
+      3,
+      1,
+      6,
+      1,
+      1,
+      1,
+      5,
+      7,
+      7,
+      2
+    ]
+  ],
+  "start": [
+    0,
+    0
+  ],
+  "goal": [
+    0,
+    10
+  ],
+  "split_switch": {
+    "cell": [
+      0,
+      3
+    ],
+    "split_positions": [
+      [
+        0,
+        6
+      ],
+      [
+        0,
+        4
+      ]
+    ]
+  },
+  "bridges": [
+    {
+      "id": 0,
+      "cells": [
+        [
+          0,
+          8
+        ],
+        [
+          0,
+          9
+        ]
+      ],
+      "initial_state": false
+    }
+  ],
+  "switches": [
+    {
+      "cell": [
+        0,
+        7
+      ],
+      "type": "heavy",
+      "target": 0,
+      "action": "open"
+    }
+  ]
+}

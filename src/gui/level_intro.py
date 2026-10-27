@@ -13,6 +13,7 @@ class LevelIntro:
     def __init__(self, app, on_done=None):
         self.app, self.on_done = app, on_done
         self.active = False
+        self._hidden_growth = []
         self._items, self._t, self._task, self._block_z = [], 0.0, None, 0.0
 
     @staticmethod
@@ -30,6 +31,10 @@ class LevelIntro:
     def play(self, rows, cols):
         self.finish(notify=False)
         app = self.app
+        for node in app.static_board_root.findAllMatches('**/TempleEdgeGrowth'):
+            if not node.isHidden():
+                node.hide()
+                self._hidden_growth.append(node)
         span = max(1, rows + cols - 2)
         for root in (app.static_board_root, app.dynamic_tile_root):
             for node in root.findAllMatches('**/=cell'):
@@ -72,6 +77,9 @@ class LevelIntro:
                 node.setPos(pos)
                 node.setScale(1)
         self._items = []
+        for node in self._hidden_growth:
+            if not node.isEmpty():node.show()
+        self._hidden_growth=[]
         block = self.app.block_root
         if not block.isEmpty():
             block.setZ(self._block_z)

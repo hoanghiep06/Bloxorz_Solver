@@ -12,7 +12,7 @@ from src.core.state import BloxorzState, Orientation
 from src.gui.move_assist import predict_moves, MovePredictor, Severity
 from src.gui.mouse_control import controlled_cells
 
-LEVELS = Path(__file__).resolve().parents[1] / 'levels'
+LEVELS = Path(__file__).resolve().parent / 'fixtures' / 'mechanics'
 
 
 class MovePredictionTests(unittest.TestCase):
@@ -40,7 +40,7 @@ class MovePredictionTests(unittest.TestCase):
         # Walk the actual rule graph, exercising bridge toggles, fragile, split,
         # merge, and active-cube changes without invoking any solver.
         split = merge = danger = bridge_changes = 0
-        for path in sorted(LEVELS.glob('*.json')):
+        for path in sorted((*LEVELS.glob('*.json'), *(Path(__file__).resolve().parents[1]/'levels').glob('*.json'))):
             board = Board(str(path)); before = copy.deepcopy(board.__dict__)
             queue = deque([board.get_initial_state()]); seen = set(queue)
             while queue and len(seen) < 600:
@@ -137,7 +137,7 @@ class MovePredictionTests(unittest.TestCase):
         result=subprocess.run([sys.executable,'-S','-B','-c',
             "import sys; from src.gui.move_assist import predict_moves; "
             "assert not any(n.startswith(('panda3d','direct','src.solvers')) for n in sys.modules)"],
-            cwd=LEVELS.parent,capture_output=True,text=True)
+            cwd=Path(__file__).resolve().parents[1],capture_output=True,text=True)
         self.assertEqual(result.returncode,0,result.stderr)
 
     def test_fatal_split_preserves_both_teleport_markers(self):

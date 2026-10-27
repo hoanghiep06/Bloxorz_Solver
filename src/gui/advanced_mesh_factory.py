@@ -3,10 +3,8 @@
 Tiles have a supporting top at Z=0; raised markings are separated from that
 plane. Broken debris remains below it. No collision or state logic lives here.
 
-Mỗi theme có một bảng màu riêng cho ô đặc biệt (xem PALETTES):
-    Sáng (light): tone vàng - cam - trắng
-    Tối (dark)  : tone xanh - tím - trắng, điểm chút đỏ
-    đã kích hoạt: xanh lá (sáng) / xanh ngọc (tối)
+Each theme has a distinct surface palette. Thermal fragile remains warm;
+pressure glyphs stay cyan and activated glyphs green/teal in either environment.
 """
 
 import math
@@ -23,26 +21,26 @@ def _c(r, g, b):
     return (r / 255, g / 255, b / 255, 1.0)
 
 
-# Mỗi theme một bảng màu. Sáng: vàng - cam - trắng. Tối: xanh - tím - trắng, điểm chút đỏ.
+# Shared palette consumed by both static and animated surface factories.
 PALETTES = {
     'light': dict(
-        FRAGILE=_c(214, 98, 52), FRAGILE_SIDE=_c(140, 62, 28),
-        FRAGILE_EDGE=_c(255, 190, 130), CRACK=_c(84, 36, 14),
-        BRIDGE_TOP=_c(255, 196, 64), BRIDGE_SIDE=_c(170, 112, 18),
-        BRIDGE_EDGE=_c(255, 230, 150), BRIDGE_RIB=_c(255, 248, 224),
+        FRAGILE=_c(255, 198, 116), FRAGILE_SIDE=_c(144, 91, 42),
+        FRAGILE_EDGE=_c(255, 179, 65), CRACK=_c(255, 163, 32),
+        BRIDGE_TOP=_c(162, 180, 163), BRIDGE_SIDE=_c(65, 83, 77),
+        BRIDGE_EDGE=_c(154, 183, 169), BRIDGE_RIB=_c(187, 213, 206),
         SWITCH_BASE=_c(52, 38, 30), SWITCH_BASE_EDGE=_c(176, 142, 110),
-        SOFT_COLOR=_c(255, 250, 236), SOFT_SIDE=_c(176, 150, 110),
-        HEAVY_COLOR=_c(222, 58, 48),
-        SPLIT_COLOR=_c(244, 128, 28),
+        SOFT_COLOR=_c(35, 231, 240), SOFT_SIDE=_c(176, 150, 110),
+        HEAVY_COLOR=_c(42, 226, 241),
+        SPLIT_COLOR=_c(192, 225, 224),
         ACTIVE=_c(96, 204, 96), ACTIVE_SIDE=_c(40, 120, 50)),
     'dark': dict(
-        FRAGILE=_c(228, 84, 108), FRAGILE_SIDE=_c(128, 38, 72),
-        FRAGILE_EDGE=_c(255, 165, 182), CRACK=_c(58, 14, 40),
-        BRIDGE_TOP=_c(166, 142, 255), BRIDGE_SIDE=_c(86, 66, 168),
-        BRIDGE_EDGE=_c(222, 212, 255), BRIDGE_RIB=_c(246, 242, 255),
+        FRAGILE=_c(245, 173, 111), FRAGILE_SIDE=_c(96, 74, 74),
+        FRAGILE_EDGE=_c(255, 151, 69), CRACK=_c(255, 172, 55),
+        BRIDGE_TOP=_c(170, 197, 230), BRIDGE_SIDE=_c(59, 79, 109),
+        BRIDGE_EDGE=_c(149, 197, 230), BRIDGE_RIB=_c(205, 227, 243),
         SWITCH_BASE=_c(22, 20, 44), SWITCH_BASE_EDGE=_c(132, 132, 196),
-        SOFT_COLOR=_c(240, 244, 255), SOFT_SIDE=_c(112, 124, 186),
-        HEAVY_COLOR=_c(238, 66, 92),
+        SOFT_COLOR=_c(77, 229, 255), SOFT_SIDE=_c(112, 124, 186),
+        HEAVY_COLOR=_c(85, 220, 255),
         SPLIT_COLOR=_c(110, 202, 255),
         ACTIVE=_c(90, 228, 196), ACTIVE_SIDE=_c(30, 128, 118)),
 }
@@ -67,9 +65,9 @@ HEAVY_COLOR, SPLIT_COLOR = PALETTES['light']['HEAVY_COLOR'], PALETTES['light']['
 SUCCESS = _c(52, 200, 120)
 SUCCESS_SIDE = _c(24, 120, 70)
 
-# Cờ ở ô đích (màu sáng, rực; cờ được render không ăn đèn nên giữ đúng màu này)
-FLAG_POLE = _c(255, 255, 255)
-FLAG_CLOTH = _c(255, 38, 38)      # đỏ thuần, sáng
+# Goal flag is unlit so its orange cloth and gold pole remain readable.
+FLAG_POLE = _c(221, 179, 93)
+FLAG_CLOTH = _c(255, 84, 22)      # warm orange cloth
 FLAG_GOLD = _c(255, 214, 59)
 # Vị trí cột cờ trong ô đích: nằm trên phần viền (rim) ở góc, không chắn miệng hố.
 # Đổi dấu x/y nếu muốn cờ đứng ở góc khác.
@@ -93,6 +91,13 @@ def _box(name, dimensions, center, pitch, top, side=BLOCK_DARK, edge=BLOCK_HIGHL
     transform = Mat4.rotateMat(angle, Vec3(0, 0, 1)) * Mat4.translateMat(
         *(v * pitch for v in center))
     node.modifyGeom(0).transformVertices(transform)
+    from src.gui.visual_materials import apply
+    if name in ('FragileSurface', 'Debris'):
+        apply(node, 'fragile')
+    elif name in ('HeavyBar','SplitPlate'):
+        apply(node, 'glow')
+    elif name in ('BridgePlatform', 'BridgeRib', 'HeavyBase', 'SplitBase'):
+        apply(node, 'metal')
     return node
 
 
@@ -100,7 +105,7 @@ def _combine(name, parts):
     node = GeomNode(name)
     for part in parts:
         for index in range(part.getNumGeoms()):
-            node.addGeom(part.modifyGeom(index))
+            node.addGeom(part.modifyGeom(index), part.getGeomState(index))
     return node
 
 
@@ -132,11 +137,13 @@ def make_fragile_mesh(*, pitch=1.0, broken=False, theme='light'):
 def make_bridge_mesh(*, pitch=1.0, theme='light'):
     _pitch(pitch)
     p = _palette(theme)
-    return _combine('BridgePlatformMesh', [
+    node = _combine('BridgePlatformMesh', [
         _box('BridgePlatform', (.96, .96, .18), (0, 0, -.09), pitch,
              p['BRIDGE_TOP'], p['BRIDGE_SIDE'], p['BRIDGE_EDGE']),
         *[_box('BridgeRib', (.78, .06, .02), (0, y, .011), pitch,
                p['BRIDGE_RIB'], p['BRIDGE_SIDE'], p['BRIDGE_RIB']) for y in (-.28, 0, .28)]])
+    from src.gui.visual_materials import apply
+    return apply(node, 'metal', theme)
 
 
 def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDisc'):
@@ -154,6 +161,17 @@ def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDi
     return builder.finish()
 
 
+def _ring(pitch, color, *, active=False):
+    builder = MeshBuilder('CyanPressureRing')
+    for i in range(32):
+        a, b = i*math.tau/32, (i+1)*math.tau/32
+        points = [(r*math.cos(t)*pitch,r*math.sin(t)*pitch,.105*pitch)
+                  for r,t in ((.30,a),(.30,b),(.23,b),(.23,a))]
+        builder.face(points,(0,0,1),color)
+    from src.gui.visual_materials import apply
+    return apply(builder.finish(),'glow')
+
+
 def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
     _pitch(pitch)
     if type(kind) is not SwitchVisualKind or type(activated) is not bool:
@@ -166,25 +184,25 @@ def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
         # Vòng tối bên ngoài làm nổi nút tròn trên mọi màu sàn.
         return _combine('SoftSwitchMesh', [
             _disc(pitch, base, base, radius=.40, z0=.005, z1=.035, name='SoftSwitchRing'),
-            _disc(pitch, color, side, radius=.29, z0=.03, z1=.105)])
+            _ring(pitch, color, active=activated)])
     if kind is SwitchVisualKind.HEAVY:
         color = p['ACTIVE'] if activated else p['HEAVY_COLOR']
         # Đế vuông + dấu cộng lớn: khác hẳn nút tròn và nút tách.
         return _combine('HeavySwitchMesh', [
             _box('HeavyBase', (.74, .74, .06), (0, 0, .03), pitch, base, base, base_edge),
-            _box('HeavyCrossV', (.17, .56, .04), (0, 0, .08), pitch, color, color, color),
-            _box('HeavyCrossH', (.56, .17, .04), (0, 0, .08), pitch, color, color, color)])
+            *[_box('HeavyBar', (.12, .52, .04), (x, 0, .08), pitch, color, color, color) for x in (-.15,.15)]])
     color = p['ACTIVE'] if activated else p['SPLIT_COLOR']
     return _combine('SplitSwitchMesh', [
         _box('SplitBase', (.76, .62, .04), (0, 0, .02), pitch, base, base, base_edge),
-        *[_box('SplitPlate', (.24, .50, .07), (x, 0, .07), pitch,
+        *[_box('SplitPlate', (.24, .34, .07), (x, 0, .07), pitch,
                color, base, color) for x in (-.19, .19)]])
 
 
 def make_split_cube_mesh(*, pitch=1.0):
-    _pitch(pitch)
-    return _box('SplitCubeMesh', (1, 1, 1), (0, 0, 0), pitch,
-                BLOCK_MAIN, BLOCK_MAIN, BLOCK_HIGHLIGHT)
+    from src.gui.mesh_factory import make_themed_cube_mesh
+    mesh = make_themed_cube_mesh('light', pitch=pitch)
+    mesh.setName('SplitCubeMesh')
+    return mesh
 
 
 def make_active_cube_mesh(*, pitch=1.0):
@@ -202,7 +220,7 @@ def make_active_cube_mesh(*, pitch=1.0):
 
 
 def make_flag_mesh(*, pitch=1.0):
-    """Cờ đuôi nheo cắm ở góc viền ô đích: cột trắng, đỉnh vàng, vải đỏ hướng vào miệng hố."""
+    """Orange pennant on a gold pole, anchored in the rim outside the aperture."""
     _pitch(pitch)
     px, py = FLAG_POLE_XY
     h = FLAG_HEIGHT
@@ -216,10 +234,35 @@ def make_flag_mesh(*, pitch=1.0):
     cloth = MeshBuilder('FlagCloth')
     x0 = px + FLAG_POLE_THICK / 2
     z_top, z_bottom = h - .03, h - .03 - FLAG_CLOTH_HEIGHT
-    tip = (x0 + FLAG_CLOTH_WIDTH, py, (z_top + z_bottom) / 2)
-    triangle = [(x0, py, z_top), (x0, py, z_bottom), tip]
-    triangle = [(x * pitch, y * pitch, z * pitch) for x, y, z in triangle]
-    cloth.face(triangle, (0, 1, 0), FLAG_CLOTH)
-    cloth.face(triangle, (0, -1, 0), FLAG_CLOTH)
-    parts.append(cloth.finish())
+    # Twelve strips give the cloth a curved silhouette, including fixed fallback.
+    for i in range(12):
+        u,v=i/12,(i+1)/12
+        def point(t,z):
+            return ((x0+t*FLAG_CLOTH_WIDTH)*pitch,
+                    (py+.018*math.sin(t*math.tau)*t)*pitch,z*pitch)
+        mid=(z_top+z_bottom)/2
+        points=[point(u,mid+(z_top-mid)*(1-u)),point(u,mid+(z_bottom-mid)*(1-u)),
+                point(v,mid+(z_bottom-mid)*(1-v)),point(v,mid+(z_top-mid)*(1-v))]
+        cloth.face(points,(0,1,0),FLAG_CLOTH)
+        cloth.face(points,(0,-1,0),FLAG_CLOTH)
+    from src.gui.visual_materials import flag_motion
+    parts.append(flag_motion(cloth.finish(),origin=x0*pitch,width=FLAG_CLOTH_WIDTH*pitch,pitch=pitch))
+    glyph = MeshBuilder('FlagGoalGlyph')
+    for side in (-1,1):
+        yy=(py+side*.003)*pitch
+        ax=(x0+.12)*pitch; az=(z_bottom+.15)*pitch
+        for p0,p1 in (((ax,az),(ax,az+.20*pitch)),
+                      ((ax,az+.20*pitch),(ax+.19*pitch,az+.10*pitch)),
+                      ((ax+.19*pitch,az+.10*pitch),(ax,az))):
+            dx,dz=p1[0]-p0[0],p1[1]-p0[1]
+            length=math.hypot(dx,dz); ox,oz=-dz/length*.012*pitch,dx/length*.012*pitch
+            for j in range(5):
+                a=j/5;b=(j+1)/5
+                def gp(t,sign):
+                    xx=p0[0]+dx*t+sign*ox
+                    zz=p0[1]+dz*t+sign*oz
+                    u=(xx/pitch-x0)/FLAG_CLOTH_WIDTH
+                    return (xx,yy+.018*math.sin(u*math.tau)*u*pitch,zz)
+                glyph.face((gp(a,1),gp(b,1),gp(b,-1),gp(a,-1)),(0,side,0),(1,.94,.66,1))
+    parts.append(flag_motion(glyph.finish(),origin=x0*pitch,width=FLAG_CLOTH_WIDTH*pitch,pitch=pitch))
     return _combine('GoalFlagMesh', parts)

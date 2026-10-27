@@ -73,4 +73,6 @@ def pointer_over_hud(app):
     mouse = watcher.getMouse()
     x = (mouse[0]+1)*app.win.getXSize()/2
     y = (1-mouse[1])*app.win.getYSize()/2
-    return hud.contains_pointer_pixels(x,y)
+    guide=getattr(app,'mechanics_guide',None)
+    return (hud.contains_pointer_pixels(x,y)
+            or (guide is not None and guide.contains_pointer_pixels(x,y)))

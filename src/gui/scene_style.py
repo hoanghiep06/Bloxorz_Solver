@@ -2,8 +2,8 @@
 """Matte materials, an unlit image backdrop and verified framebuffer AA state.
 
 Backdrop images:
-    assets/backgrounds/night.png -> dark theme
-    assets/backgrounds/day.png   -> light theme
+    assets/backgrounds/winter-temple.png -> dark theme
+    assets/backgrounds/jungle-temple.png -> light theme
 
 If an image is missing, a two-colour gradient is used.
 """
@@ -35,11 +35,11 @@ GRADIENTS = {
 }
 
 ASSET_DIR = Path(__file__).resolve().parents[2] / "assets" / "backgrounds"
-BACKGROUND_NAMES = {"light": "day", "dark": "night"}
+BACKGROUND_NAMES = {"light": "jungle-temple", "dark": "winter-temple"}
 
 FLOOR_TINT = {
-    "light": (1.0, 0.90, 0.68, 1.0),
-    "dark": (0.80, 0.80, 1.0, 1.0),
+    "light": (1.0, 1.0, 1.0, 1.0),
+    "dark": (1.0, 1.0, 1.0, 1.0),
 }
 
 BLOCK_TINT = {
@@ -295,6 +295,8 @@ class SceneStyle:
 
     def _set_cover_uv(self, aspect):
         """Cover the view without distorting the image."""
+        canvas=getattr(self,'_background_canvas',None)
+        if canvas is not None:aspect=canvas[0]
         image = self._image_aspect
         su, sv = (
             (1.0, image / aspect)
@@ -304,12 +306,24 @@ class SceneStyle:
 
         u0, u1 = (1 - su) / 2, (1 + su) / 2
         v0, v1 = (1 - sv) / 2, (1 + sv) / 2
+        if canvas is not None:
+            # Match the GUI continuation in a reserved side strip. Account for
+            # the background quad's existing 1% frustum overscan.
+            span=su*canvas[1]
+            u0,u1=u0-span*.005,u0+span*1.005
+            v0,v1=v0-sv*.005,v1+sv*.005
 
         vdata = self._background.node().modifyGeom(0).modifyVertexData()
         writer = GeomVertexWriter(vdata, "texcoord")
 
         for u, v in ((u0, v0), (u1, v0), (u1, v1), (u0, v1)):
             writer.addData2f(u, v)
+
+    def set_background_canvas(self, aspect=None, visible_fraction=1.):
+        """Optional full-window panorama crop when a GUI side strip is reserved."""
+        self._background_canvas=None if aspect is None else (aspect,visible_fraction)
+        if self._fit is not None and self._image_aspect:
+            self._set_cover_uv(self._fit.aspect)
 
     def set_theme(self, theme):
         theme = _normalise_theme(theme)

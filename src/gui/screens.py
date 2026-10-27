@@ -17,6 +17,7 @@ from src.gui.layout import Rect
 from src.gui.level_intro import LevelIntro
 from src.gui.mouse_control import controlled_cells, pick_action, pointer_over_hud
 from src.gui.move_arrows import MoveAssistLayer
+from src.gui.mechanics_guide import MechanicsGuide
 from src.gui.profile import star_rating
 from src.gui.game_adapter import prepare_level
 from src.gui.solver_worker import SolverJob
@@ -193,33 +194,42 @@ class SettingsScreen(Screen):
     def build(self, width, height):
         flow, settings = self.flow, self.flow.save.settings
         self._ready = False             # slider callbacks fire during construction
-        cw, ch = 560, 660
+        cw, ch = 560, 690
         x0, y0 = (width - cw) / 2, (height - ch) / 2
         self.card(x0, y0, cw, ch, alpha=.97)
         self.label('Settings', 40, width / 2, y0 + 62, align='center')
-        self.label('Controls', 20, x0 + 40, y0 + 125, color=ui.MUTED)
+        self.label('Controls', 20, x0 + 40, y0 + 105, color=ui.MUTED)
         self._toggles = {}
         for i, (mode, text) in enumerate((('keyboard', 'Keyboard'), ('mouse', 'Mouse'))):
-            self._toggles[mode] = self.button(text, x0 + 40 + i * 250, y0 + 142, 230, 50,
+            self._toggles[mode] = self.button(text, x0 + 40 + i * 250, y0 + 120, 230, 44,
                                               lambda m=mode: self._set_mode(m))
-        self._hint = self.label('', 17, width / 2, y0 + 228, color=ui.MUTED, align='center')
+        self._hint = self.label('', 17, width / 2, y0 + 190, color=ui.MUTED, align='center')
         self._apply_mode(settings.control_mode)
 
-        self.label('Appearance', 20, x0 + 40, y0 + 270, color=ui.MUTED)
+        self.label('Appearance', 20, x0 + 40, y0 + 225, color=ui.MUTED)
         for i, (theme, text) in enumerate((('light', 'Light'), ('dark', 'Dark'))):
-            self.button(text, x0 + 40 + i * 250, y0 + 286, 230, 50,
+            self.button(text, x0 + 40 + i * 250, y0 + 240, 230, 44,
                         lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
 
-        self.label('Music', 20, x0 + 40, y0 + 368, color=ui.MUTED)
+        self.label('Graphics quality',20,x0+40,y0+320,color=ui.MUTED)
+        self._quality_buttons={}
+        for i,(quality,text) in enumerate((('auto','Auto'),('high','High'),('balanced','Balanced'),('low','Low'))):
+            self._quality_buttons[quality]=self.button(text,x0+40+i*123,y0+336,112,42,
+                lambda q=quality:self._set_quality(q),primary=settings.quality==quality,size=18)
+        from src.gui import visual_quality
+        self._quality_hint=self.label(visual_quality.CURRENT.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately',14,
+            width/2,y0+402,color=ui.MUTED,align='center')
+
+        self.label('Music', 20, x0 + 40, y0 + 435, color=ui.MUTED)
         (self._music_buttons, self._music_slider,
          self._music_text) = self._audio_row(
-            x0, cw, y0 + 382, settings.music, self._set_music,
+            x0, cw, y0 + 450, settings.music, self._set_music,
             settings.music_volume, self._on_music_volume, self._music_released)
 
-        self.label('Sound effects', 20, x0 + 40, y0 + 464, color=ui.MUTED)
+        self.label('Sound effects', 20, x0 + 40, y0 + 530, color=ui.MUTED)
         (self._sfx_buttons, self._sfx_slider,
          self._sfx_text) = self._audio_row(
-            x0, cw, y0 + 478, settings.sfx, self._set_sfx,
+            x0, cw, y0 + 545, settings.sfx, self._set_sfx,
             settings.sfx_volume, self._on_sfx_volume, self._sfx_released)
 
         self.button('Back', x0 + (cw - 200) / 2, y0 + ch - 76, 200, 50,
@@ -260,6 +270,15 @@ class SettingsScreen(Screen):
         self.flow.audio.set_sfx_enabled(enabled)
         for value, button in self._sfx_buttons.items():
             ui.style_button(button, primary=value == enabled)
+
+    def _set_quality(self, quality):
+        self.flow.app.dashboard.set_quality(quality)
+        self.flow.save.settings.quality=quality
+        self.flow.save.save()
+        from src.gui import visual_quality
+        for name,button in self._quality_buttons.items():
+            ui.style_button(button,primary=name==quality)
+        self._quality_hint['text']=quality.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately'
 
     def _set_theme(self, theme):
         self.flow.save.settings.theme = theme
@@ -415,6 +434,9 @@ class UIFlow:
                         for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
         self.intro = LevelIntro(app, self._intro_done)
         self.arrows = MoveAssistLayer(app, controller, self._arrows_visible)
+        self.mechanics = MechanicsGuide(app.pixel2d,on_change=self._mechanics_changed)
+        app.mechanics_guide=self.mechanics
+        self.mechanics.apply_layout(*self.size)
 
         self._listener = DirectObject()
         self._listener.accept('window-event', self._window_event)
@@ -499,6 +521,8 @@ class UIFlow:
 
     def apply_scene_theme(self, theme):
         """Recolour backdrop, lights, floor, block and special tiles for the theme."""
+        if hasattr(self, 'mechanics'):
+            self.mechanics.apply_theme(theme)
         from src.gui.scene_style import (SceneStyle, FLOOR_TINT, BLOCK_TINT,
                                          apply_block_theme, apply_tile_theme)
         from src.gui.scene_lighting import SceneLightingController
@@ -534,6 +558,16 @@ class UIFlow:
     def _full_region(width, height):
         return Rect(0, 0, width, height)
 
+    def _mechanics_changed(self):
+        if self.name=='game' and not self._disposed:
+            self.app.dashboard.viewport.refresh()
+
+    def _game_region(self,width,height):
+        self.mechanics.apply_layout(width,height)
+        available=max(1,width-self.mechanics.reserved_width)
+        self.app.presentation.style.set_background_canvas(width/height,available/width)
+        return Rect(0,0,available,height)
+
     def show(self, name):
         if self._disposed:
             return
@@ -542,6 +576,8 @@ class UIFlow:
             self.screens[self.name].hide()
         self.name = name
         game = name == 'game'
+        self.mechanics.set_visible(game)
+        if not game:self.app.presentation.style.set_background_canvas()
         if not game:
             self._cancel_par()
             self.controller.cancel_guide()      # leaving the level drops any guide state
@@ -551,7 +587,7 @@ class UIFlow:
         hud.root.show() if game else hud.root.hide()
         viewport.set_region_override({'main': self._left_region, 'levels': self._full_region,
                                       'settings': self._full_region,
-                                      'game': self._full_region}.get(name))
+                                      'game': self._game_region}.get(name))
         self.controller.input_enabled = game
         self.controller.keyboard_enabled = self.save.settings.control_mode == 'keyboard'
         hud.set_guide_visible(False)
@@ -638,6 +674,7 @@ class UIFlow:
         size = (window.getXSize(), window.getYSize())
         if size[0] > 0 and size[1] > 0 and size != self.size:
             self.size = size
+            self.mechanics.apply_layout(*size)
             if self.name:
                 self.screens[self.name].resize()
 
@@ -677,6 +714,9 @@ class UIFlow:
         self.attract.stop()
         self.intro.finish(notify=False)
         self.arrows.dispose()
+        self.mechanics.dispose()
+        if getattr(self.app,'mechanics_guide',None) is self.mechanics:
+            del self.app.mechanics_guide
         self.ambient.dispose()
         for screen in self.screens.values():
             screen.dispose()

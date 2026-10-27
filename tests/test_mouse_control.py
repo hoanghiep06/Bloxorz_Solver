@@ -59,7 +59,7 @@ class SplitArrowTests(unittest.TestCase):
         from unittest.mock import patch
         from src.core.board import Board
         from pathlib import Path
-        board = Board(str(Path(__file__).resolve().parents[1] / 'levels/level_11_advanced_sandbox.json'))
+        board = Board(str(Path(__file__).resolve().parent / 'fixtures/mechanics/level_11_advanced_sandbox.json'))
         controller = SimpleNamespace(board=board, state=BloxorzState.create_split((4, 5), (4, 9)),
             board_data=SimpleNamespace(rows=9, cols=13), session_id='arrows', revision=0)
         app = SimpleNamespace(render=NodePath('arrow-test'), pixel2d=NodePath('overlay-test'),

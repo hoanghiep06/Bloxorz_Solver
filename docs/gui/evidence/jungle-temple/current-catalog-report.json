@@ -1,0 +1,659 @@
+{
+  "runs": [
+    {
+      "level": "level_01",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 7
+    },
+    {
+      "level": "level_01",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_01",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 7
+    },
+    {
+      "level": "level_01",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 7
+    },
+    {
+      "level": "level_01",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 7
+    },
+    {
+      "level": "level_01",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 7
+    },
+    {
+      "level": "level_02",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 12
+    },
+    {
+      "level": "level_02",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 55
+    },
+    {
+      "level": "level_02",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 12
+    },
+    {
+      "level": "level_02",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 12
+    },
+    {
+      "level": "level_02",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 13
+    },
+    {
+      "level": "level_02",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 12
+    },
+    {
+      "level": "level_03",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 16
+    },
+    {
+      "level": "level_03",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 35
+    },
+    {
+      "level": "level_03",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 16
+    },
+    {
+      "level": "level_03",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 16
+    },
+    {
+      "level": "level_03",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 16
+    },
+    {
+      "level": "level_03",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 16
+    },
+    {
+      "level": "level_04",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_04",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 77
+    },
+    {
+      "level": "level_04",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_04",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_04",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 18
+    },
+    {
+      "level": "level_04",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_05",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 11
+    },
+    {
+      "level": "level_05",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 53
+    },
+    {
+      "level": "level_05",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 11
+    },
+    {
+      "level": "level_05",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 11
+    },
+    {
+      "level": "level_05",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 11
+    },
+    {
+      "level": "level_05",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 11
+    },
+    {
+      "level": "level_06",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_06",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 35
+    },
+    {
+      "level": "level_06",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_06",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_06",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 22
+    },
+    {
+      "level": "level_06",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_07",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_07",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 29
+    },
+    {
+      "level": "level_07",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_07",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_07",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 18
+    },
+    {
+      "level": "level_07",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_08",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_08",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 53
+    },
+    {
+      "level": "level_08",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_08",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_08",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 25
+    },
+    {
+      "level": "level_08",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_09",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 10
+    },
+    {
+      "level": "level_09",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 42
+    },
+    {
+      "level": "level_09",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 10
+    },
+    {
+      "level": "level_09",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 10
+    },
+    {
+      "level": "level_09",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 10
+    },
+    {
+      "level": "level_09",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 10
+    },
+    {
+      "level": "level_10",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 14
+    },
+    {
+      "level": "level_10",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 64
+    },
+    {
+      "level": "level_10",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 14
+    },
+    {
+      "level": "level_10",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 14
+    },
+    {
+      "level": "level_10",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 26
+    },
+    {
+      "level": "level_10",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 14
+    },
+    {
+      "level": "level_11",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 24
+    },
+    {
+      "level": "level_11",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 43
+    },
+    {
+      "level": "level_11",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 24
+    },
+    {
+      "level": "level_11",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 24
+    },
+    {
+      "level": "level_11",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 24
+    },
+    {
+      "level": "level_11",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 24
+    },
+    {
+      "level": "level_12",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_12",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 33
+    },
+    {
+      "level": "level_12",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_12",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_12",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 33
+    },
+    {
+      "level": "level_12",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_13",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_13",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 38
+    },
+    {
+      "level": "level_13",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_13",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_13",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_13",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_14",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_14",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 53
+    },
+    {
+      "level": "level_14",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_14",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_14",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 20
+    },
+    {
+      "level": "level_14",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 19
+    },
+    {
+      "level": "level_15",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_15",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_15",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_15",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_15",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 17
+    },
+    {
+      "level": "level_15",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 15
+    },
+    {
+      "level": "level_16",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 46
+    },
+    {
+      "level": "level_16",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 104
+    },
+    {
+      "level": "level_16",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 46
+    },
+    {
+      "level": "level_16",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 46
+    },
+    {
+      "level": "level_16",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 48
+    },
+    {
+      "level": "level_16",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 46
+    },
+    {
+      "level": "level_17",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_17",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 612
+    },
+    {
+      "level": "level_17",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_17",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_17",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 29
+    },
+    {
+      "level": "level_17",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 21
+    },
+    {
+      "level": "level_18",
+      "solver": "BFS",
+      "status": "PASS",
+      "moves": 22
+    },
+    {
+      "level": "level_18",
+      "solver": "DFS",
+      "status": "PASS",
+      "moves": 89
+    },
+    {
+      "level": "level_18",
+      "solver": "IDS",
+      "status": "PASS",
+      "moves": 22
+    },
+    {
+      "level": "level_18",
+      "solver": "UCS",
+      "status": "PASS",
+      "moves": 22
+    },
+    {
+      "level": "level_18",
+      "solver": "Greedy",
+      "status": "PASS",
+      "moves": 23
+    },
+    {
+      "level": "level_18",
+      "solver": "A*",
+      "status": "PASS",
+      "moves": 22
+    }
+  ],
+  "replay_sampling": "deterministic phase advancement with native framebuffers",
+  "after_dispose": {
+    "outputs": 0,
+    "tasks": 0,
+    "widgets": 0
+  },
+  "status": "PASS"
+}

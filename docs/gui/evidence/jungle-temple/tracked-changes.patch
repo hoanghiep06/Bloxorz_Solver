@@ -1,0 +1,1252 @@
+diff --git a/README.md b/README.md
+index 2c8bbde..cac42ae 100644
+--- a/README.md
++++ b/README.md
+@@ -71,6 +71,8 @@ Nút **AI Solver** hiện ngay khi vào màn chơi. Mở nút này để chọn
+ 
+ Hỗ trợ di chuyển bật sẵn cho cả phím và chuột: bốn mũi tên `OK / ! / X`, hover để xem vùng đáp, viền vàng khi sát biên. Cảnh báo đỏ vẫn cho thực hiện nước đi. Guide ẩn khi animation/replay/Tutorial đang chạy. Animation dùng lăn cứng, vỡ sáu mảnh, cầu trượt, teleport khi mờ và thu nhỏ rồi hút vào đích. Xem [thiết kế, API và kiểm thử](docs/gui/MOVE_ASSIST_ANIMATION.md).
+ 
++Đồ họa mới dùng khối magma có texture/emission, sàn đá, cảnh Jungle/Winter và HUD kính tối. **Settings → Graphics quality** có Auto/High/Balanced/Low, áp dụng ngay và lưu vào profile. Auto chọn Balanced khi dùng renderer phần mềm; High bật bloom. Xem [báo cáo visual, ảnh chạy thật và cách bật fallback](docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md).
++
+ Chạy bộ test trong cùng môi trường:
+ 
+ ```bash
+diff --git a/src/gui/advanced_mesh_factory.py b/src/gui/advanced_mesh_factory.py
+index 873dc10..9a99a66 100644
+--- a/src/gui/advanced_mesh_factory.py
++++ b/src/gui/advanced_mesh_factory.py
+@@ -3,10 +3,8 @@
+ Tiles have a supporting top at Z=0; raised markings are separated from that
+ plane. Broken debris remains below it. No collision or state logic lives here.
+ 
+-Mỗi theme có một bảng màu riêng cho ô đặc biệt (xem PALETTES):
+-    Sáng (light): tone vàng - cam - trắng
+-    Tối (dark)  : tone xanh - tím - trắng, điểm chút đỏ
+-    đã kích hoạt: xanh lá (sáng) / xanh ngọc (tối)
++Each theme has a distinct surface palette. Thermal fragile remains warm;
++pressure glyphs stay cyan and activated glyphs green/teal in either environment.
+ """
+ 
+ import math
+@@ -23,26 +21,26 @@ def _c(r, g, b):
+     return (r / 255, g / 255, b / 255, 1.0)
+ 
+ 
+-# Mỗi theme một bảng màu. Sáng: vàng - cam - trắng. Tối: xanh - tím - trắng, điểm chút đỏ.
++# Shared palette consumed by both static and animated surface factories.
+ PALETTES = {
+     'light': dict(
+-        FRAGILE=_c(214, 98, 52), FRAGILE_SIDE=_c(140, 62, 28),
+-        FRAGILE_EDGE=_c(255, 190, 130), CRACK=_c(84, 36, 14),
+-        BRIDGE_TOP=_c(255, 196, 64), BRIDGE_SIDE=_c(170, 112, 18),
+-        BRIDGE_EDGE=_c(255, 230, 150), BRIDGE_RIB=_c(255, 248, 224),
++        FRAGILE=_c(255, 198, 116), FRAGILE_SIDE=_c(144, 91, 42),
++        FRAGILE_EDGE=_c(255, 179, 65), CRACK=_c(255, 163, 32),
++        BRIDGE_TOP=_c(162, 180, 163), BRIDGE_SIDE=_c(65, 83, 77),
++        BRIDGE_EDGE=_c(154, 183, 169), BRIDGE_RIB=_c(187, 213, 206),
+         SWITCH_BASE=_c(52, 38, 30), SWITCH_BASE_EDGE=_c(176, 142, 110),
+-        SOFT_COLOR=_c(255, 250, 236), SOFT_SIDE=_c(176, 150, 110),
+-        HEAVY_COLOR=_c(222, 58, 48),
+-        SPLIT_COLOR=_c(244, 128, 28),
++        SOFT_COLOR=_c(35, 231, 240), SOFT_SIDE=_c(176, 150, 110),
++        HEAVY_COLOR=_c(42, 226, 241),
++        SPLIT_COLOR=_c(192, 225, 224),
+         ACTIVE=_c(96, 204, 96), ACTIVE_SIDE=_c(40, 120, 50)),
+     'dark': dict(
+-        FRAGILE=_c(228, 84, 108), FRAGILE_SIDE=_c(128, 38, 72),
+-        FRAGILE_EDGE=_c(255, 165, 182), CRACK=_c(58, 14, 40),
+-        BRIDGE_TOP=_c(166, 142, 255), BRIDGE_SIDE=_c(86, 66, 168),
+-        BRIDGE_EDGE=_c(222, 212, 255), BRIDGE_RIB=_c(246, 242, 255),
++        FRAGILE=_c(245, 173, 111), FRAGILE_SIDE=_c(96, 74, 74),
++        FRAGILE_EDGE=_c(255, 151, 69), CRACK=_c(255, 172, 55),
++        BRIDGE_TOP=_c(170, 197, 230), BRIDGE_SIDE=_c(59, 79, 109),
++        BRIDGE_EDGE=_c(149, 197, 230), BRIDGE_RIB=_c(205, 227, 243),
+         SWITCH_BASE=_c(22, 20, 44), SWITCH_BASE_EDGE=_c(132, 132, 196),
+-        SOFT_COLOR=_c(240, 244, 255), SOFT_SIDE=_c(112, 124, 186),
+-        HEAVY_COLOR=_c(238, 66, 92),
++        SOFT_COLOR=_c(77, 229, 255), SOFT_SIDE=_c(112, 124, 186),
++        HEAVY_COLOR=_c(85, 220, 255),
+         SPLIT_COLOR=_c(110, 202, 255),
+         ACTIVE=_c(90, 228, 196), ACTIVE_SIDE=_c(30, 128, 118)),
+ }
+@@ -67,9 +65,9 @@ HEAVY_COLOR, SPLIT_COLOR = PALETTES['light']['HEAVY_COLOR'], PALETTES['light']['
+ SUCCESS = _c(52, 200, 120)
+ SUCCESS_SIDE = _c(24, 120, 70)
+ 
+-# Cờ ở ô đích (màu sáng, rực; cờ được render không ăn đèn nên giữ đúng màu này)
+-FLAG_POLE = _c(255, 255, 255)
+-FLAG_CLOTH = _c(255, 38, 38)      # đỏ thuần, sáng
++# Goal flag is unlit so its orange cloth and gold pole remain readable.
++FLAG_POLE = _c(221, 179, 93)
++FLAG_CLOTH = _c(255, 84, 22)      # warm orange cloth
+ FLAG_GOLD = _c(255, 214, 59)
+ # Vị trí cột cờ trong ô đích: nằm trên phần viền (rim) ở góc, không chắn miệng hố.
+ # Đổi dấu x/y nếu muốn cờ đứng ở góc khác.
+@@ -93,6 +91,13 @@ def _box(name, dimensions, center, pitch, top, side=BLOCK_DARK, edge=BLOCK_HIGHL
+     transform = Mat4.rotateMat(angle, Vec3(0, 0, 1)) * Mat4.translateMat(
+         *(v * pitch for v in center))
+     node.modifyGeom(0).transformVertices(transform)
++    from src.gui.visual_materials import apply
++    if name in ('FragileSurface', 'Debris'):
++        apply(node, 'fragile')
++    elif name in ('HeavyBar','SplitPlate'):
++        apply(node, 'glow')
++    elif name in ('BridgePlatform', 'BridgeRib', 'HeavyBase', 'SplitBase'):
++        apply(node, 'metal')
+     return node
+ 
+ 
+@@ -100,7 +105,7 @@ def _combine(name, parts):
+     node = GeomNode(name)
+     for part in parts:
+         for index in range(part.getNumGeoms()):
+-            node.addGeom(part.modifyGeom(index))
++            node.addGeom(part.modifyGeom(index), part.getGeomState(index))
+     return node
+ 
+ 
+@@ -132,11 +137,13 @@ def make_fragile_mesh(*, pitch=1.0, broken=False, theme='light'):
+ def make_bridge_mesh(*, pitch=1.0, theme='light'):
+     _pitch(pitch)
+     p = _palette(theme)
+-    return _combine('BridgePlatformMesh', [
++    node = _combine('BridgePlatformMesh', [
+         _box('BridgePlatform', (.96, .96, .18), (0, 0, -.09), pitch,
+              p['BRIDGE_TOP'], p['BRIDGE_SIDE'], p['BRIDGE_EDGE']),
+         *[_box('BridgeRib', (.78, .06, .02), (0, y, .011), pitch,
+                p['BRIDGE_RIB'], p['BRIDGE_SIDE'], p['BRIDGE_RIB']) for y in (-.28, 0, .28)]])
++    from src.gui.visual_materials import apply
++    return apply(node, 'metal', theme)
+ 
+ 
+ def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDisc'):
+@@ -154,6 +161,17 @@ def _disc(pitch, color, side, *, radius=.30, z0=.015, z1=.07, name='SoftSwitchDi
+     return builder.finish()
+ 
+ 
++def _ring(pitch, color, *, active=False):
++    builder = MeshBuilder('CyanPressureRing')
++    for i in range(32):
++        a, b = i*math.tau/32, (i+1)*math.tau/32
++        points = [(r*math.cos(t)*pitch,r*math.sin(t)*pitch,.105*pitch)
++                  for r,t in ((.30,a),(.30,b),(.23,b),(.23,a))]
++        builder.face(points,(0,0,1),color)
++    from src.gui.visual_materials import apply
++    return apply(builder.finish(),'glow')
++
++
+ def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
+     _pitch(pitch)
+     if type(kind) is not SwitchVisualKind or type(activated) is not bool:
+@@ -166,25 +184,25 @@ def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
+         # Vòng tối bên ngoài làm nổi nút tròn trên mọi màu sàn.
+         return _combine('SoftSwitchMesh', [
+             _disc(pitch, base, base, radius=.40, z0=.005, z1=.035, name='SoftSwitchRing'),
+-            _disc(pitch, color, side, radius=.29, z0=.03, z1=.105)])
++            _ring(pitch, color, active=activated)])
+     if kind is SwitchVisualKind.HEAVY:
+         color = p['ACTIVE'] if activated else p['HEAVY_COLOR']
+         # Đế vuông + dấu cộng lớn: khác hẳn nút tròn và nút tách.
+         return _combine('HeavySwitchMesh', [
+             _box('HeavyBase', (.74, .74, .06), (0, 0, .03), pitch, base, base, base_edge),
+-            _box('HeavyCrossV', (.17, .56, .04), (0, 0, .08), pitch, color, color, color),
+-            _box('HeavyCrossH', (.56, .17, .04), (0, 0, .08), pitch, color, color, color)])
++            *[_box('HeavyBar', (.12, .52, .04), (x, 0, .08), pitch, color, color, color) for x in (-.15,.15)]])
+     color = p['ACTIVE'] if activated else p['SPLIT_COLOR']
+     return _combine('SplitSwitchMesh', [
+         _box('SplitBase', (.76, .62, .04), (0, 0, .02), pitch, base, base, base_edge),
+-        *[_box('SplitPlate', (.24, .50, .07), (x, 0, .07), pitch,
++        *[_box('SplitPlate', (.24, .34, .07), (x, 0, .07), pitch,
+                color, base, color) for x in (-.19, .19)]])
+ 
+ 
+ def make_split_cube_mesh(*, pitch=1.0):
+-    _pitch(pitch)
+-    return _box('SplitCubeMesh', (1, 1, 1), (0, 0, 0), pitch,
+-                BLOCK_MAIN, BLOCK_MAIN, BLOCK_HIGHLIGHT)
++    from src.gui.mesh_factory import make_themed_cube_mesh
++    mesh = make_themed_cube_mesh('light', pitch=pitch)
++    mesh.setName('SplitCubeMesh')
++    return mesh
+ 
+ 
+ def make_active_cube_mesh(*, pitch=1.0):
+@@ -202,7 +220,7 @@ def make_active_cube_mesh(*, pitch=1.0):
+ 
+ 
+ def make_flag_mesh(*, pitch=1.0):
+-    """Cờ đuôi nheo cắm ở góc viền ô đích: cột trắng, đỉnh vàng, vải đỏ hướng vào miệng hố."""
++    """Orange pennant on a gold pole, anchored in the rim outside the aperture."""
+     _pitch(pitch)
+     px, py = FLAG_POLE_XY
+     h = FLAG_HEIGHT
+@@ -216,10 +234,35 @@ def make_flag_mesh(*, pitch=1.0):
+     cloth = MeshBuilder('FlagCloth')
+     x0 = px + FLAG_POLE_THICK / 2
+     z_top, z_bottom = h - .03, h - .03 - FLAG_CLOTH_HEIGHT
+-    tip = (x0 + FLAG_CLOTH_WIDTH, py, (z_top + z_bottom) / 2)
+-    triangle = [(x0, py, z_top), (x0, py, z_bottom), tip]
+-    triangle = [(x * pitch, y * pitch, z * pitch) for x, y, z in triangle]
+-    cloth.face(triangle, (0, 1, 0), FLAG_CLOTH)
+-    cloth.face(triangle, (0, -1, 0), FLAG_CLOTH)
+-    parts.append(cloth.finish())
+-    return _combine('GoalFlagMesh', parts)
+\ No newline at end of file
++    # Twelve strips give the cloth a curved silhouette, including fixed fallback.
++    for i in range(12):
++        u,v=i/12,(i+1)/12
++        def point(t,z):
++            return ((x0+t*FLAG_CLOTH_WIDTH)*pitch,
++                    (py+.018*math.sin(t*math.tau)*t)*pitch,z*pitch)
++        mid=(z_top+z_bottom)/2
++        points=[point(u,mid+(z_top-mid)*(1-u)),point(u,mid+(z_bottom-mid)*(1-u)),
++                point(v,mid+(z_bottom-mid)*(1-v)),point(v,mid+(z_top-mid)*(1-v))]
++        cloth.face(points,(0,1,0),FLAG_CLOTH)
++        cloth.face(points,(0,-1,0),FLAG_CLOTH)
++    from src.gui.visual_materials import flag_motion
++    parts.append(flag_motion(cloth.finish(),origin=x0*pitch,width=FLAG_CLOTH_WIDTH*pitch,pitch=pitch))
++    glyph = MeshBuilder('FlagGoalGlyph')
++    for side in (-1,1):
++        yy=(py+side*.003)*pitch
++        ax=(x0+.12)*pitch; az=(z_bottom+.15)*pitch
++        for p0,p1 in (((ax,az),(ax,az+.20*pitch)),
++                      ((ax,az+.20*pitch),(ax+.19*pitch,az+.10*pitch)),
++                      ((ax+.19*pitch,az+.10*pitch),(ax,az))):
++            dx,dz=p1[0]-p0[0],p1[1]-p0[1]
++            length=math.hypot(dx,dz); ox,oz=-dz/length*.012*pitch,dx/length*.012*pitch
++            for j in range(5):
++                a=j/5;b=(j+1)/5
++                def gp(t,sign):
++                    xx=p0[0]+dx*t+sign*ox
++                    zz=p0[1]+dz*t+sign*oz
++                    u=(xx/pitch-x0)/FLAG_CLOTH_WIDTH
++                    return (xx,yy+.018*math.sin(u*math.tau)*u*pitch,zz)
++                glyph.face((gp(a,1),gp(b,1),gp(b,-1),gp(a,-1)),(0,side,0),(1,.94,.66,1))
++    parts.append(flag_motion(glyph.finish(),origin=x0*pitch,width=FLAG_CLOTH_WIDTH*pitch,pitch=pitch))
++    return _combine('GoalFlagMesh', parts)
+diff --git a/src/gui/advanced_preview.py b/src/gui/advanced_preview.py
+index eaf7173..d21df6f 100644
+--- a/src/gui/advanced_preview.py
++++ b/src/gui/advanced_preview.py
+@@ -19,8 +19,8 @@ from src.gui.hud import HudViewModel
+ def build_framing_data(board):
+     """Dimensions-only camera carrier. Never pass this to a scene renderer.
+ 
+-    Full-grid camera bounds already include Z [-.18, 2.30] pitches; all Advanced
+-    meshes stay inside that envelope. Real tile semantics remain in schema 2.
++    Game framing additionally supplies visible_board_bounds for decoration depth.
++    Real tile semantics remain in schema 2.
+     """
+     if type(board) is not AdvancedBoardData:
+         raise TypeError('Expected AdvancedBoardData for framing.')
+@@ -39,8 +39,11 @@ class AdvancedPreviewPresentation(PreviewPresentation):
+ 
+     def __init__(self, app, board_data, **options):
+         self._dynamic_states = []
++        self.atmosphere = None
+         try:
+             super().__init__(app, board_data, **options)
++            from src.gui.visual_materials import TempleAtmosphere
++            self.atmosphere=TempleAtmosphere(app)
+             root = app.dynamic_tile_root
+             for kind in (MaterialAttrib, AntialiasAttrib):
+                 self._dynamic_states.append((root, kind, root.getAttrib(kind)))
+@@ -50,6 +53,9 @@ class AdvancedPreviewPresentation(PreviewPresentation):
+             raise
+ 
+     def dispose(self):
++        if self.atmosphere is not None:
++            self.atmosphere.dispose()
++            self.atmosphere=None
+         for root, kind, value in reversed(self._dynamic_states):
+             if not root.isEmpty():
+                 if value is None:
+@@ -79,6 +85,9 @@ def create_advanced_preview(scenario='combined', state=None, *, shadows=False, a
+         renderer.show_snapshot(variant.snapshot)
+         app.presentation = AdvancedPreviewPresentation(app, framing, shadows=shadows,
+                                                        antialiasing=antialiasing)
++        from src.gui.temple_environment import visible_board_bounds
++        app.presentation.camera.fit_board(framing,app.win.getXSize(),app.win.getYSize(),
++                                          bounds=visible_board_bounds(fixture.board))
+         app.dashboard = DashboardPresentation(app, HudViewModel(
+             level_label='VISUAL DEMO DATA / ' + scenario.upper(), runtime_status=variant.label))
+         properties = WindowProperties()
+diff --git a/src/gui/advanced_renderer.py b/src/gui/advanced_renderer.py
+index 012a1d9..afc27d8 100644
+--- a/src/gui/advanced_renderer.py
++++ b/src/gui/advanced_renderer.py
+@@ -44,6 +44,7 @@ class AdvancedSceneRenderer:
+         }
+         # Ô đặc biệt (ô đích, cầu, ô cam vỡ, nút bấm): mỗi theme một bản mesh riêng.
+         for theme in THEMES:
++            self._meshes[('floor', theme)] = make_floor_mesh(pitch=pitch, theme=theme)
+             self._meshes[('goal', theme)] = make_goal_mesh(pitch=pitch, theme=theme)
+             self._meshes[('bridge', theme)] = make_bridge_mesh(pitch=pitch, theme=theme)
+             self._meshes[('intact', theme)] = make_fragile_mesh(pitch=pitch, theme=theme)
+@@ -125,8 +126,10 @@ class AdvancedSceneRenderer:
+                             node.setLightOff(1)        # không bị bóng/ánh sáng làm tối
+                             node.setColorScaleOff(1)   # giữ đúng màu gỗ / tuyết, không bị tint
+                         else:
+-                            self._instance(static, f'Floor-{r}-{c}', 'floor',
++                            floor = self._tile_instance(static, f'Floor-{r}-{c}', 'floor',
+                                            cell=cell, board=board_data)
++                            from src.gui.temple_environment import vary_tile
++                            vary_tile(floor, r, c)
+                     elif kind is Tile.FRAGILE:
+                         fragile[cell] = tuple(self._tile_instance(dynamic, f'Fragile-{key}-{r}-{c}', key,
+                             cell=cell, board=board_data) for key in ('intact', 'broken'))
+@@ -143,12 +146,14 @@ class AdvancedSceneRenderer:
+                 for node in variants:
+                     node.setTag('switch_id', switch.switch_id)
+                 switches[switch.switch_id] = variants
+-            flags = {cell: self._instance(dynamic, f'GoalFlag-{cell[0]}-{cell[1]}', 'flag',
++            flags = {cell: self._instance(static, f'GoalFlag-{cell[0]}-{cell[1]}', 'flag',
+                                           cell=cell, board=board_data)
+                      for cell in board_data.goal_cells}
+             for flag in flags.values():
+                 flag.setLightOff(1)        # cờ giữ đúng màu đỏ sáng, không bị tối
+                 flag.setColorScaleOff(1)   # không bị tint theo theme
++            from src.gui.temple_environment import add_edge_growth
++            add_edge_growth(static, board_data, pitch=self._pitch)
+             whole = self._themed_instance(blocks, 'WholeBlockVisual', 'whole')
+             cubes = tuple(self._themed_instance(blocks, f'SplitCubeSlot-{i}', 'cube') for i in range(2))
+             indicators = tuple(self._instance(cube, 'ActiveCubeIndicator', 'active') for cube in cubes)
+diff --git a/src/gui/animation_effects.py b/src/gui/animation_effects.py
+index a4b55c1..d481444 100644
+--- a/src/gui/animation_effects.py
++++ b/src/gui/animation_effects.py
+@@ -184,6 +184,9 @@ class AnimatedSurfaceLayer:
+                 top_color=PALETTES[theme]['FRAGILE'],
+                 side_color=PALETTES[theme]['FRAGILE_SIDE'],
+                 edge_color=PALETTES[theme]['FRAGILE_EDGE']) for theme in THEMES}
++            from src.gui.visual_materials import apply as apply_material
++            for theme, mesh in fragments.items():
++                apply_material(mesh, 'fragile', theme)
+             for cell in board_data.fragile_cells:
+                 self._fragile[cell] = tuple(self._instance(self.animated_root, mesh, cell)
+                                             for mesh in (intact, broken))
+diff --git a/src/gui/app.py b/src/gui/app.py
+index 259121d..7fc37cf 100644
+--- a/src/gui/app.py
++++ b/src/gui/app.py
+@@ -18,6 +18,8 @@ class BloxorzPreviewApp(ShowBase):
+                                               f"win-size {WINDOW_SIZE[0]} {WINDOW_SIZE[1]}\nfullscreen false\n"
+                                               "win-fixed-size false\n" + audio_line)
+         super().__init__(windowType="onscreen")
++        from src.gui.visual_materials import configure
++        self.material_status = configure(self.win.getGsg())
+         self.disableMouse()
+         self.setBackgroundColor(*BACKGROUND_RGB, 1.0)
+ 
+diff --git a/src/gui/camera_views.py b/src/gui/camera_views.py
+index 4b22328..2badbdf 100644
+--- a/src/gui/camera_views.py
++++ b/src/gui/camera_views.py
+@@ -84,7 +84,9 @@ class CameraViewController:
+             self._focus = target
+             self.camera.set_view(spec.config, bounds=self._bounds(target))
+         else:
+-            self.camera.set_view(spec.config)   # whole board
++            from src.gui.temple_environment import visible_board_bounds
++            board = self.controller.board_data
++            self.camera.set_view(spec.config, bounds=visible_board_bounds(board) if board is not None else None)
+         self._apply_keys(spec.follow)
+         self._set_label()
+ 
+diff --git a/src/gui/dashboard_preview.py b/src/gui/dashboard_preview.py
+index 8b81b20..0ba981b 100644
+--- a/src/gui/dashboard_preview.py
++++ b/src/gui/dashboard_preview.py
+@@ -13,21 +13,31 @@ class DashboardPresentation:
+     """Own only HUD/viewport; existing presentation owns camera/lights/style."""
+ 
+     def __init__(self, app, model):
+-        self.hud = self.viewport = None
++        self.hud = self.viewport = self.bloom = None
+         self._disposed = False
+         self._callbacks = app.finalExitCallbacks
+         self._scene_root = app.scene_root
++        self._app = app
+         try:
+             self.hud = HudShell(app.pixel2d, model)
+             self.viewport = DashboardViewport(
+                 app.win, app.cam, app.presentation.camera,
+                 on_refit=app.presentation._refit, on_layout=self.hud.apply_layout)
++            from src.gui.cinematic_bloom import CinematicBloom
++            self.bloom = CinematicBloom(app)
+             # Run before PreviewPresentation even when caller only destroys host.
+             self._callbacks.insert(0, self.dispose)
+         except BaseException:
+             self.dispose()
+             raise
+ 
++    def set_quality(self, choice):
++        from src.gui.visual_materials import set_quality
++        from src.gui.cinematic_bloom import CinematicBloom
++        set_quality(choice)
++        if self.bloom is not None:self.bloom.dispose()
++        self.bloom=CinematicBloom(self._app)
++
+     def dispose(self):
+         if self._disposed:
+             return
+@@ -35,6 +45,8 @@ class DashboardPresentation:
+         if self.dispose in self._callbacks:
+             self._callbacks.remove(self.dispose)
+         try:
++            if self.bloom is not None:
++                self.bloom.dispose()
+             if self.viewport is not None:
+                 self.viewport.dispose(refit=not self._scene_root.isEmpty())
+         finally:
+@@ -42,6 +54,7 @@ class DashboardPresentation:
+                 self.hud.dispose()
+             self._callbacks = None
+             self._scene_root = None
++            self._app = None
+ 
+ 
+ def create_dashboard(level=DEFAULT_LEVEL, *, pose=BasicOrientation.STANDING,
+diff --git a/src/gui/game_app.py b/src/gui/game_app.py
+index 5b80318..d8a9f69 100644
+--- a/src/gui/game_app.py
++++ b/src/gui/game_app.py
+@@ -5,6 +5,7 @@ GameController, menus in screens.UIFlow, visuals in the Advanced renderer stack.
+ """
+ 
+ import argparse
++import os
+ from pathlib import Path
+ 
+ from panda3d.core import WindowProperties, loadPrcFileData, unloadPrcFile
+@@ -44,6 +45,10 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
+     renderer = controller = flow = views = None
+     try:
+         save = SaveData(save_path)
++        from src.gui.visual_materials import set_quality
++        from src.gui.visual_quality import CHOICES
++        requested=os.environ.get('BLOXORZ_QUALITY',save.settings.quality)
++        set_quality(requested if requested in CHOICES else save.settings.quality)
+         audio = AudioManager(app, music_volume=save.settings.music_volume,
+                              sfx_volume=save.settings.sfx_volume,
+                              music_enabled=save.settings.music,
+@@ -61,7 +66,8 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
+             left, right, bottom, top = app.dashboard.viewport.region.getDimensions()
+             size = (max(1, round((right - left) * width)), max(1, round((top - bottom) * height)))
+             # Refit also triggers background/light updates via on_refit.
+-            app.presentation.camera.fit_board(build_framing_data(board), *size)
++            from src.gui.temple_environment import visible_board_bounds
++            app.presentation.camera.fit_board(build_framing_data(board), *size, bounds=visible_board_bounds(board))
+             if views is not None:
+                 views.on_level_loaded()
+ 
+diff --git a/src/gui/hud.py b/src/gui/hud.py
+index 20294fc..9546428 100644
+--- a/src/gui/hud.py
++++ b/src/gui/hud.py
+@@ -74,13 +74,13 @@ MARGIN, GAP, BTN_H, TEXT = 20, 10, 46, 22
+ SQ = BTN_H                 # icon buttons are squares
+ ICON_HALF = 14             # icon half-size in pixels
+ DIVIDER = 24               # extra space separating Exit from the other tools
+-TOP_ROW = (('Exit', SQ), ('Restart', SQ), ('Guide', SQ), ('View', SQ), ('Tutorial', SQ))
++TOP_ROW = (('Exit', 104), ('Restart', 134), ('Guide', 166), ('View', SQ), ('Tutorial', SQ))
+ SOLVERS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*')
+ PLAYBACK = (('Play', SQ), ('Step', SQ))
+ SOLVER_W = 84
+ ROW2_Y = MARGIN + BTN_H + GAP
+-LEVEL_SIZE, STATUS_SIZE = 30, 18
+-TIP_SPACE = 170            # room reserved for the hover name next to the toolbar
++LEVEL_SIZE, STATUS_SIZE = 24, 17
++TIP_SPACE = 0            # room reserved for the hover name next to the toolbar
+ 
+ 
+ def _top_positions():
+@@ -134,12 +134,21 @@ class HudShell:
+         try:
+             from direct.gui.DirectGui import DirectFrame
+             self.metrics = self._own(DirectFrame(parent=self.root, relief=DGG.FLAT,
+-                frameColor=ui.PAPER, frameSize=(0, 1, -76, 0)))
++                frameColor=(0,0,0,0), frameSize=(0, 1, -76, 0)))
+             self.surfaces = {'controls': self.bar, 'metrics': self.metrics}
+             self.metric_labels = [self._label(text, 14, 0, 0, muted=True, parent=self.metrics)
+                                   for text in METRIC_LABELS]
+             self.metric_values = [self._label(UNKNOWN, 20, 0, 0, parent=self.metrics)
+                                   for _ in METRIC_LABELS]
++            self.metric_icons=[]
++            self.metric_dividers=[]
++            for index,key in enumerate(('steps','clock','nodes','graph','chip')):
++                icon=icons.make_icon(key);icon.reparentTo(self.metrics)
++                icon.setScale(14);icon.setColor(*ui.GOLD)
++                self.metric_icons.append(icon)
++                if index:
++                    divider=ui.rounded_rect(1,48,0,ui.LINE);divider.reparentTo(self.metrics)
++                    self.metric_dividers.append(divider)
+             for (name, width), x in zip(TOP_ROW, TOP_X):
+                 self._add_button(name, x, MARGIN, width)
+             for i, name in enumerate(SOLVERS):
+@@ -164,11 +173,15 @@ class HudShell:
+                                           muted=True)
+             self._playback.append(self.speed_text)
+ 
+-            self.tip = self._label('', 18, LEFT_END + 16, MARGIN + 30, muted=True)
+-            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 30, align='right')
+-            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 52, align='right', muted=True)
++            self.tip = self._label('', 14, MARGIN, ROW2_Y + BTN_H + 20, muted=True)
++            self.info = self._own(DirectFrame(parent=self.bar,relief=None))
++            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 24, align='right')
++            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 46, align='right', muted=True)
+             self.warning = self._label('Minimum window size: 1024 x 720', 16, 0, 0, align='center',
+                                        parent=self.root)
++            # The 3D region is disabled below minimum size; the host clear is
++            # pale in either theme, so this fallback needs a fixed dark ink.
++            self.warning['text_fg'] = TEXT_PRIMARY
+             self.warning.hide()
+             self.set_guide_visible(False)
+             self.update_view_model(model)
+@@ -187,13 +200,16 @@ class HudShell:
+ 
+     def _add_button(self, name, x, y, width, group=None):
+         has_icon = name in ICONS
+-        button = ui.make_button(self.bar, '' if has_icon else name, x, y, width, BTN_H,
+-                                None, size=TEXT, enabled=False)
++        caption = {'Exit':'Exit','Restart':'Restart','Guide':'AI Solver'}.get(name, '' if has_icon else name)
++        button = ui.make_button(self.bar, caption, x, y, width, BTN_H,
++                                None, size=19 if has_icon else TEXT, enabled=False)
+         self._own(button.border)
+         self._own(button)
+         self.buttons[name] = button
+         if has_icon:
+-            self._add_icon(name, x + width / 2, y + BTN_H / 2)
++            self._add_icon(name, x + (25 if caption else width / 2), y + BTN_H / 2)
++            if caption:
++                button['text_pos'] = (width/2 + 13, -BTN_H/2 - 5)
+         self._bind_tip(name, button)
+         if group is not None:
+             group.append(button.border)
+@@ -333,7 +349,7 @@ class HudShell:
+             widget.show() if visible else widget.hide()
+ 
+     def _style_dynamic(self):
+-        ui.style_button(self.buttons['Guide'], primary=self._guide_open)
++        ui.style_button(self.buttons['Guide'], primary=True)
+         for name in SOLVERS:
+             ui.style_button(self.buttons[name], primary=name == self._selected)
+         self._tint_icons()
+@@ -353,33 +369,39 @@ class HudShell:
+         self.runtime['text_fg'] = ui.MUTED
+         self.tip['text_fg'] = ui.MUTED
+         self.speed_text['text_fg'] = ui.MUTED
+-        self.warning['text_fg'] = ui.INK
++        self.warning['text_fg'] = TEXT_PRIMARY
+         self.speed['frameColor'] = ui.LINE
+         self.speed.thumb['frameColor'] = ui.PRIMARY
+-        self.metrics['frameColor'] = ui.PAPER
++        self._style_metrics()
++        for icon in self.metric_icons:
++            icon.setColor(*ui.GOLD)
+         for label in self.metric_labels:
+             label['text_fg'] = ui.MUTED
+         for label in self.metric_values:
+             label['text_fg'] = ui.INK
+ 
+     # ------------------------------------------------------------ layout/data
+-    def _fit_text(self, label, text, size, max_width):
++    def _fit_text(self, label, text, size, max_width, suffix=''):
+         node = self._TextNode('HUDTextMeasure')
+         if node.calcWidth(text) * size <= max_width:
+             label['text'] = text
+             return
+-        while text and node.calcWidth(text + '…') * size > max_width:
++        if suffix and text.endswith(suffix):
++            text=text[:-len(suffix)]
++        while text and node.calcWidth(text + '…' + suffix) * size > max_width:
+             text = text[:-1]
+-        label['text'] = text + '…'
++        label['text'] = text + '…' + suffix
+ 
+     def _refresh_texts(self):
+         width = self.layout.width if self.layout else 1024
+-        self._fit_text(self.level, self.model.level_label, LEVEL_SIZE,
+-                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE))
++        title=self.model.level_label
++        tail=' ('+title.rsplit(' (',1)[-1] if ' (' in title and '/' in title.rsplit(' (',1)[-1] and title.endswith(')') else ''
++        self._fit_text(self.level, title, LEVEL_SIZE,
++                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE), suffix=tail)
+         self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
+         cell = (width - 40) / 5
+         for label, value in zip(self.metric_values, metric_values(self.model)):
+-            self._fit_text(label, value, 20, cell - 20)
++            self._fit_text(label, value, 20, cell - 56)
+ 
+     def apply_layout(self, layout):
+         if self._disposed:
+@@ -396,14 +418,29 @@ class HudShell:
+         self.metrics.show()
+         self.metrics.setPos(20, 0, -(layout.height - 94))
+         self.metrics['frameSize'] = (0, layout.width - 40, -76, 0)
++        self._style_metrics()
+         cell = (layout.width - 40) / 5
+         for index, (label, value) in enumerate(zip(self.metric_labels, self.metric_values)):
+-            label.setPos(index * cell + 10, 0, -24)
+-            value.setPos(index * cell + 10, 0, -55)
+-        self.level.setX(layout.width - MARGIN)
+-        self.runtime.setX(layout.width - MARGIN)
++            label.setPos(index * cell + 46, 0, -24)
++            self.metric_icons[index].setPos(index*cell+24,0,-30)
++            if index:
++                self.metric_dividers[index-1].setPos(index*cell,0,-14)
++            value.setPos(index * cell + 46, 0, -55)
++        info_width = max(150,layout.width - LEFT_END - 3*MARGIN)
++        self.info.setPos(layout.width-info_width-MARGIN,0,-MARGIN)
++        self.info['geom'] = ui.rounded_rect(info_width,52,10,ui.PAPER)
++        self.level.setX(layout.width - MARGIN - 10)
++        self.runtime.setX(layout.width - MARGIN - 10)
+         self._refresh_texts()
+ 
++    def _style_metrics(self):
++        width = self.layout.width-40 if self.layout else 1240
++        # Two nested rounded meshes provide a luminous one-pixel frame.
++        border = ui.rounded_outline(width,76,12,ui.LINE)
++        fill = ui.rounded_rect(width-2,74,11,ui.PAPER)
++        fill.reparentTo(border); fill.setPos(1,-.01,-1)
++        self.metrics['geom'] = border
++
+     def contains_pointer_pixels(self, x, y):
+         """Reserve visible toolbar/status and metric bands for the HUD."""
+         if self.layout is None or not self.layout.supported:
+diff --git a/src/gui/icons.py b/src/gui/icons.py
+index 5ec6be7..de5667a 100644
+--- a/src/gui/icons.py
++++ b/src/gui/icons.py
+@@ -141,4 +141,29 @@ def make_icon(name):
+     path.setLightOff(1)
+     path.setShaderOff(1)
+     path.setTransparency(TransparencyAttrib.MAlpha)
+-    return path
+\ No newline at end of file
++    return path
++
++def _clock():
++    return _band(_circle_points(.78), _circle_points(.62)) + _rect(-.08,0,.08,.58) + _rect(0,-.08,.45,.08) + _rect(-.23,.84,.23,.98)
++
++
++def _graph():
++    return _rect(-.8,-.8,-.45,.05)+_rect(-.2,-.8,.15,.85)+_rect(.4,-.8,.75,.42)
++
++
++def _chip():
++    tris=_band([(-.64,-.64),(.64,-.64),(.64,.64),(-.64,.64)], [(-.48,-.48),(.48,-.48),(.48,.48),(-.48,.48)])
++    for off in (-.4,0,.4):
++        tris+=_rect(off-.06,.68,off+.06,.95)+_rect(off-.06,-.95,off+.06,-.68)
++        tris+=_rect(.68,off-.06,.95,off+.06)+_rect(-.95,off-.06,-.68,off+.06)
++    return tris
++
++
++def _nodes():
++    return _rect(-.07,-.52,.07,.5)+_rect(-.6,-.5,.6,-.36)+_disc(0,.65,.23)+_disc(-.6,-.55,.23)+_disc(.6,-.55,.23)
++
++
++def _steps():
++    return _disc(-.42,.36,.28)+_disc(.4,-.22,.28)+_rect(-.57,-.3,-.27,.18)+_rect(.25,-.88,.55,-.4)
++
++BUILDERS.update(clock=_clock,graph=_graph,chip=_chip,nodes=_nodes,steps=_steps)
+diff --git a/src/gui/level_intro.py b/src/gui/level_intro.py
+index 37a3bed..0ca7bc0 100644
+--- a/src/gui/level_intro.py
++++ b/src/gui/level_intro.py
+@@ -13,6 +13,7 @@ class LevelIntro:
+     def __init__(self, app, on_done=None):
+         self.app, self.on_done = app, on_done
+         self.active = False
++        self._hidden_growth = []
+         self._items, self._t, self._task, self._block_z = [], 0.0, None, 0.0
+ 
+     @staticmethod
+@@ -30,6 +31,10 @@ class LevelIntro:
+     def play(self, rows, cols):
+         self.finish(notify=False)
+         app = self.app
++        for node in app.static_board_root.findAllMatches('**/TempleEdgeGrowth'):
++            if not node.isHidden():
++                node.hide()
++                self._hidden_growth.append(node)
+         span = max(1, rows + cols - 2)
+         for root in (app.static_board_root, app.dynamic_tile_root):
+             for node in root.findAllMatches('**/=cell'):
+@@ -72,6 +77,9 @@ class LevelIntro:
+                 node.setPos(pos)
+                 node.setScale(1)
+         self._items = []
++        for node in self._hidden_growth:
++            if not node.isEmpty():node.show()
++        self._hidden_growth=[]
+         block = self.app.block_root
+         if not block.isEmpty():
+             block.setZ(self._block_z)
+diff --git a/src/gui/mesh_factory.py b/src/gui/mesh_factory.py
+index c31b0c5..0784a11 100644
+--- a/src/gui/mesh_factory.py
++++ b/src/gui/mesh_factory.py
+@@ -2,7 +2,6 @@
+ 
+ from itertools import combinations, product
+ import math
+-import random
+ 
+ from panda3d.core import (
+     Geom, GeomNode, GeomTriangles, GeomVertexData, GeomVertexFormat,
+@@ -21,20 +20,18 @@ BLOCK_MAIN = _rgb("527B9C")
+ BLOCK_DARK = _rgb("354F68")
+ BLOCK_HIGHLIGHT = _rgb("91ADC3")
+ 
+-# Ô đích theo theme: sáng = gỗ nâu, tối = tuyết trắng.
++# Goal rim stays warm and legible in either theme; the cavity remains dark.
+ GOAL_THEME_COLORS = {
+-    'light': dict(rim=_rgb("A5683A"), wall=_rgb("6E4322"), floor=_rgb("C98F57")),
+-    'dark': dict(rim=_rgb("FFFFFF"), wall=_rgb("C7DBEE"), floor=_rgb("EEF6FF")),
++    'light': dict(rim=_rgb("FF9C24"), wall=_rgb("26362F"), floor=_rgb("101D18")),
++    'dark': dict(rim=_rgb("FFAC38"), wall=_rgb("20354B"), floor=_rgb("081320")),
+ }
+-# Giữ tên cũ (bản sáng) để file/test khác import vẫn chạy.
++# Preserve the public light-theme constants for existing callers.
+ GOAL_RIM = GOAL_THEME_COLORS['light']['rim']
+ GOAL_WALL = GOAL_THEME_COLORS['light']['wall']
+ GOAL_FLOOR = GOAL_THEME_COLORS['light']['floor']
+ GOAL_INTERIOR = GOAL_WALL
+ 
+-# Màu block theo theme. Màu đã "nướng" vào vertex color nên BLOCK_TINT phải là (1,1,1,1).
+-#   light: khối nâu đất, dính từng mảng rêu xanh.
+-#   dark : khối xanh dương, rải vài chấm tuyết trắng.
++# Legacy palette exported for compatibility; the active block now uses magma textures.
+ BLOCK_THEME_COLORS = {
+     'light': dict(main=_rgb("8A5A34"), dark=_rgb("5C3B22"), edge=_rgb("B98A5C"),
+                   inlay=_rgb("C9A074"), spot=_rgb("5F8A2E"), spot2=_rgb("86AD43")),
+@@ -48,12 +45,14 @@ class _MeshBuilder:
+ 
+     def __init__(self, name: str):
+         self.name = name
+-        self.data = GeomVertexData(name, GeomVertexFormat.getV3n3c4(), Geom.UHStatic)
++        self.data = GeomVertexData(name, GeomVertexFormat.getV3n3c4t2(), Geom.UHStatic)
+         self.vertices = GeomVertexWriter(self.data, "vertex")
+         self.normals = GeomVertexWriter(self.data, "normal")
+         self.colors = GeomVertexWriter(self.data, "color")
++        self.uvs = GeomVertexWriter(self.data, "texcoord")
+         self.triangles = GeomTriangles(Geom.UHStatic)
+         self.count = 0
++        self.uv_offset = (0., 0.)
+ 
+     def face(self, points, normal, color):
+         points = list(points)
+@@ -63,7 +62,10 @@ class _MeshBuilder:
+         if cross.dot(normal) < 0:
+             points.reverse()
+         offset = self.count
++        axis = max(range(3), key=lambda i: abs(normal[i]))
++        axes = [i for i in range(3) if i != axis]
+         for point in points:
++            self.uvs.addData2f(point[axes[0]] + .5 + axis*.173 + self.uv_offset[0], point[axes[1]] + .5 + axis*.291 + self.uv_offset[1])
+             self.vertices.addData3f(*point)
+             self.normals.addData3f(normal)
+             self.colors.addData4f(*color)
+@@ -152,48 +154,7 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
+     return node
+ 
+ 
+-def _spots(builder, half, bevel, colors, kind, skip_faces=()):
+-    """Flush convex ellipses on every face. Deterministic (seeded per face).
+-
+-    kind 'moss': a few large irregular patches + small blobs.
+-    kind 'snow': several small round dots.
+-    """
+-    inset = [h - bevel for h in half]
+-    lift = 0.0  # flush decals keep the rigid support envelope exact
+-    for axis in range(3):
+-        others = [a for a in range(3) if a != axis]
+-        for sign in (-1, 1):
+-            if (axis, sign) in skip_faces:
+-                continue
+-            rng = random.Random(100 + axis * 2 + (1 if sign > 0 else 0))
+-            shapes = []
+-            if kind == 'moss':
+-                for _ in range(rng.randint(2, 3)):
+-                    shapes.append((rng.uniform(.16, .34), rng.uniform(.16, .34)))
+-                for _ in range(rng.randint(2, 3)):
+-                    shapes.append((rng.uniform(.06, .11), rng.uniform(.06, .11)))
+-            else:
+-                for _ in range(rng.randint(4, 6)):
+-                    r = rng.uniform(.07, .13)
+-                    shapes.append((r, r))
+-            for index, (ru, rv) in enumerate(shapes):
+-                u0 = rng.uniform(-(1 - ru), 1 - ru)
+-                v0 = rng.uniform(-(1 - rv), 1 - rv)
+-                color = colors['spot'] if index % 2 == 0 else colors['spot2']
+-                points = []
+-                for k in range(12):
+-                    angle = math.tau * k / 12
+-                    point = [0.0] * 3
+-                    point[axis] = sign * (half[axis] + lift)
+-                    point[others[0]] = (u0 + ru * math.cos(angle)) * inset[others[0]]
+-                    point[others[1]] = (v0 + rv * math.sin(angle)) * inset[others[1]]
+-                    points.append(point)
+-                normal = [0, 0, 0]
+-                normal[axis] = sign
+-                builder.face(points, normal, color)
+-
+-
+-def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
++def make_floor_mesh(*, pitch: float = 1.0, theme='light') -> GeomNode:
+     """Return a shared local tile: top 0, bottom -0.18s, width/depth 0.96s."""
+     _pitch(pitch)
+     colors = {(axis, sign): FLOOR_TOP if axis == 2 and sign == 1 else FLOOR_SIDE
+@@ -203,7 +164,8 @@ def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
+     # Bake the tile offset into vertices; the reusable instance transform is XY only.
+     from panda3d.core import Mat4
+     node.modifyGeom(0).transformVertices(Mat4.translateMat(0, 0, -0.09 * pitch))
+-    return node
++    from src.gui.visual_materials import apply
++    return apply(node, "stone", theme)
+ 
+ 
+ def make_goal_mesh(*, pitch: float = 1.0, theme: str = 'light') -> GeomNode:
+@@ -232,40 +194,32 @@ def make_goal_mesh(*, pitch: float = 1.0, theme: str = 'light') -> GeomNode:
+ 
+ 
+ def make_block_mesh(*, pitch: float = 1.0) -> GeomNode:
+-    """Return one centered nominal s×s×2s prototype with a flush asymmetric inlay."""
+-    _pitch(pitch)
+-    colors = {(axis, sign): (BLOCK_DARK if (axis, sign) in ((0, -1), (2, -1))
+-                             else BLOCK_MAIN)
+-              for axis in range(3) for sign in (-1, 1)}
+-    return _beveled_box("MainBlockMesh", (pitch, pitch, 2 * pitch), 0.03 * pitch,
+-                        colors, BLOCK_HIGHLIGHT, inlay=True)
++    """Default magma prototype, retaining the Basic renderer's public mesh name."""
++    mesh = make_themed_block_mesh('light', pitch=pitch)
++    mesh.setName('MainBlockMesh')
++    return mesh
+ 
+ 
+ def make_themed_block_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
+-    """Khối s×s×2s theo theme: 'light' nâu + rêu, 'dark' xanh dương + chấm tuyết."""
++    """Rigid UV-mapped volcanic cuboid; geometry never expands beyond 1×1×2."""
+     _pitch(pitch)
+-    c = BLOCK_THEME_COLORS[theme]
+-    colors = {(axis, sign): (c['dark'] if (axis, sign) in ((0, -1), (2, -1)) else c['main'])
+-              for axis in range(3) for sign in (-1, 1)}
+-    bevel = 0.03 * pitch
+-    kind = 'moss' if theme == 'light' else 'snow'
+-    return _beveled_box(
+-        f"MainBlockMesh-{theme}", (pitch, pitch, 2 * pitch), bevel, colors, c['edge'],
+-        inlay=True, inlay_color=c['inlay'],
+-        # Bỏ mặt (1,-1) vì mặt đó đã có miếng inlay.
+-        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind, {(1, -1)}))
++    if theme not in BLOCK_THEME_COLORS:
++        raise ValueError('theme must be light or dark')
++    from src.gui.visual_materials import apply
++    colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
++    return apply(_beveled_box(f"MainBlockMesh-{theme}", (pitch,pitch,2*pitch),
++        .03*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
+ 
+ 
+ def make_themed_cube_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
+-    """Khối con 1x1x1 (sau khi tách) cùng bảng màu và hoa văn với khối chính."""
++    """Split basalt shares the local UV/material pipeline of the whole actor."""
+     _pitch(pitch)
+-    c = BLOCK_THEME_COLORS[theme]
+-    colors = {(axis, sign): c['main'] for axis in range(3) for sign in (-1, 1)}
+-    bevel = 0.02 * pitch
+-    kind = 'moss' if theme == 'light' else 'snow'
+-    return _beveled_box(
+-        f"SplitCubeMesh-{theme}", (pitch, pitch, pitch), bevel, colors, c['edge'],
+-        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind))
++    if theme not in BLOCK_THEME_COLORS:
++        raise ValueError('theme must be light or dark')
++    from src.gui.visual_materials import apply
++    colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
++    return apply(_beveled_box(f"SplitCubeMesh-{theme}", (pitch,pitch,pitch),
++        .02*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
+ 
+ 
+ class MeshBuilder(_MeshBuilder):
+diff --git a/src/gui/profile.py b/src/gui/profile.py
+index ac00770..b905505 100644
+--- a/src/gui/profile.py
++++ b/src/gui/profile.py
+@@ -13,6 +13,7 @@ THEMES = ('light', 'dark')
+ class Settings:
+     control_mode: str = 'keyboard'
+     theme: str = 'light'
++    quality: str = 'auto'
+     music: bool = True
+     music_volume: float = 0.7
+     sfx: bool = True
+@@ -55,6 +56,8 @@ class SaveData:
+                 self.settings.control_mode = settings['control_mode']
+             if settings.get('theme') in THEMES:
+                 self.settings.theme = settings['theme']
++            if settings.get('quality') in ('auto','high','balanced','low'):
++                self.settings.quality=settings['quality']
+             legacy = settings.get('volume')            # save cũ: một âm lượng chung
+             for key in ('music_volume', 'sfx_volume'):
+                 value = settings.get(key, legacy)
+@@ -70,6 +73,7 @@ class SaveData:
+     def save(self):
+         payload = {'settings': {'control_mode': self.settings.control_mode,
+                                 'theme': self.settings.theme,
++                                'quality': self.settings.quality,
+                                 'music': self.settings.music,
+                                 'music_volume': self.settings.music_volume,
+                                 'sfx': self.settings.sfx,
+diff --git a/src/gui/scene_style.py b/src/gui/scene_style.py
+index 501f34c..0c0b86c 100644
+--- a/src/gui/scene_style.py
++++ b/src/gui/scene_style.py
+@@ -2,8 +2,8 @@
+ """Matte materials, an unlit image backdrop and verified framebuffer AA state.
+ 
+ Backdrop images:
+-    assets/backgrounds/night.png -> dark theme
+-    assets/backgrounds/day.png   -> light theme
++    assets/backgrounds/winter-temple.png -> dark theme
++    assets/backgrounds/jungle-temple.png -> light theme
+ 
+ If an image is missing, a two-colour gradient is used.
+ """
+@@ -35,11 +35,11 @@ GRADIENTS = {
+ }
+ 
+ ASSET_DIR = Path(__file__).resolve().parents[2] / "assets" / "backgrounds"
+-BACKGROUND_NAMES = {"light": "day", "dark": "night"}
++BACKGROUND_NAMES = {"light": "jungle-temple", "dark": "winter-temple"}
+ 
+ FLOOR_TINT = {
+-    "light": (1.0, 0.90, 0.68, 1.0),
+-    "dark": (0.80, 0.80, 1.0, 1.0),
++    "light": (1.0, 1.0, 1.0, 1.0),
++    "dark": (1.0, 1.0, 1.0, 1.0),
+ }
+ 
+ BLOCK_TINT = {
+diff --git a/src/gui/screens.py b/src/gui/screens.py
+index c7c0217..740ed0c 100644
+--- a/src/gui/screens.py
++++ b/src/gui/screens.py
+@@ -193,33 +193,42 @@ class SettingsScreen(Screen):
+     def build(self, width, height):
+         flow, settings = self.flow, self.flow.save.settings
+         self._ready = False             # slider callbacks fire during construction
+-        cw, ch = 560, 660
++        cw, ch = 560, 690
+         x0, y0 = (width - cw) / 2, (height - ch) / 2
+         self.card(x0, y0, cw, ch, alpha=.97)
+         self.label('Settings', 40, width / 2, y0 + 62, align='center')
+-        self.label('Controls', 20, x0 + 40, y0 + 125, color=ui.MUTED)
++        self.label('Controls', 20, x0 + 40, y0 + 105, color=ui.MUTED)
+         self._toggles = {}
+         for i, (mode, text) in enumerate((('keyboard', 'Keyboard'), ('mouse', 'Mouse'))):
+-            self._toggles[mode] = self.button(text, x0 + 40 + i * 250, y0 + 142, 230, 50,
++            self._toggles[mode] = self.button(text, x0 + 40 + i * 250, y0 + 120, 230, 44,
+                                               lambda m=mode: self._set_mode(m))
+-        self._hint = self.label('', 17, width / 2, y0 + 228, color=ui.MUTED, align='center')
++        self._hint = self.label('', 17, width / 2, y0 + 190, color=ui.MUTED, align='center')
+         self._apply_mode(settings.control_mode)
+ 
+-        self.label('Appearance', 20, x0 + 40, y0 + 270, color=ui.MUTED)
++        self.label('Appearance', 20, x0 + 40, y0 + 225, color=ui.MUTED)
+         for i, (theme, text) in enumerate((('light', 'Light'), ('dark', 'Dark'))):
+-            self.button(text, x0 + 40 + i * 250, y0 + 286, 230, 50,
++            self.button(text, x0 + 40 + i * 250, y0 + 240, 230, 44,
+                         lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
+ 
+-        self.label('Music', 20, x0 + 40, y0 + 368, color=ui.MUTED)
++        self.label('Graphics quality',20,x0+40,y0+320,color=ui.MUTED)
++        self._quality_buttons={}
++        for i,(quality,text) in enumerate((('auto','Auto'),('high','High'),('balanced','Balanced'),('low','Low'))):
++            self._quality_buttons[quality]=self.button(text,x0+40+i*123,y0+336,112,42,
++                lambda q=quality:self._set_quality(q),primary=settings.quality==quality,size=18)
++        from src.gui import visual_quality
++        self._quality_hint=self.label(visual_quality.CURRENT.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately',14,
++            width/2,y0+402,color=ui.MUTED,align='center')
++
++        self.label('Music', 20, x0 + 40, y0 + 435, color=ui.MUTED)
+         (self._music_buttons, self._music_slider,
+          self._music_text) = self._audio_row(
+-            x0, cw, y0 + 382, settings.music, self._set_music,
++            x0, cw, y0 + 450, settings.music, self._set_music,
+             settings.music_volume, self._on_music_volume, self._music_released)
+ 
+-        self.label('Sound effects', 20, x0 + 40, y0 + 464, color=ui.MUTED)
++        self.label('Sound effects', 20, x0 + 40, y0 + 530, color=ui.MUTED)
+         (self._sfx_buttons, self._sfx_slider,
+          self._sfx_text) = self._audio_row(
+-            x0, cw, y0 + 478, settings.sfx, self._set_sfx,
++            x0, cw, y0 + 545, settings.sfx, self._set_sfx,
+             settings.sfx_volume, self._on_sfx_volume, self._sfx_released)
+ 
+         self.button('Back', x0 + (cw - 200) / 2, y0 + ch - 76, 200, 50,
+@@ -261,6 +270,15 @@ class SettingsScreen(Screen):
+         for value, button in self._sfx_buttons.items():
+             ui.style_button(button, primary=value == enabled)
+ 
++    def _set_quality(self, quality):
++        self.flow.app.dashboard.set_quality(quality)
++        self.flow.save.settings.quality=quality
++        self.flow.save.save()
++        from src.gui import visual_quality
++        for name,button in self._quality_buttons.items():
++            ui.style_button(button,primary=name==quality)
++        self._quality_hint['text']=quality.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately'
++
+     def _set_theme(self, theme):
+         self.flow.save.settings.theme = theme
+         self.flow.save.save()
+diff --git a/src/gui/ui_theme.py b/src/gui/ui_theme.py
+index c374783..f969281 100644
+--- a/src/gui/ui_theme.py
++++ b/src/gui/ui_theme.py
+@@ -14,18 +14,18 @@ def rgba(hex_value, alpha=1.0):
+ WHITE = (1, 1, 1, 1)
+ 
+ THEMES = {
+-    'light': dict(INK='273B50', MUTED='61778B', LINE='D1DEE8',
+-                  PAPER='FFFFFF', PAPER_HOVER='E7EFF5', PAPER_PRESSED='D1DEE8',
+-                  PRIMARY='273B50', PRIMARY_HOVER='3B5772', PRIMARY_PRESSED='1B2B3C',
+-                  ON_PRIMARY='FFFFFF', CARD='FFFFFF',
+-                  DISABLED='E7EFF5', DISABLED_TEXT='9FB0C0',
+-                  GOLD='F5B83D', GOLD_OFF='D1DEE8'),
+-    'dark': dict(INK='E8EEF4', MUTED='9FB0C0', LINE='3A4F63',
+-                 PAPER='22313F', PAPER_HOVER='2C3E50', PAPER_PRESSED='1A2631',
+-                 PRIMARY='5B9BE0', PRIMARY_HOVER='73ADEB', PRIMARY_PRESSED='4380C4',
+-                 ON_PRIMARY='FFFFFF', CARD='18222C',
+-                 DISABLED='1C2733', DISABLED_TEXT='5A6B7B',
+-                 GOLD='F5B83D', GOLD_OFF='3A4F63'),
++    'light': dict(INK='F1F7F1', MUTED='BDCEC7', LINE='779D91',
++                  PAPER='102C29', PAPER_HOVER='23443C', PAPER_PRESSED='081D1B',
++                  PRIMARY='85440C', PRIMARY_HOVER='AA5B13', PRIMARY_PRESSED='633107',
++                  ON_PRIMARY='FFD06D', CARD='102722',
++                  DISABLED='1B302B', DISABLED_TEXT='758B82',
++                  GOLD='FFB82E', GOLD_OFF='40574B'),
++    'dark': dict(INK='F1F6FF', MUTED='AEC6DE', LINE='617F9F',
++                 PAPER='0B1D35', PAPER_HOVER='1D3655', PAPER_PRESSED='071326',
++                 PRIMARY='85400A', PRIMARY_HOVER='A95713', PRIMARY_PRESSED='602D08',
++                 ON_PRIMARY='FFD06D', CARD='0A172D',
++                 DISABLED='14243A', DISABLED_TEXT='6D829C',
++                 GOLD='FFB82E', GOLD_OFF='3D516B'),
+ }
+ CURRENT = 'light'
+ 
+@@ -36,7 +36,7 @@ def set_theme(name):
+     palette = THEMES.get(name, THEMES['light'])
+     CURRENT = name if name in THEMES else 'light'
+     for key, value in palette.items():
+-        globals()[key] = rgba(value)
++        globals()[key] = rgba(value, .90 if key in ('PAPER','CARD') else 1.)
+ 
+ 
+ set_theme('light')
+@@ -62,7 +62,8 @@ def rounded_rect(width, height, radius, color):
+     col.addData4(*color)
+     for x, z in points:
+         vertex.addData3(x, 0, z)
+-        col.addData4(*color)
++        shade = 1.07 if z > -height*.45 else .92
++        col.addData4(*(min(1,c*shade) for c in color[:3]), color[3])
+     triangles = GeomTriangles(Geom.UHStatic)
+     for i in range(len(points)):
+         triangles.addVertices(0, 1 + i, 1 + (i + 1) % len(points))
+@@ -76,6 +77,33 @@ def rounded_rect(width, height, radius, color):
+     return path
+ 
+ 
++def rounded_outline(width, height, radius, color, thickness=1):
++    """True hollow frame, leaving the translucent fill visible over scenery."""
++    from panda3d.core import (Geom,GeomNode,GeomTriangles,GeomVertexData,
++        GeomVertexFormat,GeomVertexWriter,NodePath,TransparencyAttrib)
++    def boundary(w,h,r,ox=0,oz=0):
++        points=[]
++        for cx,cz,start in ((w-r,-r,90),(w-r,-h+r,0),(r,-h+r,-90),(r,-r,-180)):
++            for step in range(9):
++                angle=math.radians(start-step*10)
++                points.append((cx+r*math.cos(angle)+ox,cz+r*math.sin(angle)+oz))
++        return points
++    outer=boundary(width,height,radius)
++    inner=boundary(width-2*thickness,height-2*thickness,max(0,radius-thickness),thickness,-thickness)
++    data=GeomVertexData('GlassOutline',GeomVertexFormat.getV3c4(),Geom.UHStatic)
++    v,c=GeomVertexWriter(data,'vertex'),GeomVertexWriter(data,'color')
++    for ring in (outer,inner):
++        for x,z in ring:v.addData3f(x,0,z);c.addData4f(*color)
++    triangles=GeomTriangles(Geom.UHStatic);n=len(outer)
++    for i in range(n):
++        j=(i+1)%n
++        triangles.addVertices(i,j,n+j);triangles.addVertices(i,n+j,n+i)
++    geom=Geom(data);geom.addPrimitive(triangles)
++    node=GeomNode('GlassOutline');node.addGeom(geom)
++    path=NodePath(node);path.setTwoSided(True);path.setTransparency(TransparencyAttrib.MAlpha)
++    return path
++
++
+ def _radius(height):
+     return min(height * .3, 24)
+ 
+@@ -87,7 +115,7 @@ def style_button(button, primary):
+               else (PAPER, PAPER_PRESSED, PAPER_HOVER, DISABLED))
+     button['geom'] = tuple(rounded_rect(width - 2, height - 2, radius - 1, c) for c in states)
+     button['text_fg'] = ON_PRIMARY if primary else INK
+-    button.border['geom'] = rounded_rect(width, height, radius, PRIMARY if primary else LINE)
++    button.border['geom'] = rounded_outline(width, height, radius, GOLD if primary else LINE)
+ 
+ 
+ def make_button(parent, text, x, y, width, height, command, *, primary=False,
+@@ -97,7 +125,7 @@ def make_button(parent, text, x, y, width, height, command, *, primary=False,
+     from direct.gui import DirectGuiGlobals as DGG
+     from panda3d.core import TextNode
+     border = DirectFrame(parent=parent, relief=None, pos=(x, 0, -y),
+-                         geom=rounded_rect(width, height, _radius(height), LINE))
++                         geom=rounded_outline(width, height, _radius(height), LINE))
+     inner_h = height - 2
+     button = DirectButton(
+         parent=border, text=text, text_scale=size, text_align=TextNode.ACenter,
+@@ -118,6 +146,7 @@ def make_label(parent, text, size, x, y, *, color=None, align='left'):
+     modes = {'left': TextNode.ALeft, 'center': TextNode.ACenter, 'right': TextNode.ARight}
+     return DirectLabel(parent=parent, text=text, text_scale=size,
+                        text_fg=INK if color is None else color, text_align=modes[align],
++                       text_shadow=(0.01,0.025,0.025,.85), text_shadowOffset=(.05,.06),
+                        pos=(x, 0, -y), relief=None, frameColor=(0, 0, 0, 0), state='disabled')
+ 
+ 
+diff --git a/tests/game_integration_support.py b/tests/game_integration_support.py
+index 1913020..6ce1ae4 100644
+--- a/tests/game_integration_support.py
++++ b/tests/game_integration_support.py
+@@ -9,7 +9,7 @@ from panda3d.core import NodePath
+ from src.gui.controller import GameController, LevelCatalog, LevelEntry
+ from src.gui.game_scene import GameScene
+ 
+-LEVELS = Path(__file__).resolve().parents[1] / 'levels'
++LEVELS = Path(__file__).resolve().parent / 'fixtures' / 'mechanics'
+ 
+ class GameIntegrationCase(unittest.TestCase):
+     def setUp(self):
+diff --git a/tests/test_gui_hud.py b/tests/test_gui_hud.py
+index 9100919..f964a2a 100644
+--- a/tests/test_gui_hud.py
++++ b/tests/test_gui_hud.py
+@@ -110,6 +110,19 @@ class HudWidgetTests(unittest.TestCase):
+                 else:
+                     self.assertGreaterEqual(button['frameSize'][1], 44)
+ 
++    def test_level_badge_does_not_overlap_playback_row(self):
++        from src.gui.hud import ROW2_Y
++        self.hud.set_guide_visible(True)
++        self.hud.select_solver('BFS')
++        low,high=self.hud.info['geom'].getTightBounds()
++        self.assertLessEqual(-(low.z+self.hud.info.getZ(self.hud.bar)),ROW2_Y)
++
++    def test_small_window_keeps_level_progress_when_title_is_elided(self):
++        self.hud.update_view_model(HudViewModel(level_label='Advanced Mechanics Sandbox (9 x 13) (11/18)'))
++        self.hud.apply_layout(calculate_layout(1024,720))
++        self.assertTrue(self.hud.level['text'].endswith('(11/18)'))
++        self.assertIn('…',self.hud.level['text'])
++
+     def test_long_labels_elided_and_small_window_recovers(self):
+         self.hud.update_view_model(HudViewModel(level_label='A very long level name ' * 10,
+                                                runtime_status='A long status ' * 10,
+diff --git a/tests/test_mouse_control.py b/tests/test_mouse_control.py
+index 25276b9..e2653e4 100644
+--- a/tests/test_mouse_control.py
++++ b/tests/test_mouse_control.py
+@@ -59,7 +59,7 @@ class SplitArrowTests(unittest.TestCase):
+         from unittest.mock import patch
+         from src.core.board import Board
+         from pathlib import Path
+-        board = Board(str(Path(__file__).resolve().parents[1] / 'levels/level_11_advanced_sandbox.json'))
++        board = Board(str(Path(__file__).resolve().parent / 'fixtures/mechanics/level_11_advanced_sandbox.json'))
+         controller = SimpleNamespace(board=board, state=BloxorzState.create_split((4, 5), (4, 9)),
+             board_data=SimpleNamespace(rows=9, cols=13), session_id='arrows', revision=0)
+         app = SimpleNamespace(render=NodePath('arrow-test'), pixel2d=NodePath('overlay-test'),
+diff --git a/tests/test_move_assist.py b/tests/test_move_assist.py
+index 9763e56..ee51029 100644
+--- a/tests/test_move_assist.py
++++ b/tests/test_move_assist.py
+@@ -12,7 +12,7 @@ from src.core.state import BloxorzState, Orientation
+ from src.gui.move_assist import predict_moves, MovePredictor, Severity
+ from src.gui.mouse_control import controlled_cells
+ 
+-LEVELS = Path(__file__).resolve().parents[1] / 'levels'
++LEVELS = Path(__file__).resolve().parent / 'fixtures' / 'mechanics'
+ 
+ 
+ class MovePredictionTests(unittest.TestCase):
+@@ -40,7 +40,7 @@ class MovePredictionTests(unittest.TestCase):
+         # Walk the actual rule graph, exercising bridge toggles, fragile, split,
+         # merge, and active-cube changes without invoking any solver.
+         split = merge = danger = bridge_changes = 0
+-        for path in sorted(LEVELS.glob('*.json')):
++        for path in sorted((*LEVELS.glob('*.json'), *(Path(__file__).resolve().parents[1]/'levels').glob('*.json'))):
+             board = Board(str(path)); before = copy.deepcopy(board.__dict__)
+             queue = deque([board.get_initial_state()]); seen = set(queue)
+             while queue and len(seen) < 600:
+@@ -137,7 +137,7 @@ class MovePredictionTests(unittest.TestCase):
+         result=subprocess.run([sys.executable,'-S','-B','-c',
+             "import sys; from src.gui.move_assist import predict_moves; "
+             "assert not any(n.startswith(('panda3d','direct','src.solvers')) for n in sys.modules)"],
+-            cwd=LEVELS.parent,capture_output=True,text=True)
++            cwd=Path(__file__).resolve().parents[1],capture_output=True,text=True)
+         self.assertEqual(result.returncode,0,result.stderr)
+ 
+     def test_fatal_split_preserves_both_teleport_markers(self):
+diff --git a/tools/game_integration_smoke.py b/tools/game_integration_smoke.py
+index 03818f0..f265ec6 100644
+--- a/tools/game_integration_smoke.py
++++ b/tools/game_integration_smoke.py
+@@ -25,6 +25,7 @@ def main(argv=None):
+     parser.add_argument('--all',action='store_true',help='All levels x all 6 solvers.')
+     parser.add_argument('--interactions-only',action='store_true',help='Skip repeated solver runs; check manual/UI lifecycle paths.')
+     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-game-integration'))
++    parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
+     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
+     from panda3d.core import loadPrcFileData,GraphicsEngine,GraphicsWindow
+     loadPrcFileData('game-qa-silent','audio-library-name null')
+@@ -37,7 +38,7 @@ def main(argv=None):
+     report={'solver_runs':[],'manual':{},'images':[],'observed_events':[]}
+     observed=set();goals=[]
+     with tempfile.TemporaryDirectory(prefix='game-native-qa-') as temp:
+-        app,renderer,c=create_game(save_path=Path(temp)/'save.json')
++        app,renderer,c=create_game(args.levels,save_path=Path(temp)/'save.json')
+         original=c._on_event
+         def on_event(event):
+             if event=='goal':goals.append((c.search_name,c.moves,c.session_id))
+diff --git a/tools/move_assist_smoke.py b/tools/move_assist_smoke.py
+index 009e71f..a704151 100644
+--- a/tools/move_assist_smoke.py
++++ b/tools/move_assist_smoke.py
+@@ -12,6 +12,7 @@ import tempfile
+ def main(argv=None):
+     parser=argparse.ArgumentParser(description=__doc__)
+     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-assist-qa/manual'))
++    parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
+     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
+     from panda3d.core import loadPrcFileData
+     loadPrcFileData('assist-qa','audio-library-name null')
+@@ -25,7 +26,7 @@ def main(argv=None):
+     from tools.gui_stage3_6_smoke import _present,_resize
+     report={'checks':[],'images':[],'input':'X11 XTest native keyboard and mouse'}
+     with tempfile.TemporaryDirectory(prefix='assist-native-') as temp:
+-        app,renderer,c=create_game(save_path=Path(temp)/'save.json')
++        app,renderer,c=create_game(args.levels,save_path=Path(temp)/'save.json')
+         driver=NativeInput(app);flow=app.game_flow;hud=app.dashboard.hud
+         assist=flow.arrows
+         def check(name):
+@@ -183,11 +184,11 @@ def main(argv=None):
+             # Stable pools through repeated restart/move/cancel cycles.
+             enter(rate=.25)
+             hover('R');driver.pointer(600,350);driver.step(3)
+-            baseline=len(app.taskMgr.getTasks())
++            baseline=len(app.taskMgr.getTasks())+len(app.taskMgr.getDoLaters())
+             for _ in range(10):
+                 driver.key('Right');driver.step(2);driver.key('r');driver.step(3)
+                 assert not c.manager.is_busy and c.moves==0
+-            assert len(app.taskMgr.getTasks())==baseline
++            assert len(app.taskMgr.getTasks())+len(app.taskMgr.getDoLaters())==baseline
+             check('Ten native mid-animation restarts retain task count')
+             report['status']='PASS'
+         except BaseException:

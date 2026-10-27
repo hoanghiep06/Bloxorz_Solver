@@ -5,6 +5,7 @@ GameController, menus in screens.UIFlow, visuals in the Advanced renderer stack.
 """
 
 import argparse
+import os
 from pathlib import Path
 
 from panda3d.core import WindowProperties, loadPrcFileData, unloadPrcFile
@@ -44,6 +45,10 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
     renderer = controller = flow = views = None
     try:
         save = SaveData(save_path)
+        from src.gui.visual_materials import set_quality
+        from src.gui.visual_quality import CHOICES
+        requested=os.environ.get('BLOXORZ_QUALITY',save.settings.quality)
+        set_quality(requested if requested in CHOICES else save.settings.quality)
         audio = AudioManager(app, music_volume=save.settings.music_volume,
                              sfx_volume=save.settings.sfx_volume,
                              music_enabled=save.settings.music,
@@ -61,7 +66,8 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
             left, right, bottom, top = app.dashboard.viewport.region.getDimensions()
             size = (max(1, round((right - left) * width)), max(1, round((top - bottom) * height)))
             # Refit also triggers background/light updates via on_refit.
-            app.presentation.camera.fit_board(build_framing_data(board), *size)
+            from src.gui.temple_environment import visible_board_bounds
+            app.presentation.camera.fit_board(build_framing_data(board), *size, bounds=visible_board_bounds(board))
             if views is not None:
                 views.on_level_loaded()
 

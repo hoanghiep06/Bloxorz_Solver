@@ -44,6 +44,7 @@ class AdvancedSceneRenderer:
         }
         # Ô đặc biệt (ô đích, cầu, ô cam vỡ, nút bấm): mỗi theme một bản mesh riêng.
         for theme in THEMES:
+            self._meshes[('floor', theme)] = make_floor_mesh(pitch=pitch, theme=theme)
             self._meshes[('goal', theme)] = make_goal_mesh(pitch=pitch, theme=theme)
             self._meshes[('bridge', theme)] = make_bridge_mesh(pitch=pitch, theme=theme)
             self._meshes[('intact', theme)] = make_fragile_mesh(pitch=pitch, theme=theme)
@@ -125,8 +126,10 @@ class AdvancedSceneRenderer:
                             node.setLightOff(1)        # không bị bóng/ánh sáng làm tối
                             node.setColorScaleOff(1)   # giữ đúng màu gỗ / tuyết, không bị tint
                         else:
-                            self._instance(static, f'Floor-{r}-{c}', 'floor',
+                            floor = self._tile_instance(static, f'Floor-{r}-{c}', 'floor',
                                            cell=cell, board=board_data)
+                            from src.gui.temple_environment import vary_tile
+                            vary_tile(floor, r, c)
                     elif kind is Tile.FRAGILE:
                         fragile[cell] = tuple(self._tile_instance(dynamic, f'Fragile-{key}-{r}-{c}', key,
                             cell=cell, board=board_data) for key in ('intact', 'broken'))
@@ -149,6 +152,8 @@ class AdvancedSceneRenderer:
             for flag in flags.values():
                 flag.setLightOff(1)        # cờ giữ đúng màu đỏ sáng, không bị tối
                 flag.setColorScaleOff(1)   # không bị tint theo theme
+            from src.gui.temple_environment import add_edge_growth
+            add_edge_growth(static, board_data, pitch=self._pitch)
             whole = self._themed_instance(blocks, 'WholeBlockVisual', 'whole')
             cubes = tuple(self._themed_instance(blocks, f'SplitCubeSlot-{i}', 'cube') for i in range(2))
             indicators = tuple(self._instance(cube, 'ActiveCubeIndicator', 'active') for cube in cubes)

@@ -1,0 +1,46 @@
+{
+  "images": [
+    "/tmp/jungle-completion-fallback/main-menu.png",
+    "/tmp/jungle-completion-fallback/game-comparable.png",
+    "/tmp/jungle-completion-fallback/solver-controls.png",
+    "/tmp/jungle-completion-fallback/dashboard-light-1280.png",
+    "/tmp/jungle-completion-fallback/dashboard-light-1024.png",
+    "/tmp/jungle-completion-fallback/dashboard-dark-1280.png",
+    "/tmp/jungle-completion-fallback/dashboard-dark-1024.png",
+    "/tmp/jungle-completion-fallback/magma-face-45.png",
+    "/tmp/jungle-completion-fallback/magma-face-135.png",
+    "/tmp/jungle-completion-fallback/magma-face-225.png",
+    "/tmp/jungle-completion-fallback/advanced-split.png",
+    "/tmp/jungle-completion-fallback/bridge-and-soft-switch.png"
+  ],
+  "checks": [
+    "Core split + native Space, two textured actors"
+  ],
+  "source": "native Panda3D framebuffer",
+  "resources_10_restarts": {
+    "before": {
+      "nodes": 781,
+      "tasks": 14,
+      "outputs": 1,
+      "widgets": 99
+    },
+    "after": {
+      "nodes": 781,
+      "tasks": 14,
+      "outputs": 1,
+      "widgets": 99
+    }
+  },
+  "render_frame_ms_median": 19.12,
+  "render_fps_median": 52.3,
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "material_status": "FIXED_FUNCTION",
+  "bloom_status": "DISABLED_QUALITY",
+  "after_dispose": {
+    "outputs": 0,
+    "tasks": 0,
+    "widgets": 0,
+    "subscriptions": 0
+  },
+  "status": "PASS"
+}
