@@ -42,8 +42,9 @@ def configure(gsg):
         log.warning('Temple materials: GLSL unavailable; textured fallback enabled.')
         return STATUS
     try:
-        candidate = Shader.load(Shader.SL_GLSL, str(ROOT/'shaders/temple.vert'),
-                                 str(ROOT/'shaders/temple.frag'))
+        vert = Filename.fromOsSpecific(str(ROOT / 'shaders' / 'temple.vert'))
+        frag = Filename.fromOsSpecific(str(ROOT / 'shaders' / 'temple.frag'))
+        candidate = Shader.load(Shader.SL_GLSL, vert, frag)
         if candidate is None:
             raise RuntimeError('Shader source could not be loaded.')
         context = candidate.prepareNow(gsg.getPreparedObjects(), gsg)
