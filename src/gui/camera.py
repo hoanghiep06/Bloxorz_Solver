@@ -1,10 +1,13 @@
 """Stable perspective framing; math remains usable without Panda3D installed."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import product
 import math
 
 from src.gui.contracts import StaticBoardData
+
+# Closest the camera may get to the framed centre when zooming in (in tile sizes).
+MIN_ZOOM_DISTANCE = 1.5
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,8 +100,14 @@ def board_bounds(board_data: StaticBoardData, *, pitch: float = 1.0) -> SceneBou
 
 
 def fit_camera(board_data: StaticBoardData, width: int, height: int, *, pitch: float = 1.0,
-               config: CameraConfig = CameraConfig(), bounds: SceneBounds | None = None) -> CameraFit:
-    """Analytically fit all AABB corners to a padded perspective frustum."""
+               config: CameraConfig = CameraConfig(), bounds: SceneBounds | None = None,
+               zoom: float = 1.0) -> CameraFit:
+    """Analytically fit all AABB corners to a padded perspective frustum.
+
+    zoom scales the fitted camera distance (1 = exact fit, <1 closer, >1 farther).
+    With zoom != 1 the camera may be inside the bounds, so the near plane is
+    derived without requiring every corner to stay in front of the camera.
+    """
     for name, value in (('width', width), ('height', height)):
         if type(value) is not int or value <= 0:
             raise ValueError(f'{name} must be a positive integer.')
@@ -106,6 +115,9 @@ def fit_camera(board_data: StaticBoardData, width: int, height: int, *, pitch: f
     _finite(pitch, 'pitch')
     if pitch <= 0:
         raise ValueError('pitch must be positive.')
+    _finite(zoom, 'zoom')
+    if zoom <= 0:
+        raise ValueError('zoom must be positive.')
     aspect = width / height
     tangent_v = math.tan(math.radians(config.vertical_fov) / 2)
     tangent_h = aspect * tangent_v
@@ -121,13 +133,25 @@ def fit_camera(board_data: StaticBoardData, width: int, height: int, *, pitch: f
     distance = max(max(abs(x) / (usable * tangent_h) - z,
                        abs(y) / (usable * tangent_v) - z, 0.1 * pitch - z)
                    for x, y, z in projections) * (1 + 1e-12)
+    zoomed = zoom != 1.0
+    fitted_distance = distance
+    if zoomed:
+        distance = max(distance * zoom, MIN_ZOOM_DISTANCE * pitch)
     depths = [distance + z for _, _, z in projections]
-    near = max(0.01 * pitch, min(depths) * 0.5)
-    far = max(depths) + max(2 * pitch, 0.1 * max(depths))
+    nearest = min(depths)
+    if not zoomed or nearest > 0.1 * pitch:
+        near = max(0.01 * pitch, nearest * 0.5)
+    else:
+        near = 0.05 * pitch
+    # Far plane never shrinks when zooming in: backdrops/skies placed relative to
+    # the unzoomed fit must stay inside the frustum.
+    far_depths = [max(distance, fitted_distance) + z for _, _, z in projections]
+    far = max(far_depths) + max(2 * pitch, 0.1 * max(far_depths))
     position = tuple(t + distance * b for t, b in zip(target, back))
     for value in (*position, distance, near, far, horizontal, aspect):
         _finite(value, 'camera fit result')
-    if not 0 < horizontal < 180 or not 0 < near < min(depths) < far:
+    ordered = (0 < near < far) if zoomed else (0 < near < nearest < far)
+    if not 0 < horizontal < 180 or not ordered:
         raise ValueError('camera inputs exceed stable perspective precision.')
     return CameraFit(position, target, right, up, forward, distance, horizontal,
                      config.vertical_fov, near, far, aspect, envelope)
@@ -151,6 +175,8 @@ class BoardCameraController:
         if not isinstance(lens, PerspectiveLens) or camera.isEmpty():
             raise ValueError('camera must be live and lens must be PerspectiveLens.')
         self.camera, self.lens, self.config = camera, lens, config
+        self.zoom = 1.0          # distance multiplier on top of the fitted distance
+        self._far_floor = 0.0    # far plane used when the backdrop was last placed
         self.current_fit = None
         self._board = None
         self._pitch = 1.0
@@ -169,7 +195,19 @@ class BoardCameraController:
             raise RuntimeError('Camera controller is disposed.')
         if width == 0 or height == 0:
             return False
-        fit = fit_camera(board_data, width, height, pitch=pitch, config=self.config, bounds=bounds)
+        fit = fit_camera(board_data, width, height, pitch=pitch, config=self.config,
+                         bounds=bounds, zoom=self.zoom)
+        reference = None
+        if notify:
+            # Backdrop/lights are placed once from this fit and then stay put while the
+            # player zooms or orbits. Hand them the unzoomed fit and remember its far
+            # plane as a floor: orbiting changes the fitted far plane with the angle,
+            # and anything placed from the reference must never fall beyond it.
+            reference = fit if self.zoom == 1.0 else fit_camera(
+                board_data, width, height, pitch=pitch, config=self.config, bounds=bounds)
+            self._far_floor = reference.far
+        if fit.far < self._far_floor:
+            fit = replace(fit, far=self._far_floor)
         self._board, self._pitch, self._bounds = board_data, pitch, bounds
         self._dimensions = (width, height)
         self.current_fit = fit
@@ -178,7 +216,7 @@ class BoardCameraController:
         self.camera.setPos(*fit.position)
         self.camera.lookAt(*fit.target)
         if notify and self._on_refit:
-            self._on_refit(fit)
+            self._on_refit(reference)
         return True
 
     def set_viewport_size(self, width, height):
@@ -205,15 +243,28 @@ class BoardCameraController:
         if self._board is not None:
             self.fit_board(self._board, *self._dimensions, pitch=self._pitch, bounds=self._bounds)
 
-    def set_view(self, config: CameraConfig, *, bounds=None, notify=True):
-        """Switch viewing angle and refit (bounds=None frames the whole board)."""
+    def set_view(self, config: CameraConfig, *, bounds=None, notify=True, zoom=None):
+        """Switch viewing angle and refit (bounds=None frames the whole board).
+
+        zoom=None keeps the current zoom; pass 1.0 to return to the exact fit.
+        """
         if self._disposed:
             raise RuntimeError('Camera controller is disposed.')
         self.config = config
+        if zoom is not None:
+            self.zoom = zoom
         if self._board is None or self._dimensions is None:
             return False
         return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
                               bounds=bounds, notify=notify)
+
+    def orbit(self, config: CameraConfig, zoom: float, *, notify=False):
+        """User orbit/zoom: new angle and zoom around the SAME framed bounds."""
+        if self._disposed or self._board is None or self._dimensions is None:
+            return False
+        self.config, self.zoom = config, zoom
+        return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
+                              bounds=self._bounds, notify=notify)
 
     def reframe(self, bounds, config: CameraConfig | None = None):
         """Per-frame reframe for follow cameras (optionally rotating); skips on_refit."""

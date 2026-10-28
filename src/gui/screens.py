@@ -443,7 +443,9 @@ class UIFlow:
         self._listener = DirectObject()
         self._listener.accept('window-event', self._window_event)
         self._listener.accept('escape', self.back)
-        self._listener.accept('mouse1', self._click)
+        # Click-to-roll fires on RELEASE so that holding + dragging (camera orbit)
+        # can be told apart from a click.
+        self._listener.accept('mouse1-up', self._click)
         self._listener.accept('m', self.toggle_music)      # phím tắt bật/tắt nhạc
         hud = app.dashboard.hud
         hud.restyle()
@@ -688,16 +690,23 @@ class UIFlow:
                 or self.screens['game'].result_visible or controller.manager is None
                 or controller.manager.is_busy or controller.phase != 'READY'):
             return
+        # Holding the button and dragging orbits the camera; that is not a click.
+        views = getattr(self.app, 'game_views', None)
+        if views is not None and views.drag_happened:
+            return
         # A DirectGUI click must not also become a move on the board behind it.
         from direct.gui.DirectGuiBase import DirectGuiWidget
         region = self.app.mouseWatcherNode.getOverRegion()
         if (region is not None and region.getName() in DirectGuiWidget.guiDict
                 or pointer_over_hud(self.app)):
             return
-        action = pick_action(self.app, self.app.dashboard.viewport.region,
-                             self.app.presentation.camera.current_fit,
-                             controlled_cells(controller.state),
-                             controller.board_data.rows, controller.board_data.cols)
+        try:
+            action = pick_action(self.app, self.app.dashboard.viewport.region,
+                                 self.app.presentation.camera.current_fit,
+                                 controlled_cells(controller.state),
+                                 controller.board_data.rows, controller.board_data.cols)
+        except ValueError:      # block is behind the camera (zoomed far in)
+            return
         if action:
             controller.manual_move(action)
 
