@@ -72,7 +72,7 @@ METRIC_LABELS = ('Moves', 'Search Time', 'Expanded Nodes', 'Solution Length', 'P
 # ---- layout constants (pixels) ----
 MARGIN, GAP, BTN_H, TEXT = 20, 10, 46, 22
 SQ = BTN_H                 # icon buttons are squares
-ICON_HALF = 14             # icon half-size in pixels
+ICON_HALF = 12             # 24px toolbar vectors; robot keeps a 26px portrait
 DIVIDER = 24               # extra space separating Exit from the other tools
 TOP_ROW = (('Exit', 104), ('Restart', 134), ('Guide', 166), ('View', SQ), ('Tutorial', SQ))
 SOLVERS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*')
@@ -222,7 +222,7 @@ class HudShell:
         holder.setScale(ICON_HALF)
         variants = {}
         for index, key in enumerate(ICONS[name]):
-            node = icons.make_icon(key)
+            node = icons.make_robot_icon() if name=='Guide' else icons.make_icon(key)
             node.reparentTo(holder)
             if index:
                 node.hide()
@@ -254,7 +254,10 @@ class HudShell:
                 color = tuple(self.buttons[name]['text_fg'])
             except Exception:
                 pass
-            holder.setColor(*color)
+            if name=='Guide':
+                from direct.gui import DirectGuiGlobals as DGG
+                holder.setColorScale(1,1,1,1 if self.buttons[name]['state']==DGG.NORMAL else .45)
+            else:holder.setColor(*color)
 
     def _set_visible(self, name, visible):
         widgets = [self.buttons[name].border]

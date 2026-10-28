@@ -22,7 +22,8 @@ class GuideLayoutTests(unittest.TestCase):
                         self.assertGreater(rect.x,0)
                     if layout.card:self.assertFalse(layout.card.intersects(layout.rail))
                     left=width-layout.reserved
-                    self.assertLess(left,(layout.card or layout.rail).x)
+                    self.assertLess(left,layout.rail.x)
+                    self.assertEqual(layout.reserved,guide_layout(width,height).reserved)
                     self.assertGreater(left,600)
 
     def test_undersized_window_hides_instead_of_clipping(self):
@@ -106,6 +107,24 @@ class GuideWidgetTests(SceneFixture):
                 heading=g.heading.component('text0').textNode
                 self.assertGreater(29+heading.getLeft()*12,0)
                 self.assertLess(29+heading.getRight()*12,58)
+
+    def test_rail_and_icon_bounds_are_identical_for_every_state_and_card(self):
+        g=self.guide
+        def bounds():
+            return tuple((tuple(b.getPos(self.app.pixel2d)),tuple(b['frameSize']),
+                          tuple(g._icons[k].getPos(self.app.pixel2d)),
+                          tuple(tuple(p) for p in g._icons[k].getTightBounds(self.app.pixel2d)))
+                         for k,b in g.buttons.items())
+        for width,height in ((1024,720),(1280,720),(1920,1080)):
+            g.apply_layout(width,height);expected=bounds();reserved=g.reserved_width
+            for theme in ('dark','light'):
+                g.apply_theme(theme)
+                for key,b in g.buttons.items():
+                    for state in range(4):
+                        b.guiItem.setState(state);self.assertEqual(bounds(),expected)
+                    b.guiItem.setState(0);g.show_mechanic(key)
+                    self.assertEqual(bounds(),expected);self.assertEqual(g.reserved_width,reserved)
+                g.close_card();self.assertEqual(bounds(),expected)
 
     def test_resize_keeps_selected_card_and_passive_click_guard(self):
         g=self.guide;g.show_mechanic('split_switch')

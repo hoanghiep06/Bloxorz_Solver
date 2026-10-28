@@ -12,7 +12,7 @@
 - `src/gui/scene_style.py`: thêm crop panorama tùy chọn cho bố cục có vùng bên phải; giữ nguyên asset, ánh sáng và vật liệu hiện có.
 - `tests/test_mechanics_guide.py`, `tools/mechanics_guide_smoke.py`: component/regression và native XTest QA.
 
-Rail rộng 58 px, nút 40×40, khoảng cách 8 px. Card rộng 260 px, body 16 px, note 14 px; chiều cao dựa trên số dòng của font thật. Card tự dịch lên phía trên metrics. Viewport dành khoảng 90 px khi đóng / 362 px khi mở để Board nằm bên trái Guide; camera dùng pipeline fit hiện có. Phần panorama tại vùng dành riêng được tiếp nối bằng crop GUI của **chính asset hiện tại**, không thêm camera hoặc thay theme. Crop trở về mặc định khi rời gameplay.
+Rail rộng 58 px, nút 40×40, khoảng cách 8 px. Card rộng 260 px, body 16 px, note 14 px; chiều cao dựa trên số dòng của font thật. Card tự dịch lên phía trên metrics. Sau targeted UI fix, viewport luôn dành 90 px cho rail; card là overlay độc lập bên trái rail. Mở/đổi/đóng card không refit camera hoặc dịch board. Click guard bao gồm rectangle card thực. Xem [báo cáo mới](BUGFIX_FALLING_GUIDE_TOOLBAR.md). Phần panorama tại vùng dành riêng được tiếp nối bằng crop GUI của **chính asset hiện tại**, không thêm camera hoặc thay theme. Crop trở về mặc định khi rời gameplay.
 
 ## Nội dung tiếng Anh
 

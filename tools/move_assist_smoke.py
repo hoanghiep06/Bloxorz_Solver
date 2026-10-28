@@ -1,4 +1,4 @@
-"""Native move-assist acceptance checks and framebuffer evidence.
+"""Native DEBUG move-assist acceptance checks and framebuffer evidence.
 
 Run: xvfb-run -a .venv/bin/python -B -m tools.move_assist_smoke
 Uses a temporary profile. It does not alter production levels or saved progress.
@@ -13,6 +13,8 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-assist-qa/manual'))
     parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
+    import os
+    os.environ['BLOXORZ_MOVE_ASSIST_DEBUG']='1'
     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
     from panda3d.core import loadPrcFileData
     loadPrcFileData('assist-qa','audio-library-name null')

@@ -69,7 +69,7 @@ class SplitArrowTests(unittest.TestCase):
                 StaticBoardData(1,'arrow-fit','arrow-fit',9,13,
                     tuple((BasicTileKind.FLOOR,)*13 for _ in range(9)),()),1280,720))))
         app.dashboard.viewport.region.getDimensions.return_value=(0,1,0,1)
-        arrows = MoveArrows(app, controller, lambda: True)
+        arrows = MoveArrows(app, controller, lambda: True, enabled=True)
         self.addCleanup(app.render.removeNode)
         self.addCleanup(app.pixel2d.removeNode)
         self.addCleanup(arrows.dispose)
@@ -103,7 +103,7 @@ class VisibleArrowPickingTests(unittest.TestCase):
             win=Mock(getXSize=lambda:1280,getYSize=lambda:720),mouseWatcherNode=watcher,
             dashboard=SimpleNamespace(viewport=SimpleNamespace(region=region)),
             presentation=SimpleNamespace(camera=SimpleNamespace(current_fit=None)))
-        layer=MoveAssistLayer(app,controller,lambda:True)
+        layer=MoveAssistLayer(app,controller,lambda:True,enabled=True)
         self.addCleanup(app.render.removeNode);self.addCleanup(app.pixel2d.removeNode);self.addCleanup(layer.dispose)
         board=StaticBoardData(1,'picking','picking',9,13,
             tuple((BasicTileKind.FLOOR,)*13 for _ in range(9)),())

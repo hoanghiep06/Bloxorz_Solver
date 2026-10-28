@@ -1,0 +1,84 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":99".
+{
+  "checks": [
+    "dark: production F1/F2 + native Down/Left + result + HUD Restart",
+    "dark: hover/press/release/card/theme/resize bounds <=1px; all toolbar callbacks",
+    "light: production F1/F2 + native Down/Left + result + HUD Restart",
+    "light: hover/press/release/card/theme/resize bounds <=1px; all toolbar callbacks"
+  ],
+  "input": "Real Panda3D GraphicsWindow + X11 XTest",
+  "bounds": [
+    {
+      "theme": "dark",
+      "size": [
+        1280,
+        720
+      ],
+      "max_error_px": 0.0
+    },
+    {
+      "theme": "dark",
+      "size": [
+        1024,
+        720
+      ],
+      "max_error_px": 0.0
+    },
+    {
+      "theme": "dark",
+      "size": [
+        1920,
+        1080
+      ],
+      "max_error_px": 0.0
+    },
+    {
+      "theme": "light",
+      "size": [
+        1280,
+        720
+      ],
+      "max_error_px": 0.0
+    },
+    {
+      "theme": "light",
+      "size": [
+        1024,
+        720
+      ],
+      "max_error_px": 0.0
+    },
+    {
+      "theme": "light",
+      "size": [
+        1920,
+        1080
+      ],
+      "max_error_px": 0.0
+    }
+  ],
+  "20_card_cycles": {
+    "before": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 152,
+      "outputs": 1
+    },
+    "after": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 152,
+      "outputs": 1
+    }
+  },
+  "after_dispose": {
+    "tasks": 0,
+    "widgets": 0,
+    "outputs": 0,
+    "listeners": 0
+  },
+  "status": "PASS"
+}

@@ -48,7 +48,8 @@ def guide_layout(width, height, selected=None, card_height=230):
         index=next(i for i,m in enumerate(MECHANICS) if m.id==selected)
         y=min(max(136,top+24+index*STEP),height-104-card_height)
         card=Rect(rail.x-12-CARD_WIDTH,y,CARD_WIDTH,card_height)
-    return GuideLayout(rail,card,width-(card.x if card else rail.x)+12)
+    # The card overlays the scene; opening it must never resize the viewport.
+    return GuideLayout(rail,card,width-rail.x+12)
 
 
 def mechanic_icon(mechanic_id):
@@ -248,8 +249,10 @@ class MechanicsGuide:
 
     def contains_pointer_pixels(self,x,y):
         if not self._visible or self.layout is None or self._disposed:return False
-        # The entire reserved strip is outside the gameplay viewport.
-        return self._size[0]-self.reserved_width<=x<=self._size[0] and 0<=y<=self._size[1]
+        # The card is an independent overlay over the unchanged viewport.
+        card=self.layout.card
+        return ((self._size[0]-self.reserved_width<=x<=self._size[0] and 0<=y<=self._size[1])
+                or (card is not None and card.x<=x<=card.right and card.y<=y<=card.bottom))
 
     def dispose(self):
         if self._disposed:return

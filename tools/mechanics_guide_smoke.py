@@ -75,22 +75,20 @@ def main(argv=None):
                 for width,height in ((1024,720),(1280,720),(1366,768),(1920,1080)):
                     resize((width,height))
                     if g.selected:g.close_card()
+                    fit_before=a.presentation.camera.current_fit
+                    region_before=tuple(a.dashboard.viewport.region.getDimensions())
                     d.click_widget(g.buttons['split_switch'])
                     assert g.selected=='split_switch'
                     layout=g.layout
                     for rect in (layout.rail,layout.card):
                         assert 136<=rect.y and rect.bottom<height-94
                         assert rect.right<=width-20
-                    # The real fitted Iso board remains to the left of the card.
+                    # Card overlays the scene and must not move/refit the board.
                     fit=a.presentation.camera.current_fit
-                    left,right,bottom,top=a.dashboard.viewport.region.getDimensions()
-                    assert round(right*width)<layout.card.x
-                    for point in fit.bounds.corners():
-                        x,y,_=project_point(point,fit)
-                        px=(left+(x+1)/2*(right-left))*width
-                        assert px<layout.card.x,(width,height,px,layout.card.x)
+                    assert fit==fit_before
+                    assert tuple(a.dashboard.viewport.region.getDimensions())==region_before
                     if width in (1024,1920):shot(f'{theme}-card-{width}')
-                check(theme+': four target resolutions, no HUD overlap or board behind card')
+                check(theme+': four target resolutions, fixed viewport/camera; independent overlay card')
             resize((1280,720))
             # Theme update while the same card remains open; widget identities stable.
             buttons=tuple(g.buttons.values());selected=g.selected;baseline=counts()

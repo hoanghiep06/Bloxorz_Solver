@@ -1,0 +1,71 @@
+{
+  "source": "real Panda3D game; existing production levels; deterministic animation clock",
+  "before": false,
+  "cases": {},
+  "checks": [
+    "Default gameplay creates no assist nodes or updater task",
+    "Native Up -> FALL -> result; R restarts; Mechanics Guide preserved",
+    "Native mouse fall + HUD Restart + H tutorial in Iso/Top/Follow without assist",
+    "15 pause/resume/restart cases; no stale terminal or callbacks"
+  ],
+  "native_clock_frames": [
+    "/tmp/targeted-positive-falls/native-clock-edge-000.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-001.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-002.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-003.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-004.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-005.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-006.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-007.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-008.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-009.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-010.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-011.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-012.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-013.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-014.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-015.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-016.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-017.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-018.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-019.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-020.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-021.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-022.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-023.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-024.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-025.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-026.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-027.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-028.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-029.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-030.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-031.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-032.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-033.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-034.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-035.png",
+    "/tmp/targeted-positive-falls/native-clock-edge-036.png"
+  ],
+  "resources_20_restarts": {
+    "before": {
+      "nodes": 194,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    },
+    "after": {
+      "nodes": 194,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    }
+  },
+  "after_dispose": {
+    "tasks": 0,
+    "widgets": 0,
+    "outputs": 0,
+    "listeners": 0
+  },
+  "status": "PASS"
+}

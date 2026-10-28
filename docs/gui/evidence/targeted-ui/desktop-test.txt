@@ -1,0 +1,4 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+PASS desktop F1/F2 clock, result, Restart, Guide, robot toolbar

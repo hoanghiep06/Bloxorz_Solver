@@ -13,6 +13,7 @@ from src.gui.animation_math import (
     VisualPose, RollPlan, canonical_poses, smoothstep, lerp, add, rotate, finite,
 )
 from src.gui.animation_timeline import AnimationTimeline
+from src.gui.fall_math import FallPlan
 from src.gui.animation_effects import AnimatedActorRig, event_progress
 from src.gui.advanced_contracts import validate_snapshot
 
@@ -50,6 +51,7 @@ class AnimationManager:
         self._status = Status.IDLE
         self._progress = 0.0
         self._terminal = None
+        self._fall = None
         self._recent_ids = deque(maxlen=128)
         self._task_mgr, self._task = task_mgr, None
         self._rig = None
@@ -131,6 +133,20 @@ class AnimationManager:
             plan.validate_target(target[request.actor_id])
         elif request.terminal is not None and request.terminal.roll_direction is not None:
             plan = RollPlan(self._poses[request.terminal.actor_id], request.terminal.roll_direction)
+        self._fall = None
+        if request.terminal is not None and request.terminal.kind is EventKind.FALL:
+            from src.gui.advanced_contracts import AdvancedTileKind as Tile
+            from src.gui.geometry_math import cell_to_world
+            before=as_visual_snapshot(request.before_snapshot)
+            present={b.bridge_id for b in before.bridge_states if b.present}
+            bridge_cells={cell for b in self.board.bridges if b.bridge_id in present for cell in b.cells}
+            supports=tuple(cell_to_world(r,c,rows=self.board.rows,cols=self.board.cols,pitch=self._pitch)
+                for r,row in enumerate(self.board.tiles) for c,kind in enumerate(row)
+                if (r,c) not in self.board.goal_cells and (r,c) not in before.broken_fragile_cells
+                and (kind in (Tile.FLOOR,Tile.FRAGILE) or (r,c) in bridge_cells))
+            self._fall=FallPlan(self._poses[request.terminal.actor_id],duration=request.duration,
+                pitch=self._pitch,supports=supports,roll_direction=request.terminal.roll_direction,
+                fall_distance=request.terminal.fall_distance)
         self._start_poses = self._poses.copy()
         self._targets, self._roll = target, plan
         self._timeline = AnimationTimeline(request.duration, self._rate)
@@ -157,7 +173,7 @@ class AnimationManager:
         poses = self._start_poses.copy()
         active = before.active_cube_id
         weights, opacity, scales = None, {}, {}
-        if self._roll is not None:
+        if self._roll is not None and self._fall is None:
             key = request.actor_id if request.kind is AnimationKind.ROLL else request.terminal.actor_id
             poses[key] = self._roll.sample(progress if request.kind is AnimationKind.ROLL
                                            else min(1, progress / .45))
@@ -202,16 +218,9 @@ class AnimationManager:
                     weights[event.active_cube_id] = u
             elif event.kind is EventKind.FALL:
                 key = request.terminal.actor_id
-                if self._roll is not None:
-                    if progress < .45:
-                        continue
-                    source = self._roll.sample(1)
-                    u = (progress - .45) / .55
-                else:
-                    source = self._start_poses[key]
-                    u = event_progress(event, progress)
-                poses[key] = replace(source, center=add(source.center, (0, 0, -request.terminal.fall_distance*self._pitch*u*u)))
-                opacity[key] = max(0, 1-2*max(0, u-.5))
+                sample=self._fall.sample(event_progress(event,progress)*request.duration)
+                poses[key]=sample.pose
+                opacity[key]=sample.opacity
             elif event.kind is EventKind.GOAL_COMPLETE:
                 key = request.terminal.actor_id
                 source = self._start_poses[key]

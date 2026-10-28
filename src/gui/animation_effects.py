@@ -93,8 +93,9 @@ class AnimatedActorRig:
         self._slots = slots
         nodes = {None: self._whole, **{key: self._cubes[i] for key, i in slots.items()}}
         models = {None: self._whole_model, **{key: self._cube_models[i] for key, i in slots.items()}}
+        shown={nodes[key] for key in poses if opacity.get(key,1)>0}
         for node in (self._whole, *self._cubes):
-            node.hide()
+            if node not in shown:node.hide()
         for marker in self._indicators:
             marker.hide()
         for key, pose in poses.items():

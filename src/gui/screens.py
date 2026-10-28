@@ -433,7 +433,9 @@ class UIFlow:
         self.screens = {cls.name: cls(self)
                         for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
         self.intro = LevelIntro(app, self._intro_done)
-        self.arrows = MoveAssistLayer(app, controller, self._arrows_visible)
+        import os
+        self.arrows = MoveAssistLayer(app, controller, self._arrows_visible,
+            enabled=os.environ.get('BLOXORZ_MOVE_ASSIST_DEBUG')=='1')
         self.mechanics = MechanicsGuide(app.pixel2d,on_change=self._mechanics_changed)
         app.mechanics_guide=self.mechanics
         self.mechanics.apply_layout(*self.size)
@@ -559,8 +561,8 @@ class UIFlow:
         return Rect(0, 0, width, height)
 
     def _mechanics_changed(self):
-        if self.name=='game' and not self._disposed:
-            self.app.dashboard.viewport.refresh()
+        # Guide owns its overlay layout. No camera/viewport refit on card clicks.
+        pass
 
     def _game_region(self,width,height):
         self.mechanics.apply_layout(width,height)

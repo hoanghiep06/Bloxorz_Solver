@@ -1,0 +1,33 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":99".
+{
+  "checks": [
+    "dark: production F1/F2 + native Down/Left + result + HUD Restart",
+    "light: production F1/F2 + native Down/Left + result + HUD Restart"
+  ],
+  "input": "Real Panda3D GraphicsWindow + X11 XTest",
+  "bounds": [],
+  "20_card_cycles": {
+    "before": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    },
+    "after": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    }
+  },
+  "after_dispose": {
+    "tasks": 0,
+    "widgets": 0,
+    "outputs": 0,
+    "listeners": 0
+  },
+  "status": "PASS"
+}

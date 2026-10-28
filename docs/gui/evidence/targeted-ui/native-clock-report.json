@@ -1,0 +1,515 @@
+{
+  "checks": [
+    "dark: production F1/F2 + native Down/Left + result + HUD Restart",
+    "light: production F1/F2 + native Down/Left + result + HUD Restart"
+  ],
+  "falls": {
+    "dark-F1": {
+      "route": "D",
+      "action": "D",
+      "native_frames": [
+        "/tmp/targeted-ui-clock/dark-F1-native-000.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-001.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-002.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-003.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-004.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-005.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-006.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-007.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-008.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-009.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-010.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-011.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-012.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-013.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-014.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-015.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-016.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-017.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-018.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-019.png",
+        "/tmp/targeted-ui-clock/dark-F1-native-020.png"
+      ],
+      "native_samples": [
+        {
+          "progress": 1.0,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.04096000000000001,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.10178444444444452,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.1537888888888888,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.20354000000000008,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.25920000000000015,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.30929888888888896,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.35897555555555577,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.41082444444444444,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.4598155555555556,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.509798888888889,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5597288888888889,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6092533333333335,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6591855555555556,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7078822222222225,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7579255555555554,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8078155555555557,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8572133333333336,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9069466666666666,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.955411111111111,
+          "phase": "READY"
+        },
+        {
+          "progress": 1.0,
+          "phase": "FELL"
+        }
+      ],
+      "received_actions": [
+        "D"
+      ]
+    },
+    "dark-F2": {
+      "route": "DUDRRDRRDL",
+      "action": "L",
+      "native_frames": [
+        "/tmp/targeted-ui-clock/dark-F2-native-000.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-001.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-002.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-003.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-004.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-005.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-006.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-007.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-008.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-009.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-010.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-011.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-012.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-013.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-014.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-015.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-016.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-017.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-018.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-019.png",
+        "/tmp/targeted-ui-clock/dark-F2-native-020.png"
+      ],
+      "native_samples": [
+        {
+          "progress": 1.0,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.05354888888888946,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.10729888888888953,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.1569477777777786,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.20589888888888908,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.2562822222222236,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.3055288888888895,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.3584355555555558,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.40869333333333396,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.4636000000000015,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.514624444444445,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5668977777777783,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6185411111111113,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6691088888888904,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7195044444444458,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.769894444444446,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8189411111111116,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8691688888888905,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9177077777777793,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9667866666666668,
+          "phase": "READY"
+        },
+        {
+          "progress": 1.0,
+          "phase": "FELL"
+        }
+      ],
+      "received_actions": [
+        "L"
+      ]
+    },
+    "light-F1": {
+      "route": "D",
+      "action": "D",
+      "native_frames": [
+        "/tmp/targeted-ui-clock/light-F1-native-000.png",
+        "/tmp/targeted-ui-clock/light-F1-native-001.png",
+        "/tmp/targeted-ui-clock/light-F1-native-002.png",
+        "/tmp/targeted-ui-clock/light-F1-native-003.png",
+        "/tmp/targeted-ui-clock/light-F1-native-004.png",
+        "/tmp/targeted-ui-clock/light-F1-native-005.png",
+        "/tmp/targeted-ui-clock/light-F1-native-006.png",
+        "/tmp/targeted-ui-clock/light-F1-native-007.png",
+        "/tmp/targeted-ui-clock/light-F1-native-008.png",
+        "/tmp/targeted-ui-clock/light-F1-native-009.png",
+        "/tmp/targeted-ui-clock/light-F1-native-010.png",
+        "/tmp/targeted-ui-clock/light-F1-native-011.png",
+        "/tmp/targeted-ui-clock/light-F1-native-012.png",
+        "/tmp/targeted-ui-clock/light-F1-native-013.png",
+        "/tmp/targeted-ui-clock/light-F1-native-014.png",
+        "/tmp/targeted-ui-clock/light-F1-native-015.png",
+        "/tmp/targeted-ui-clock/light-F1-native-016.png",
+        "/tmp/targeted-ui-clock/light-F1-native-017.png",
+        "/tmp/targeted-ui-clock/light-F1-native-018.png",
+        "/tmp/targeted-ui-clock/light-F1-native-019.png",
+        "/tmp/targeted-ui-clock/light-F1-native-020.png",
+        "/tmp/targeted-ui-clock/light-F1-native-021.png",
+        "/tmp/targeted-ui-clock/light-F1-native-022.png"
+      ],
+      "native_samples": [
+        {
+          "progress": 1.0,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.05205555555555463,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.10102444444444339,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.14606444444444674,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.19230666666666865,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.2376433333333357,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.2833744444444461,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.32930333333333234,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.3746688888888904,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.42063333333333314,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.4674866666666667,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5113711111111109,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5562477777777788,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6023277777777775,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6493455555555548,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.695506666666669,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7403977777777765,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7873488888888897,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8342100000000011,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8798566666666672,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9254977777777798,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9704522222222225,
+          "phase": "READY"
+        },
+        {
+          "progress": 1.0,
+          "phase": "FELL"
+        }
+      ],
+      "received_actions": [
+        "D"
+      ]
+    },
+    "light-F2": {
+      "route": "DUDRRDRRDL",
+      "action": "L",
+      "native_frames": [
+        "/tmp/targeted-ui-clock/light-F2-native-000.png",
+        "/tmp/targeted-ui-clock/light-F2-native-001.png",
+        "/tmp/targeted-ui-clock/light-F2-native-002.png",
+        "/tmp/targeted-ui-clock/light-F2-native-003.png",
+        "/tmp/targeted-ui-clock/light-F2-native-004.png",
+        "/tmp/targeted-ui-clock/light-F2-native-005.png",
+        "/tmp/targeted-ui-clock/light-F2-native-006.png",
+        "/tmp/targeted-ui-clock/light-F2-native-007.png",
+        "/tmp/targeted-ui-clock/light-F2-native-008.png",
+        "/tmp/targeted-ui-clock/light-F2-native-009.png",
+        "/tmp/targeted-ui-clock/light-F2-native-010.png",
+        "/tmp/targeted-ui-clock/light-F2-native-011.png",
+        "/tmp/targeted-ui-clock/light-F2-native-012.png",
+        "/tmp/targeted-ui-clock/light-F2-native-013.png",
+        "/tmp/targeted-ui-clock/light-F2-native-014.png",
+        "/tmp/targeted-ui-clock/light-F2-native-015.png",
+        "/tmp/targeted-ui-clock/light-F2-native-016.png",
+        "/tmp/targeted-ui-clock/light-F2-native-017.png",
+        "/tmp/targeted-ui-clock/light-F2-native-018.png",
+        "/tmp/targeted-ui-clock/light-F2-native-019.png",
+        "/tmp/targeted-ui-clock/light-F2-native-020.png",
+        "/tmp/targeted-ui-clock/light-F2-native-021.png",
+        "/tmp/targeted-ui-clock/light-F2-native-022.png"
+      ],
+      "native_samples": [
+        {
+          "progress": 1.0,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.059059999999999176,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.10874555555555313,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.15509888888888984,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.20054444444444325,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.24701333333333586,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.29505111111111165,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.3395100000000026,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.3857488888888917,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.4302022222222253,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.47737888888888513,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5237544444444432,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.5707755555555533,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6165555555555594,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.6638922222222258,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7106600000000027,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.7591144444444432,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8025566666666685,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.850009999999999,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.8951299999999978,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9393899999999967,
+          "phase": "READY"
+        },
+        {
+          "progress": 0.9847511111111136,
+          "phase": "READY"
+        },
+        {
+          "progress": 1.0,
+          "phase": "FELL"
+        }
+      ],
+      "received_actions": [
+        "L"
+      ]
+    }
+  },
+  "input": "Real Panda3D GraphicsWindow + X11 XTest",
+  "bounds": [],
+  "20_card_cycles": {
+    "before": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    },
+    "after": {
+      "nodes": 393,
+      "tasks": 13,
+      "widgets": 127,
+      "outputs": 1
+    }
+  },
+  "after_dispose": {
+    "tasks": 0,
+    "widgets": 0,
+    "outputs": 0,
+    "listeners": 0
+  },
+  "status": "PASS"
+}

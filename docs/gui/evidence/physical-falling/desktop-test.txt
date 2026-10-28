@@ -1,0 +1,4 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+PASS desktop window: wall-clock fall, terminal overlay, restart

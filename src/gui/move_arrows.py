@@ -34,7 +34,14 @@ def _arrow_node():
 
 
 class MoveAssistLayer:
-    def __init__(self, app, controller, visible_fn):
+    def __init__(self, app, controller, visible_fn, *, enabled=False):
+        self.enabled=enabled
+        self.app,self.controller,self._visible=app,controller,visible_fn
+        self.root=self.warning=self.predictor=self._overlay=self._edge=None
+        self.preview=self._key=self._preview_key=None
+        self._arrows,self._labels,self._base={},{},{}
+        self._task=None
+        if not enabled:return
         from src.gui.controller import ACTION_TO_ROLL
         self.app, self.controller, self._visible = app, controller, visible_fn
         self.root = app.render.attachNewNode('MoveAssistLayer')
@@ -94,6 +101,7 @@ class MoveAssistLayer:
             self._base[action] = (cx+dx*distance, cy+dy*distance)
 
     def _hover(self):
+        if not self.enabled:return None
         c, app = self.controller, self.app
         from direct.gui.DirectGuiBase import DirectGuiWidget
         watcher = app.mouseWatcherNode
@@ -209,6 +217,7 @@ class MoveAssistLayer:
         return bx,by,max(.10,12*unit)
 
     def _update(self, task):
+        if not self.enabled:return task.cont
         if not self._visible():
             self.root.hide()
             self.warning.hide()
@@ -251,6 +260,7 @@ class MoveAssistLayer:
         return task.cont
 
     def dispose(self):
+        if not self.enabled:return
         if self._task is not None:
             self.app.taskMgr.remove(self._task)
             self._task = None

@@ -30,9 +30,7 @@ KEYBOARD = (
 )
 MOUSE = (
     ('Click', 'Roll toward click'),
-    ('Hover', 'Preview landing cells'),
-    ('OK / ! / X', 'Safe / fall / blocked'),
-    ('Yellow edge', 'Near edge; moves allowed'),
+    ('Guide icons', 'Open mechanics help'),
 )
 BUTTONS = (
     ('Back arrow', 'Exit to menu'),
