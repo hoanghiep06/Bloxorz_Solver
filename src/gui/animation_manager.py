@@ -1,7 +1,6 @@
 """Main-thread visual animation ownership; no Controller, input or solver queue."""
 from collections import deque
 from dataclasses import replace
-import math
 import threading
 
 from panda3d.core import ClockObject
@@ -11,9 +10,10 @@ from src.gui.animation_contracts import (
     as_visual_board, as_visual_snapshot, validate_request,
 )
 from src.gui.animation_math import (
-    VisualPose, RollPlan, canonical_poses, smoothstep, lerp, add, rotate, slerp, finite,
+    VisualPose, RollPlan, canonical_poses, smoothstep, lerp, add, rotate, finite,
 )
 from src.gui.animation_timeline import AnimationTimeline
+from src.gui.fall_math import FallPlan
 from src.gui.animation_effects import AnimatedActorRig, event_progress
 from src.gui.advanced_contracts import validate_snapshot
 
@@ -33,6 +33,13 @@ class AnimationManager:
         self.renderer = renderer
         self.board = as_visual_board(board_data)
         self._pitch = pitch
+        from src.gui.geometry_math import cell_to_world
+        from src.gui.advanced_contracts import AdvancedTileKind
+        self._support_patches = tuple((cell, cell_to_world(*cell, rows=self.board.rows,
+            cols=self.board.cols, pitch=pitch)) for cell in (
+            (r,c) for r,row in enumerate(self.board.tiles) for c,kind in enumerate(row)
+            if kind in (AdvancedTileKind.FLOOR,AdvancedTileKind.FRAGILE))
+            if cell not in self.board.goal_cells)
         self.surface_layer = surface_layer
         if surface_layer is not None and surface_layer.board != self.board:
             raise ValueError('Surface layer board must match animation board.')
@@ -44,6 +51,7 @@ class AnimationManager:
         self._status = Status.IDLE
         self._progress = 0.0
         self._terminal = None
+        self._fall = None
         self._recent_ids = deque(maxlen=128)
         self._task_mgr, self._task = task_mgr, None
         self._rig = None
@@ -110,6 +118,9 @@ class AnimationManager:
             raise ValueError('Request before snapshot must exactly match current authoritative visual input.')
         if (request.session_id, request.request_id) in self._recent_ids:
             raise ValueError('Duplicate request_id (recent bounded history).')
+        if self.surface_layer is None and (request.terminal is not None
+                and request.terminal.collapse_cell is not None):
+            raise ValueError('Fragile collapse requires an explicitly wired surface layer.')
         if self.surface_layer is None and any(e.kind in (
             EventKind.FRAGILE_BREAK, EventKind.BRIDGE_PRESENT, EventKind.BRIDGE_ABSENT,
             EventKind.SWITCH_ACTIVATE, EventKind.SWITCH_DEACTIVATE) for e in request.events):
@@ -122,6 +133,20 @@ class AnimationManager:
             plan.validate_target(target[request.actor_id])
         elif request.terminal is not None and request.terminal.roll_direction is not None:
             plan = RollPlan(self._poses[request.terminal.actor_id], request.terminal.roll_direction)
+        self._fall = None
+        if request.terminal is not None and request.terminal.kind is EventKind.FALL:
+            from src.gui.advanced_contracts import AdvancedTileKind as Tile
+            from src.gui.geometry_math import cell_to_world
+            before=as_visual_snapshot(request.before_snapshot)
+            present={b.bridge_id for b in before.bridge_states if b.present}
+            bridge_cells={cell for b in self.board.bridges if b.bridge_id in present for cell in b.cells}
+            supports=tuple(cell_to_world(r,c,rows=self.board.rows,cols=self.board.cols,pitch=self._pitch)
+                for r,row in enumerate(self.board.tiles) for c,kind in enumerate(row)
+                if (r,c) not in self.board.goal_cells and (r,c) not in before.broken_fragile_cells
+                and (kind in (Tile.FLOOR,Tile.FRAGILE) or (r,c) in bridge_cells))
+            self._fall=FallPlan(self._poses[request.terminal.actor_id],duration=request.duration,
+                pitch=self._pitch,supports=supports,roll_direction=request.terminal.roll_direction,
+                fall_distance=request.terminal.fall_distance)
         self._start_poses = self._poses.copy()
         self._targets, self._roll = target, plan
         self._timeline = AnimationTimeline(request.duration, self._rate)
@@ -134,8 +159,12 @@ class AnimationManager:
             self._fail(error)
             raise
 
-    def _draw(self, poses, active_id, *, weights=None, opacity=None, scales=None):
-        self._rig.apply(poses, active_weights=({active_id: 1} if active_id is not None else {})
+    def _draw(self, poses, active_id, *, weights=None, opacity=None, scales=None,
+              support_snapshot=None):
+        broken = as_visual_snapshot(support_snapshot or self._snapshot).broken_fragile_cells
+        if support_snapshot is None and self._request is not None:
+            broken = as_visual_snapshot(self._request.before_snapshot).broken_fragile_cells
+        self._rig.apply(poses, supports=tuple(xy for cell,xy in self._support_patches if cell not in broken), active_weights=({active_id: 1} if active_id is not None else {})
                         if weights is None else weights, opacity=opacity, scales=scales)
 
     def _sample(self, progress):
@@ -144,7 +173,7 @@ class AnimationManager:
         poses = self._start_poses.copy()
         active = before.active_cube_id
         weights, opacity, scales = None, {}, {}
-        if self._roll is not None:
+        if self._roll is not None and self._fall is None:
             key = request.actor_id if request.kind is AnimationKind.ROLL else request.terminal.actor_id
             poses[key] = self._roll.sample(progress if request.kind is AnimationKind.ROLL
                                            else min(1, progress / .45))
@@ -157,21 +186,27 @@ class AnimationManager:
                 poses = {}
                 for cube_id, sign in zip(event.cube_ids, (-1, 1)):
                     start = add(source.center, rotate(source.quaternion, (0, 0, sign*self._pitch/2)))
-                    center = add(lerp(start, self._targets[cube_id].center, u),
-                                 (0, 0, .35*self._pitch*math.sin(math.pi*u)))
+                    # Teleport only while invisible. Never sweep an actor
+                    # through cells that Core did not visit.
+                    center = start if u < .5 else self._targets[cube_id].center
                     poses[cube_id] = VisualPose(center, source.quaternion, (self._pitch,)*3)
+                    opacity[cube_id] = abs(2*u-1)
                 if u == 0:
                     poses = self._start_poses.copy()
                 active = event.active_cube_id
             elif event.kind is EventKind.MERGE:
                 destination = self._targets[None]
                 poses = {}
-                for cube_id, sign in zip(event.cube_ids, (-1, 1)):
+                halves = [add(destination.center, rotate(destination.quaternion,
+                              (0, 0, sign*self._pitch/2))) for sign in (-1, 1)]
+                # Stable cube IDs may arrive in either spatial order.
+                first = self._start_poses[event.cube_ids[0]].center
+                if sum((first[i]-halves[1][i])**2 for i in range(3)) < sum(
+                        (first[i]-halves[0][i])**2 for i in range(3)):
+                    halves.reverse()
+                for cube_id, target in zip(event.cube_ids, halves):
                     start = self._start_poses[cube_id]
-                    target = add(destination.center, rotate(destination.quaternion, (0, 0, sign*self._pitch/2)))
-                    poses[cube_id] = VisualPose(add(lerp(start.center, target, u),
-                        (0, 0, .35*self._pitch*math.sin(math.pi*u))),
-                        slerp(start.quaternion, destination.quaternion, u), start.nominal_dimensions)
+                    poses[cube_id] = replace(start, center=lerp(start.center, target, u))
                 if u == 1:
                     poses = {None: destination}
                 active = before.active_cube_id if u < 1 else None
@@ -183,22 +218,24 @@ class AnimationManager:
                     weights[event.active_cube_id] = u
             elif event.kind is EventKind.FALL:
                 key = request.terminal.actor_id
-                if self._roll is not None:
-                    if progress < .45:
-                        continue
-                    source = self._roll.sample(1)
-                    u = smoothstep((progress - .45) / .55)
-                else:
-                    source = self._start_poses[key]
-                poses[key] = replace(source, center=add(source.center, (0, 0, -request.terminal.fall_distance*self._pitch*u*u)))
-                opacity[key] = max(0, 1-2*max(0, u-.5))
+                sample=self._fall.sample(event_progress(event,progress)*request.duration)
+                poses[key]=sample.pose
+                opacity[key]=sample.opacity
             elif event.kind is EventKind.GOAL_COMPLETE:
-                # A stationary shrink/fade proxy above the mouth, never rigid-body
-                # sinking through the Stage 3 goal aperture (.76 < block width 1).
                 key = request.terminal.actor_id
-                scales[key], opacity[key] = 1-.75*u, 1-u
+                source = self._start_poses[key]
+                shrink = smoothstep(min(1, progress / .35))
+                scale = 1 - .30*shrink
+                sink = max(0, (progress-.35)/.65)
+                # Keep bottom on the support plane until width .70 fits inside
+                # the existing .76 aperture; only then begin downward suction.
+                poses[key] = replace(source, center=(source.center[0], source.center[1],
+                    source.extents[2]*scale - 2.4*self._pitch*sink*sink))
+                scales[key] = scale
+                opacity[key] = 1-smoothstep(min(1, max(0, (progress-.7)/.3)))
         if self.surface_layer is not None:
-            self.surface_layer.sample(before, request.events, progress)
+            self.surface_layer.sample(before, request.events, progress,
+                collapse_cell=request.terminal.collapse_cell if request.terminal else None)
         self._draw(poses, active, weights=weights, opacity=opacity, scales=scales)
         self._poses = poses
         self._progress = progress
@@ -300,7 +337,7 @@ class AnimationManager:
                 self._restore_before()
                 self._notify(Status.CANCELLED)
             self.renderer.show_snapshot(as_visual_snapshot(snapshot))
-            self._draw(poses, as_visual_snapshot(snapshot).active_cube_id)
+            self._draw(poses, as_visual_snapshot(snapshot).active_cube_id, support_snapshot=snapshot)
             self._snapshot, self._poses = snapshot, poses
             self._terminal, self._status, self._progress = None, Status.IDLE, 0.0
         finally:

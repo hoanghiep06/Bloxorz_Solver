@@ -2,7 +2,6 @@
 
 from itertools import combinations, product
 import math
-import random
 
 from panda3d.core import (
     Geom, GeomNode, GeomTriangles, GeomVertexData, GeomVertexFormat,
@@ -20,12 +19,19 @@ FLOOR_EDGE = _rgb("91A8BB")
 BLOCK_MAIN = _rgb("527B9C")
 BLOCK_DARK = _rgb("354F68")
 BLOCK_HIGHLIGHT = _rgb("91ADC3")
-GOAL_RIM = _rgb("F5C230")        # viền vàng gold, nổi trên cả sàn be lẫn sàn xanh băng
-GOAL_INTERIOR = _rgb("10161F")   # lòng hố gần đen để tạo chiều sâu
 
-# Màu block theo theme. Màu đã "nướng" vào vertex color nên BLOCK_TINT phải là (1,1,1,1).
-#   light: khối nâu đất, dính từng mảng rêu xanh.
-#   dark : khối xanh dương, rải vài chấm tuyết trắng.
+# Goal rim stays warm and legible in either theme; the cavity remains dark.
+GOAL_THEME_COLORS = {
+    'light': dict(rim=_rgb("FF9C24"), wall=_rgb("26362F"), floor=_rgb("101D18")),
+    'dark': dict(rim=_rgb("FFAC38"), wall=_rgb("20354B"), floor=_rgb("081320")),
+}
+# Preserve the public light-theme constants for existing callers.
+GOAL_RIM = GOAL_THEME_COLORS['light']['rim']
+GOAL_WALL = GOAL_THEME_COLORS['light']['wall']
+GOAL_FLOOR = GOAL_THEME_COLORS['light']['floor']
+GOAL_INTERIOR = GOAL_WALL
+
+# Legacy palette exported for compatibility; the active block now uses magma textures.
 BLOCK_THEME_COLORS = {
     'light': dict(main=_rgb("8A5A34"), dark=_rgb("5C3B22"), edge=_rgb("B98A5C"),
                   inlay=_rgb("C9A074"), spot=_rgb("5F8A2E"), spot2=_rgb("86AD43")),
@@ -39,12 +45,14 @@ class _MeshBuilder:
 
     def __init__(self, name: str):
         self.name = name
-        self.data = GeomVertexData(name, GeomVertexFormat.getV3n3c4(), Geom.UHStatic)
+        self.data = GeomVertexData(name, GeomVertexFormat.getV3n3c4t2(), Geom.UHStatic)
         self.vertices = GeomVertexWriter(self.data, "vertex")
         self.normals = GeomVertexWriter(self.data, "normal")
         self.colors = GeomVertexWriter(self.data, "color")
+        self.uvs = GeomVertexWriter(self.data, "texcoord")
         self.triangles = GeomTriangles(Geom.UHStatic)
         self.count = 0
+        self.uv_offset = (0., 0.)
 
     def face(self, points, normal, color):
         points = list(points)
@@ -54,7 +62,10 @@ class _MeshBuilder:
         if cross.dot(normal) < 0:
             points.reverse()
         offset = self.count
+        axis = max(range(3), key=lambda i: abs(normal[i]))
+        axes = [i for i in range(3) if i != axis]
         for point in points:
+            self.uvs.addData2f(point[axes[0]] + .5 + axis*.173 + self.uv_offset[0], point[axes[1]] + .5 + axis*.291 + self.uv_offset[1])
             self.vertices.addData3f(*point)
             self.normals.addData3f(normal)
             self.colors.addData4f(*color)
@@ -82,7 +93,7 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
 
     Outer support planes retain the nominal dimensions. Every edge/corner is
     real geometry, and all polygons share exact geometric boundary positions.
-    ``decorate(builder, half)`` may add thin raised polygons (moss / snow spots).
+    ``decorate(builder, half)`` adds flush face markings within the cuboid.
     """
     half = [dimension / 2 for dimension in dimensions]
     inset = [extent - bevel for extent in half]
@@ -132,53 +143,18 @@ def _beveled_box(name, dimensions, bevel, face_colors, edge_color, *, inlay=Fals
             points.append([signs[a] * (half[a] if a == axis else inset[a])
                            for a in range(3)])
         builder.face(points, signs, edge_color)
+    node = builder.finish()
     if decorate is not None:
-        decorate(builder, half)
-    return builder.finish()
+        from panda3d.core import DepthOffsetAttrib, RenderState
+        decals = _MeshBuilder(name + '-Markings')
+        decorate(decals, half)
+        markings = decals.finish()
+        for index in range(markings.getNumGeoms()):
+            node.addGeom(markings.modifyGeom(index), RenderState.make(DepthOffsetAttrib.make(1)))
+    return node
 
 
-def _spots(builder, half, bevel, colors, kind, skip_faces=()):
-    """Raised convex ellipses on every face. Deterministic (seeded per face).
-
-    kind 'moss': a few large irregular patches + small blobs.
-    kind 'snow': several small round dots.
-    """
-    inset = [h - bevel for h in half]
-    lift = min(half) * 0.012          # đủ cao để không z-fight, không lộ ra ngoài bounds đáng kể
-    for axis in range(3):
-        others = [a for a in range(3) if a != axis]
-        for sign in (-1, 1):
-            if (axis, sign) in skip_faces:
-                continue
-            rng = random.Random(100 + axis * 2 + (1 if sign > 0 else 0))
-            shapes = []
-            if kind == 'moss':
-                for _ in range(rng.randint(2, 3)):
-                    shapes.append((rng.uniform(.16, .34), rng.uniform(.16, .34)))
-                for _ in range(rng.randint(2, 3)):
-                    shapes.append((rng.uniform(.06, .11), rng.uniform(.06, .11)))
-            else:
-                for _ in range(rng.randint(4, 6)):
-                    r = rng.uniform(.07, .13)
-                    shapes.append((r, r))
-            for index, (ru, rv) in enumerate(shapes):
-                u0 = rng.uniform(-(1 - ru), 1 - ru)
-                v0 = rng.uniform(-(1 - rv), 1 - rv)
-                color = colors['spot'] if index % 2 == 0 else colors['spot2']
-                points = []
-                for k in range(12):
-                    angle = math.tau * k / 12
-                    point = [0.0] * 3
-                    point[axis] = sign * (half[axis] + lift)
-                    point[others[0]] = (u0 + ru * math.cos(angle)) * inset[others[0]]
-                    point[others[1]] = (v0 + rv * math.sin(angle)) * inset[others[1]]
-                    points.append(point)
-                normal = [0, 0, 0]
-                normal[axis] = sign
-                builder.face(points, normal, color)
-
-
-def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
+def make_floor_mesh(*, pitch: float = 1.0, theme='light') -> GeomNode:
     """Return a shared local tile: top 0, bottom -0.18s, width/depth 0.96s."""
     _pitch(pitch)
     colors = {(axis, sign): FLOOR_TOP if axis == 2 and sign == 1 else FLOOR_SIDE
@@ -188,13 +164,15 @@ def make_floor_mesh(*, pitch: float = 1.0) -> GeomNode:
     # Bake the tile offset into vertices; the reusable instance transform is XY only.
     from panda3d.core import Mat4
     node.modifyGeom(0).transformVertices(Mat4.translateMat(0, 0, -0.09 * pitch))
-    return node
+    from src.gui.visual_materials import apply
+    return apply(node, "stone", theme)
 
 
-def make_goal_mesh(*, pitch: float = 1.0) -> GeomNode:
-    """Return a real open-top square recess: 0.10s rim, 0.14s cavity depth."""
+def make_goal_mesh(*, pitch: float = 1.0, theme: str = 'light') -> GeomNode:
+    """Open-top square recess: 0.10s rim, 0.14s cavity depth; màu theo theme."""
     _pitch(pitch)
-    builder = _MeshBuilder("GoalMesh")
+    c = GOAL_THEME_COLORS[theme]
+    builder = _MeshBuilder(f"GoalMesh-{theme}")
     outer = [(-0.48, -0.48), (0.48, -0.48), (0.48, 0.48), (-0.48, 0.48)]
     inner = [(-0.38, -0.38), (0.38, -0.38), (0.38, 0.38), (-0.38, 0.38)]
     def point(xy, z):
@@ -202,54 +180,46 @@ def make_goal_mesh(*, pitch: float = 1.0) -> GeomNode:
     for i in range(4):
         j = (i + 1) % 4
         builder.face((point(outer[i], 0), point(outer[j], 0),
-                      point(inner[j], 0), point(inner[i], 0)), (0, 0, 1), GOAL_RIM)
+                      point(inner[j], 0), point(inner[i], 0)), (0, 0, 1), c['rim'])
         dx, dy = outer[j][0] - outer[i][0], outer[j][1] - outer[i][1]
         builder.face((point(outer[i], 0), point(outer[j], 0),
                       point(outer[j], -0.18), point(outer[i], -0.18)),
-                     (dy, -dx, 0), GOAL_RIM)
+                     (dy, -dx, 0), c['rim'])
         builder.face((point(inner[i], 0), point(inner[j], 0),
                       point(inner[j], -0.14), point(inner[i], -0.14)),
-                     (-dy, dx, 0), GOAL_INTERIOR)
-    builder.face([point(p, -0.14) for p in inner], (0, 0, 1), GOAL_INTERIOR)
+                     (-dy, dx, 0), c['wall'])
+    builder.face([point(p, -0.14) for p in inner], (0, 0, 1), c['floor'])
     builder.face([point(p, -0.18) for p in outer], (0, 0, -1), FLOOR_SIDE)
     return builder.finish()
 
 
 def make_block_mesh(*, pitch: float = 1.0) -> GeomNode:
-    """Return one centered nominal s×s×2s prototype with a flush asymmetric inlay."""
-    _pitch(pitch)
-    colors = {(axis, sign): (BLOCK_DARK if (axis, sign) in ((0, -1), (2, -1))
-                             else BLOCK_MAIN)
-              for axis in range(3) for sign in (-1, 1)}
-    return _beveled_box("MainBlockMesh", (pitch, pitch, 2 * pitch), 0.03 * pitch,
-                        colors, BLOCK_HIGHLIGHT, inlay=True)
+    """Default magma prototype, retaining the Basic renderer's public mesh name."""
+    mesh = make_themed_block_mesh('light', pitch=pitch)
+    mesh.setName('MainBlockMesh')
+    return mesh
 
 
 def make_themed_block_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
-    """Khối s×s×2s theo theme: 'light' nâu + rêu, 'dark' xanh dương + chấm tuyết."""
+    """Rigid UV-mapped volcanic cuboid; geometry never expands beyond 1×1×2."""
     _pitch(pitch)
-    c = BLOCK_THEME_COLORS[theme]
-    colors = {(axis, sign): (c['dark'] if (axis, sign) in ((0, -1), (2, -1)) else c['main'])
-              for axis in range(3) for sign in (-1, 1)}
-    bevel = 0.03 * pitch
-    kind = 'moss' if theme == 'light' else 'snow'
-    return _beveled_box(
-        f"MainBlockMesh-{theme}", (pitch, pitch, 2 * pitch), bevel, colors, c['edge'],
-        inlay=True, inlay_color=c['inlay'],
-        # Bỏ mặt (1,-1) vì mặt đó đã có miếng inlay.
-        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind, {(1, -1)}))
+    if theme not in BLOCK_THEME_COLORS:
+        raise ValueError('theme must be light or dark')
+    from src.gui.visual_materials import apply
+    colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
+    return apply(_beveled_box(f"MainBlockMesh-{theme}", (pitch,pitch,2*pitch),
+        .03*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
 
 
 def make_themed_cube_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
-    """Khối con 1x1x1 (sau khi tách) cùng bảng màu và hoa văn với khối chính."""
+    """Split basalt shares the local UV/material pipeline of the whole actor."""
     _pitch(pitch)
-    c = BLOCK_THEME_COLORS[theme]
-    colors = {(axis, sign): c['main'] for axis in range(3) for sign in (-1, 1)}
-    bevel = 0.02 * pitch
-    kind = 'moss' if theme == 'light' else 'snow'
-    return _beveled_box(
-        f"SplitCubeMesh-{theme}", (pitch, pitch, pitch), bevel, colors, c['edge'],
-        decorate=lambda builder, half: _spots(builder, half, bevel, c, kind))
+    if theme not in BLOCK_THEME_COLORS:
+        raise ValueError('theme must be light or dark')
+    from src.gui.visual_materials import apply
+    colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
+    return apply(_beveled_box(f"SplitCubeMesh-{theme}", (pitch,pitch,pitch),
+        .02*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
 
 
 class MeshBuilder(_MeshBuilder):

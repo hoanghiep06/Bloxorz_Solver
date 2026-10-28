@@ -1,8 +1,8 @@
-"""Flat vector icons for the HUD, drawn as Panda3D geometry (no font/image needed).
+"""Flat vector HUD icons plus the user-supplied RGBA AI robot portrait.
 
 Every icon is built from triangles in a unit box (about -1..1 on x and z), so
-the HUD only has to scale and tint it. Builders are pure math; only make_icon
-touches Panda3D.
+the HUD only has to scale and tint it. Vector builders are pure math; the two
+make_* adapters touch Panda3D. The robot uses its own colours, never a font glyph.
 """
 import math
 
@@ -57,11 +57,21 @@ def _star(cx, cz, size):
 
 
 def _exit():
-    return [((-0.95, 0.0), (-0.15, 0.72), (-0.15, -0.72))] + _rect(-0.2, -0.24, 0.9, 0.24)
+    return _stroke(((.85,0),(-.8,0)))+_stroke(((-.15,.65),(-.8,0),(-.15,-.65)))
+
+
+def _stroke(points,width=.18):
+    tris=[]
+    for (x,z),(xx,zz) in zip(points,points[1:]):
+        length=math.hypot(xx-x,zz-z);nx=-(zz-z)*width/(2*length);nz=(xx-x)*width/(2*length)
+        tris += [((x+nx,z+nz),(x-nx,z-nz),(xx-nx,zz-nz)),
+                 ((x+nx,z+nz),(xx-nx,zz-nz),(xx+nx,zz+nz))]
+    for x,z in points:tris+=_disc(x,z,width/2)
+    return tris
 
 
 def _restart():
-    tris = _arc_band(0.82, 0.54, 40, 325)
+    tris = _arc_band(0.82, 0.63, 40, 325)
     theta = math.radians(325)
     cx, cz = 0.68 * math.cos(theta), 0.68 * math.sin(theta)
     tx, tz = -math.sin(theta), math.cos(theta)      # travel direction (counter-clockwise)
@@ -118,7 +128,7 @@ def triangles(name):
 
 def make_icon(name):
     """Return a flat, unlit NodePath for the icon (tint it with setColor)."""
-    from panda3d.core import (Geom, GeomNode, GeomTriangles, GeomVertexData,
+    from panda3d.core import (AntialiasAttrib,Geom, GeomNode, GeomTriangles, GeomVertexData,
                               GeomVertexFormat, GeomVertexWriter, NodePath,
                               TransparencyAttrib)
     tris = triangles(name)
@@ -141,4 +151,47 @@ def make_icon(name):
     path.setLightOff(1)
     path.setShaderOff(1)
     path.setTransparency(TransparencyAttrib.MAlpha)
+    path.setAntialias(AntialiasAttrib.MMultisample)
     return path
+
+
+def make_robot_icon():
+    """User-provided RGBA portrait, aspect-correct and independent of tint."""
+    from pathlib import Path
+    from panda3d.core import CardMaker,Filename,NodePath,Texture,TexturePool,TransparencyAttrib
+    asset=Path(__file__).resolve().parents[2]/'assets/icons/ai-robot.png'
+    texture=TexturePool.loadTexture(Filename.fromOsSpecific(str(asset)))
+    if texture is None:raise RuntimeError('Missing AI Solver robot icon asset.')
+    texture.setMinfilter(Texture.FTLinearMipmapLinear);texture.setMagfilter(Texture.FTLinear)
+    texture.setWrapU(Texture.WMClamp);texture.setWrapV(Texture.WMClamp)
+    height=26/24;width=height*texture.getXSize()/texture.getYSize()
+    card=CardMaker('AI-Robot');card.setFrame(-width,width,-height,height)
+    node=NodePath(card.generate());node.setTexture(texture,1)
+    node.setTransparency(TransparencyAttrib.MAlpha);node.setLightOff(1);node.setShaderOff(1)
+    node.setColorOff(1)
+    return node
+
+def _clock():
+    return _band(_circle_points(.78), _circle_points(.62)) + _rect(-.08,0,.08,.58) + _rect(0,-.08,.45,.08) + _rect(-.23,.84,.23,.98)
+
+
+def _graph():
+    return _rect(-.8,-.8,-.45,.05)+_rect(-.2,-.8,.15,.85)+_rect(.4,-.8,.75,.42)
+
+
+def _chip():
+    tris=_band([(-.64,-.64),(.64,-.64),(.64,.64),(-.64,.64)], [(-.48,-.48),(.48,-.48),(.48,.48),(-.48,.48)])
+    for off in (-.4,0,.4):
+        tris+=_rect(off-.06,.68,off+.06,.95)+_rect(off-.06,-.95,off+.06,-.68)
+        tris+=_rect(.68,off-.06,.95,off+.06)+_rect(-.95,off-.06,-.68,off+.06)
+    return tris
+
+
+def _nodes():
+    return _rect(-.07,-.52,.07,.5)+_rect(-.6,-.5,.6,-.36)+_disc(0,.65,.23)+_disc(-.6,-.55,.23)+_disc(.6,-.55,.23)
+
+
+def _steps():
+    return _disc(-.42,.36,.28)+_disc(.4,-.22,.28)+_rect(-.57,-.3,-.27,.18)+_rect(.25,-.88,.55,-.4)
+
+BUILDERS.update(clock=_clock,graph=_graph,chip=_chip,nodes=_nodes,steps=_steps)

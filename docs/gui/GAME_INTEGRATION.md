@@ -23,10 +23,13 @@ Selecting a solver starts a fresh attempt and clears any previous win/failure di
 During an active guide, Play/Pause, Step and Hide Solution provide playback
 controls; AI Solver returns as soon as the guide ends or is hidden.
 
-Ten original project levels are under `levels/`. They cover the existing Basic
+Eleven original project levels are under `levels/`. They cover the existing Basic
 map, fragile crossing/detour, soft/heavy switches, toggle/permanent bridges,
 split/Space/merge, cube movement on fragile and combined mechanics.
 These are authoritative game levels, not the older visual-only animation fixtures.
+Level 11 (`level_11_advanced_sandbox.json`) is a 9x13 sandbox combining fragile
+tiles, soft/heavy/split switches, open/closed bridges, voids and a goal. It can be
+selected on the second page of the level menu and uses the same Core rules.
 
 In split mode, mouse directions, arrow placement and hover all use only the
 selected cube's cell. Space changes that selection; the other cube remains still.

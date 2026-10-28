@@ -1,0 +1,207 @@
+[
+  {
+    "phase": "READY",
+    "request": null,
+    "progress": 0.0
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.025455555555555044
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.04989777777777722
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.07908444444444385
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.10468666666666533
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.13056999999999874
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.15576999999999805
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.18203111111110973
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.2073366666666655
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.23580999999999877
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.2600355555555546
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.28540222222222117
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.3118133333333321
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.3382088888888883
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.3635855555555562
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.3905666666666659
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.4155966666666661
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.44075999999999854
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.4662399999999995
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.4933511111111106
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.5188277777777767
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.5446633333333316
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.5708688888888879
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.597028888888889
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.6219922222222232
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.6474000000000006
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.6717200000000013
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.6958433333333345
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.7200877777777789
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.7434433333333345
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.7686855555555578
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.7957988888888895
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.8211422222222254
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.8469655555555613
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.8699611111111178
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.8958666666666737
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.9223344444444532
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.9487900000000099
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.9732133333333436
+  },
+  {
+    "phase": "READY",
+    "request": "req-1",
+    "progress": 0.9972333333333437
+  },
+  {
+    "phase": "FELL",
+    "request": null,
+    "progress": 1.0
+  }
+]

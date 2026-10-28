@@ -1,0 +1,74 @@
+{
+  "images": [
+    "/tmp/jungle-completion-visual/main-menu.png",
+    "/tmp/jungle-completion-visual/game-comparable.png",
+    "/tmp/jungle-completion-visual/solver-controls.png",
+    "/tmp/jungle-completion-visual/dashboard-light-1280.png",
+    "/tmp/jungle-completion-visual/dashboard-light-1024.png",
+    "/tmp/jungle-completion-visual/dashboard-dark-1280.png",
+    "/tmp/jungle-completion-visual/dashboard-dark-1024.png",
+    "/tmp/jungle-completion-visual/magma-face-45.png",
+    "/tmp/jungle-completion-visual/magma-face-135.png",
+    "/tmp/jungle-completion-visual/magma-face-225.png",
+    "/tmp/jungle-completion-visual/advanced-split.png",
+    "/tmp/jungle-completion-visual/bridge-and-soft-switch.png",
+    "/tmp/jungle-completion-visual/demo-basic-roll-000.png",
+    "/tmp/jungle-completion-visual/demo-basic-roll-050.png",
+    "/tmp/jungle-completion-visual/demo-basic-roll-100.png",
+    "/tmp/jungle-completion-visual/demo-switches-000.png",
+    "/tmp/jungle-completion-visual/demo-switches-050.png",
+    "/tmp/jungle-completion-visual/demo-switches-100.png",
+    "/tmp/jungle-completion-visual/demo-bridge-000.png",
+    "/tmp/jungle-completion-visual/demo-bridge-050.png",
+    "/tmp/jungle-completion-visual/demo-bridge-100.png",
+    "/tmp/jungle-completion-visual/demo-fragile-000.png",
+    "/tmp/jungle-completion-visual/demo-fragile-050.png",
+    "/tmp/jungle-completion-visual/demo-fragile-100.png",
+    "/tmp/jungle-completion-visual/demo-split-000.png",
+    "/tmp/jungle-completion-visual/demo-split-050.png",
+    "/tmp/jungle-completion-visual/demo-split-100.png",
+    "/tmp/jungle-completion-visual/demo-merge-000.png",
+    "/tmp/jungle-completion-visual/demo-merge-050.png",
+    "/tmp/jungle-completion-visual/demo-merge-100.png",
+    "/tmp/jungle-completion-visual/demo-goal-000.png",
+    "/tmp/jungle-completion-visual/demo-goal-050.png",
+    "/tmp/jungle-completion-visual/demo-goal-100.png"
+  ],
+  "checks": [
+    "Core split + native Space, two textured actors",
+    "Explicit demo DTO: basic-roll",
+    "Explicit demo DTO: switches",
+    "Explicit demo DTO: bridge",
+    "Explicit demo DTO: fragile",
+    "Explicit demo DTO: split",
+    "Explicit demo DTO: merge",
+    "Explicit demo DTO: goal"
+  ],
+  "source": "native Panda3D framebuffer",
+  "resources_10_restarts": {
+    "before": {
+      "nodes": 781,
+      "tasks": 14,
+      "outputs": 3,
+      "widgets": 99
+    },
+    "after": {
+      "nodes": 781,
+      "tasks": 14,
+      "outputs": 3,
+      "widgets": 99
+    }
+  },
+  "render_frame_ms_median": 60.62,
+  "render_fps_median": 16.5,
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "material_status": "GLSL_DETAIL_EMISSION",
+  "bloom_status": "ENABLED",
+  "after_dispose": {
+    "outputs": 0,
+    "tasks": 0,
+    "widgets": 0,
+    "subscriptions": 0
+  },
+  "status": "PASS"
+}

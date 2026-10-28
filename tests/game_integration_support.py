@@ -9,7 +9,7 @@ from panda3d.core import NodePath
 from src.gui.controller import GameController, LevelCatalog, LevelEntry
 from src.gui.game_scene import GameScene
 
-LEVELS = Path(__file__).resolve().parents[1] / 'levels'
+LEVELS = Path(__file__).resolve().parent / 'fixtures' / 'mechanics'
 
 class GameIntegrationCase(unittest.TestCase):
     def setUp(self):

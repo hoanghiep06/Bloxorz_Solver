@@ -1,0 +1,48 @@
+{
+  "F1": [
+    {
+      "file": "F1-0.2.png",
+      "actual_progress": 0.20342555555555591,
+      "phase": "READY"
+    },
+    {
+      "file": "F1-0.5.png",
+      "actual_progress": 0.5179888888888889,
+      "phase": "READY"
+    },
+    {
+      "file": "F1-0.8.png",
+      "actual_progress": 0.8142422222222222,
+      "phase": "READY"
+    },
+    {
+      "file": "F1-1.0.png",
+      "actual_progress": 1.0,
+      "phase": "FELL"
+    }
+  ],
+  "F2": [
+    {
+      "file": "F2-0.2.png",
+      "actual_progress": 0.20344222222222244,
+      "phase": "READY"
+    },
+    {
+      "file": "F2-0.5.png",
+      "actual_progress": 0.5176666666666672,
+      "phase": "READY"
+    },
+    {
+      "file": "F2-0.8.png",
+      "actual_progress": 0.8139577777777774,
+      "phase": "READY"
+    },
+    {
+      "file": "F2-1.0.png",
+      "actual_progress": 1.0,
+      "phase": "FELL"
+    }
+  ],
+  "status": "PASS",
+  "input": "Public Controller action + normal task clock on desktop; XTest separately on Xvfb"
+}

@@ -295,7 +295,9 @@ class GameController:
         self.state = plan.next_state
         self.moves += 1
         if self.board.is_goal(self.state):
-            self._begin_terminal(EventKind.GOAL_COMPLETE)
+            self.phase, self._mode = 'GOAL', Replay.IDLE
+            self._refresh_hud()
+            self._emit('goal')
         else:
             self._refresh_hud()
             self._continue_replay()

@@ -13,6 +13,7 @@ THEMES = ('light', 'dark')
 class Settings:
     control_mode: str = 'keyboard'
     theme: str = 'light'
+    quality: str = 'auto'
     music: bool = True
     music_volume: float = 0.7
     sfx: bool = True
@@ -55,6 +56,8 @@ class SaveData:
                 self.settings.control_mode = settings['control_mode']
             if settings.get('theme') in THEMES:
                 self.settings.theme = settings['theme']
+            if settings.get('quality') in ('auto','high','balanced','low'):
+                self.settings.quality=settings['quality']
             legacy = settings.get('volume')            # save cũ: một âm lượng chung
             for key in ('music_volume', 'sfx_volume'):
                 value = settings.get(key, legacy)
@@ -70,6 +73,7 @@ class SaveData:
     def save(self):
         payload = {'settings': {'control_mode': self.settings.control_mode,
                                 'theme': self.settings.theme,
+                                'quality': self.settings.quality,
                                 'music': self.settings.music,
                                 'music_volume': self.settings.music_volume,
                                 'sfx': self.settings.sfx,

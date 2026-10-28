@@ -18,6 +18,8 @@ class BloxorzPreviewApp(ShowBase):
                                               f"win-size {WINDOW_SIZE[0]} {WINDOW_SIZE[1]}\nfullscreen false\n"
                                               "win-fixed-size false\n" + audio_line)
         super().__init__(windowType="onscreen")
+        from src.gui.visual_materials import configure
+        self.material_status = configure(self.win.getGsg())
         self.disableMouse()
         self.setBackgroundColor(*BACKGROUND_RGB, 1.0)
 

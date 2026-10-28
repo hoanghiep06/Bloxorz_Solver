@@ -22,9 +22,10 @@ class DelayedSolver:
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--all',action='store_true',help='All 10 levels x all 6 solvers.')
+    parser.add_argument('--all',action='store_true',help='All levels x all 6 solvers.')
     parser.add_argument('--interactions-only',action='store_true',help='Skip repeated solver runs; check manual/UI lifecycle paths.')
     parser.add_argument('--output',type=Path,default=Path('/tmp/bloxorz-game-integration'))
+    parser.add_argument('--levels',type=Path,default=Path(__file__).resolve().parents[1]/'levels')
     args=parser.parse_args(argv);args.output.mkdir(parents=True,exist_ok=True)
     from panda3d.core import loadPrcFileData,GraphicsEngine,GraphicsWindow
     loadPrcFileData('game-qa-silent','audio-library-name null')
@@ -37,7 +38,7 @@ def main(argv=None):
     report={'solver_runs':[],'manual':{},'images':[],'observed_events':[]}
     observed=set();goals=[]
     with tempfile.TemporaryDirectory(prefix='game-native-qa-') as temp:
-        app,renderer,c=create_game(save_path=Path(temp)/'save.json')
+        app,renderer,c=create_game(args.levels,save_path=Path(temp)/'save.json')
         original=c._on_event
         def on_event(event):
             if event=='goal':goals.append((c.search_name,c.moves,c.session_id))
@@ -49,6 +50,8 @@ def main(argv=None):
             if request is not None:
                 observed.update(event.kind.value for event in request.events)
             app.taskMgr.step()
+            if c.guide_active and flow.name=='game':
+                assert flow.arrows.root.isHidden(),'Manual assistance leaked into replay.'
             time.sleep(.001)
         def wait_for(predicate,timeout=15):
             deadline=time.monotonic()+timeout
@@ -100,9 +103,13 @@ def main(argv=None):
                     enter(index);hud.set_guide_visible(True)
                     click(name);hud.speed['value']=4;hud.speed['command']()
                     before=len(goals);started=time.monotonic();click('Play')
-                    wait_for(lambda:len(goals)>before,timeout=30)
-                    assert len(goals)==before+1
+                    wait_for(lambda:c.search is not None,timeout=30)
                     expected=c.search.solution_length
+                    # Wide maps can produce long valid DFS paths. Allow both
+                    # roll/effect phases per action at the chosen replay speed.
+                    replay_timeout=max(30,expected*2*c.MOVE_DURATION/c.speed+10)
+                    wait_for(lambda:len(goals)>before,timeout=replay_timeout)
+                    assert len(goals)==before+1
                     assert goals[-1][1]==expected
                     wait_for(lambda:c.phase=='READY' and not c.guide_active)
                     assert c.search is not None
@@ -152,7 +159,7 @@ def main(argv=None):
             click('Step');wait_for(lambda:not c.manager.is_busy)
             assert c.moves==2 and c.state.is_split() and c._mode is Replay.PAUSED,(c.moves,c.state,c._mode)
             image('split-step-paused')
-            click('Close');assert c.moves==0 and not c.manager.is_busy
+            click('Guide');assert c.moves==0 and not c.manager.is_busy
             report['manual']['pause_step_split_and_cancel']='PASS'
             # Resize: verify the actual native size and the fallback warning.
             report['resize']={}

@@ -65,7 +65,13 @@ python -B main.py
 
 `main.py` mở GUI hiện tại; không cần sửa import hoặc bỏ comment solver. Bấm **Start → chọn level** để chơi. Dùng **WASD / phím mũi tên** để di chuyển, **Space** để đổi khối khi tách, **R** để chơi lại. Vào **Settings → Mouse** để điều khiển bằng chuột.
 
+Để thử đủ cơ chế trên map rộng, chọn **màn 11 — Advanced Mechanics Sandbox (9 × 13)** ở trang 2 của menu level: có ô dễ vỡ, công tắc thường/nặng/tách khối, cầu mở/đóng, vực và đích.
+
 Nút **AI Solver** hiện ngay khi vào màn chơi. Mở nút này để chọn BFS, DFS, IDS, UCS, Greedy hoặc A*, sau đó dùng Play / Step. HUD hiển thị số bước, thời gian tìm kiếm, số node, độ dài nghiệm và bộ nhớ đỉnh của các allocation Python (`Peak Python Memory`, không phải toàn bộ RAM tiến trình).
+
+Hỗ trợ di chuyển bật sẵn cho cả phím và chuột: bốn mũi tên `OK / ! / X`, hover để xem vùng đáp, viền vàng khi sát biên. Cảnh báo đỏ vẫn cho thực hiện nước đi. Guide ẩn khi animation/replay/Tutorial đang chạy. Animation dùng lăn cứng, vỡ sáu mảnh, cầu trượt, teleport khi mờ và thu nhỏ rồi hút vào đích. Xem [thiết kế, API và kiểm thử](docs/gui/MOVE_ASSIST_ANIMATION.md).
+
+Đồ họa mới dùng khối magma có texture/emission, sàn đá, cảnh Jungle/Winter và HUD kính tối. **Settings → Graphics quality** có Auto/High/Balanced/Low, áp dụng ngay và lưu vào profile. Auto chọn Balanced khi dùng renderer phần mềm; High bật bloom. Xem [báo cáo visual, ảnh chạy thật và cách bật fallback](docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md).
 
 Chạy bộ test trong cùng môi trường:
 

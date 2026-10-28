@@ -37,7 +37,7 @@ def main(argv=None):
             data = dict(grid=grid, start=[4, 0], goal=[8, 12],
                         split_switch=dict(cell=[4, 3], split_positions=positions))
             (levels / f'level_{index}.json').write_text(json.dumps(data))
-        (levels / 'level_3.json').write_bytes((DEFAULT_LEVELS / 'level_05_split.json').read_bytes())
+        (levels / 'level_3.json').write_bytes((DEFAULT_LEVELS / 'level_05.json').read_bytes())
         app, renderer, controller = create_game(levels, save_path=directory / 'save.json')
         flow = app.game_flow
         try:

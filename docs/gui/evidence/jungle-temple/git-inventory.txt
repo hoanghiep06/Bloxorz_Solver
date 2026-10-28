@@ -1,0 +1,150 @@
+$ git status --short
+ M README.md
+ M src/gui/advanced_mesh_factory.py
+ M src/gui/advanced_preview.py
+ M src/gui/advanced_renderer.py
+ M src/gui/animation_effects.py
+ M src/gui/app.py
+ M src/gui/camera_views.py
+ M src/gui/dashboard_preview.py
+ M src/gui/game_app.py
+ M src/gui/hud.py
+ M src/gui/icons.py
+ M src/gui/level_intro.py
+ M src/gui/mesh_factory.py
+ M src/gui/profile.py
+ M src/gui/scene_style.py
+ M src/gui/screens.py
+ M src/gui/ui_theme.py
+ M tests/game_integration_support.py
+ M tests/test_gui_hud.py
+ M tests/test_mouse_control.py
+ M tests/test_move_assist.py
+ M tools/game_integration_smoke.py
+ M tools/move_assist_smoke.py
+?? assets/VISUAL_ATTRIBUTION.md
+?? assets/backgrounds/jungle-temple.png
+?? assets/backgrounds/winter-temple.png
+?? assets/materials/
+?? assets/shaders/
+?? docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md
+?? docs/gui/evidence/
+?? src/gui/cinematic_bloom.py
+?? src/gui/temple_environment.py
+?? src/gui/visual_materials.py
+?? src/gui/visual_quality.py
+?? tests/fixtures/
+?? tests/test_visual_overhaul.py
+?? tools/build_visual_materials.py
+?? tools/jungle_motion_capture.py
+?? tools/jungle_quality_smoke.py
+?? tools/jungle_solver_smoke.py
+?? tools/jungle_visual_capture.py
+
+$ git diff --stat
+ README.md                         |   2 +
+ src/gui/advanced_mesh_factory.py  | 119 ++++++++++++++++++++++++++------------
+ src/gui/advanced_preview.py       |  13 ++++-
+ src/gui/advanced_renderer.py      |   9 ++-
+ src/gui/animation_effects.py      |   3 +
+ src/gui/app.py                    |   2 +
+ src/gui/camera_views.py           |   4 +-
+ src/gui/dashboard_preview.py      |  15 ++++-
+ src/gui/game_app.py               |   8 ++-
+ src/gui/hud.py                    |  83 ++++++++++++++++++--------
+ src/gui/icons.py                  |  27 ++++++++-
+ src/gui/level_intro.py            |   8 +++
+ src/gui/mesh_factory.py           | 110 ++++++++++-------------------------
+ src/gui/profile.py                |   4 ++
+ src/gui/scene_style.py            |  10 ++--
+ src/gui/screens.py                |  38 ++++++++----
+ src/gui/ui_theme.py               |  61 ++++++++++++++-----
+ tests/game_integration_support.py |   2 +-
+ tests/test_gui_hud.py             |  13 +++++
+ tests/test_mouse_control.py       |   2 +-
+ tests/test_move_assist.py         |   6 +-
+ tools/game_integration_smoke.py   |   3 +-
+ tools/move_assist_smoke.py        |   7 ++-
+ 23 files changed, 362 insertions(+), 187 deletions(-)
+
+$ git ls-files --others --exclude-standard
+assets/VISUAL_ATTRIBUTION.md
+assets/backgrounds/jungle-temple.png
+assets/backgrounds/winter-temple.png
+assets/materials/fragile.png
+assets/materials/magma-height.png
+assets/materials/magma.png
+assets/materials/metal.png
+assets/materials/stone-dark.png
+assets/materials/stone-height.png
+assets/materials/stone-light.png
+assets/materials/temple-stone.png
+assets/shaders/bloom-composite.frag
+assets/shaders/bloom-extract.frag
+assets/shaders/bloom.vert
+assets/shaders/temple.frag
+assets/shaders/temple.vert
+docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md
+docs/gui/evidence/jungle-temple/advanced-split.png
+docs/gui/evidence/jungle-temple/basic-roll.gif
+docs/gui/evidence/jungle-temple/current-catalog-report.json
+docs/gui/evidence/jungle-temple/dashboard-dark-1024.png
+docs/gui/evidence/jungle-temple/dashboard-dark-1280.png
+docs/gui/evidence/jungle-temple/dashboard-light-1024.png
+docs/gui/evidence/jungle-temple/dashboard-light-1280.png
+docs/gui/evidence/jungle-temple/demo-basic-roll-000.png
+docs/gui/evidence/jungle-temple/demo-basic-roll-050.png
+docs/gui/evidence/jungle-temple/demo-basic-roll-100.png
+docs/gui/evidence/jungle-temple/demo-bridge-050.png
+docs/gui/evidence/jungle-temple/demo-fragile-050.png
+docs/gui/evidence/jungle-temple/demo-goal-050.png
+docs/gui/evidence/jungle-temple/demo-switches-100.png
+docs/gui/evidence/jungle-temple/fallback-report.json
+docs/gui/evidence/jungle-temple/flag.gif
+docs/gui/evidence/jungle-temple/fragile.gif
+docs/gui/evidence/jungle-temple/game-balanced.png
+docs/gui/evidence/jungle-temple/game-before.png
+docs/gui/evidence/jungle-temple/game-comparable.png
+docs/gui/evidence/jungle-temple/game-high.png
+docs/gui/evidence/jungle-temple/game-low.png
+docs/gui/evidence/jungle-temple/git-inventory.txt
+docs/gui/evidence/jungle-temple/goal-flag-closeup.png
+docs/gui/evidence/jungle-temple/goal.gif
+docs/gui/evidence/jungle-temple/magma-face-135.png
+docs/gui/evidence/jungle-temple/magma-face-225.png
+docs/gui/evidence/jungle-temple/magma-face-45.png
+docs/gui/evidence/jungle-temple/manifest.json
+docs/gui/evidence/jungle-temple/merge.gif
+docs/gui/evidence/jungle-temple/motion-report.json
+docs/gui/evidence/jungle-temple/native-input-report.json
+docs/gui/evidence/jungle-temple/quality-report.json
+docs/gui/evidence/jungle-temple/sandbox-before.png
+docs/gui/evidence/jungle-temple/settings-1024.png
+docs/gui/evidence/jungle-temple/settings-quality.png
+docs/gui/evidence/jungle-temple/solver-controls.png
+docs/gui/evidence/jungle-temple/split.gif
+docs/gui/evidence/jungle-temple/tracked-changes.patch
+docs/gui/evidence/jungle-temple/visual-report.json
+docs/gui/evidence/jungle-temple/wall-clock-solvers-report.json
+src/gui/cinematic_bloom.py
+src/gui/temple_environment.py
+src/gui/visual_materials.py
+src/gui/visual_quality.py
+tests/fixtures/mechanics/README.md
+tests/fixtures/mechanics/level_01.json
+tests/fixtures/mechanics/level_02_fragile.json
+tests/fixtures/mechanics/level_03_soft_bridge.json
+tests/fixtures/mechanics/level_04_heavy_bridge.json
+tests/fixtures/mechanics/level_05_split.json
+tests/fixtures/mechanics/level_06_combined.json
+tests/fixtures/mechanics/level_07_fragile_detour.json
+tests/fixtures/mechanics/level_08_toggle_bridge.json
+tests/fixtures/mechanics/level_09_permanent_bridge.json
+tests/fixtures/mechanics/level_10_cube_fragile.json
+tests/fixtures/mechanics/level_11_advanced_sandbox.json
+tests/test_visual_overhaul.py
+tools/build_visual_materials.py
+tools/jungle_motion_capture.py
+tools/jungle_quality_smoke.py
+tools/jungle_solver_smoke.py
+tools/jungle_visual_capture.py

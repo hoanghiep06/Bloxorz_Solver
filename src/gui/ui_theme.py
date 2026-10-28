@@ -14,18 +14,20 @@ def rgba(hex_value, alpha=1.0):
 WHITE = (1, 1, 1, 1)
 
 THEMES = {
-    'light': dict(INK='273B50', MUTED='61778B', LINE='D1DEE8',
-                  PAPER='FFFFFF', PAPER_HOVER='E7EFF5', PAPER_PRESSED='D1DEE8',
-                  PRIMARY='273B50', PRIMARY_HOVER='3B5772', PRIMARY_PRESSED='1B2B3C',
-                  ON_PRIMARY='FFFFFF', CARD='FFFFFF',
-                  DISABLED='E7EFF5', DISABLED_TEXT='9FB0C0',
-                  GOLD='F5B83D', GOLD_OFF='D1DEE8'),
-    'dark': dict(INK='E8EEF4', MUTED='9FB0C0', LINE='3A4F63',
-                 PAPER='22313F', PAPER_HOVER='2C3E50', PAPER_PRESSED='1A2631',
-                 PRIMARY='5B9BE0', PRIMARY_HOVER='73ADEB', PRIMARY_PRESSED='4380C4',
-                 ON_PRIMARY='FFFFFF', CARD='18222C',
-                 DISABLED='1C2733', DISABLED_TEXT='5A6B7B',
-                 GOLD='F5B83D', GOLD_OFF='3A4F63'),
+    'light': dict(GUIDE_PANEL='EFF6FD', GUIDE_BORDER='B7D0E8',
+                  GUIDE_INK='17324D', GUIDE_BODY='294763', GUIDE_MUTED='405E78', INK='F1F7F1', MUTED='BDCEC7', LINE='779D91',
+                  PAPER='102C29', PAPER_HOVER='23443C', PAPER_PRESSED='081D1B',
+                  PRIMARY='85440C', PRIMARY_HOVER='AA5B13', PRIMARY_PRESSED='633107',
+                  ON_PRIMARY='FFD06D', CARD='102722',
+                  DISABLED='1B302B', DISABLED_TEXT='758B82',
+                  GOLD='FFB82E', GOLD_OFF='40574B'),
+    'dark': dict(GUIDE_PANEL='0B1D35', GUIDE_BORDER='355574',
+                 GUIDE_INK='F4F8FF', GUIDE_BODY='E2ECF7', GUIDE_MUTED='BFD0E3', INK='F1F6FF', MUTED='AEC6DE', LINE='617F9F',
+                 PAPER='0B1D35', PAPER_HOVER='1D3655', PAPER_PRESSED='071326',
+                 PRIMARY='85400A', PRIMARY_HOVER='A95713', PRIMARY_PRESSED='602D08',
+                 ON_PRIMARY='FFD06D', CARD='0A172D',
+                 DISABLED='14243A', DISABLED_TEXT='6D829C',
+                 GOLD='FFB82E', GOLD_OFF='3D516B'),
 }
 CURRENT = 'light'
 
@@ -36,7 +38,7 @@ def set_theme(name):
     palette = THEMES.get(name, THEMES['light'])
     CURRENT = name if name in THEMES else 'light'
     for key, value in palette.items():
-        globals()[key] = rgba(value)
+        globals()[key] = rgba(value, .90 if key in ('PAPER','CARD') else 1.)
 
 
 set_theme('light')
@@ -62,7 +64,8 @@ def rounded_rect(width, height, radius, color):
     col.addData4(*color)
     for x, z in points:
         vertex.addData3(x, 0, z)
-        col.addData4(*color)
+        shade = 1.07 if z > -height*.45 else .92
+        col.addData4(*(min(1,c*shade) for c in color[:3]), color[3])
     triangles = GeomTriangles(Geom.UHStatic)
     for i in range(len(points)):
         triangles.addVertices(0, 1 + i, 1 + (i + 1) % len(points))
@@ -73,6 +76,33 @@ def rounded_rect(width, height, radius, color):
     path = NodePath(node)
     path.setTwoSided(True)
     path.setTransparency(TransparencyAttrib.MAlpha)
+    return path
+
+
+def rounded_outline(width, height, radius, color, thickness=1):
+    """True hollow frame, leaving the translucent fill visible over scenery."""
+    from panda3d.core import (Geom,GeomNode,GeomTriangles,GeomVertexData,
+        GeomVertexFormat,GeomVertexWriter,NodePath,TransparencyAttrib)
+    def boundary(w,h,r,ox=0,oz=0):
+        points=[]
+        for cx,cz,start in ((w-r,-r,90),(w-r,-h+r,0),(r,-h+r,-90),(r,-r,-180)):
+            for step in range(9):
+                angle=math.radians(start-step*10)
+                points.append((cx+r*math.cos(angle)+ox,cz+r*math.sin(angle)+oz))
+        return points
+    outer=boundary(width,height,radius)
+    inner=boundary(width-2*thickness,height-2*thickness,max(0,radius-thickness),thickness,-thickness)
+    data=GeomVertexData('GlassOutline',GeomVertexFormat.getV3c4(),Geom.UHStatic)
+    v,c=GeomVertexWriter(data,'vertex'),GeomVertexWriter(data,'color')
+    for ring in (outer,inner):
+        for x,z in ring:v.addData3f(x,0,z);c.addData4f(*color)
+    triangles=GeomTriangles(Geom.UHStatic);n=len(outer)
+    for i in range(n):
+        j=(i+1)%n
+        triangles.addVertices(i,j,n+j);triangles.addVertices(i,n+j,n+i)
+    geom=Geom(data);geom.addPrimitive(triangles)
+    node=GeomNode('GlassOutline');node.addGeom(geom)
+    path=NodePath(node);path.setTwoSided(True);path.setTransparency(TransparencyAttrib.MAlpha)
     return path
 
 
@@ -87,7 +117,7 @@ def style_button(button, primary):
               else (PAPER, PAPER_PRESSED, PAPER_HOVER, DISABLED))
     button['geom'] = tuple(rounded_rect(width - 2, height - 2, radius - 1, c) for c in states)
     button['text_fg'] = ON_PRIMARY if primary else INK
-    button.border['geom'] = rounded_rect(width, height, radius, PRIMARY if primary else LINE)
+    button.border['geom'] = rounded_outline(width, height, radius, GOLD if primary else LINE)
 
 
 def make_button(parent, text, x, y, width, height, command, *, primary=False,
@@ -97,7 +127,7 @@ def make_button(parent, text, x, y, width, height, command, *, primary=False,
     from direct.gui import DirectGuiGlobals as DGG
     from panda3d.core import TextNode
     border = DirectFrame(parent=parent, relief=None, pos=(x, 0, -y),
-                         geom=rounded_rect(width, height, _radius(height), LINE))
+                         geom=rounded_outline(width, height, _radius(height), LINE))
     inner_h = height - 2
     button = DirectButton(
         parent=border, text=text, text_scale=size, text_align=TextNode.ACenter,
@@ -118,6 +148,7 @@ def make_label(parent, text, size, x, y, *, color=None, align='left'):
     modes = {'left': TextNode.ALeft, 'center': TextNode.ACenter, 'right': TextNode.ARight}
     return DirectLabel(parent=parent, text=text, text_scale=size,
                        text_fg=INK if color is None else color, text_align=modes[align],
+                       text_shadow=(0.01,0.025,0.025,.85), text_shadowOffset=(.05,.06),
                        pos=(x, 0, -y), relief=None, frameColor=(0, 0, 0, 0), state='disabled')
 
 

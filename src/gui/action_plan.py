@@ -11,6 +11,21 @@ DIRECTIONS = dict(zip(('U', 'D', 'L', 'R'),
                      (RollDirection.UP, RollDirection.DOWN, RollDirection.LEFT, RollDirection.RIGHT)))
 
 
+def _open_void_exit(board, motion, action):
+    """Visual clearance only, after Core has explicitly declared a fall.
+
+    A void can open out of the playable surface while still being inside the
+    rectangular JSON grid. Require every destination lane to stay unsupported
+    all the way to the grid boundary; enclosed holes retain their drop profile.
+    """
+    dx,dy,_=DIRECTIONS[action].value
+    for row,col in motion.get_occupied_cells():
+        while 0<=row<board.rows and 0<=col<board.cols:
+            if board.is_valid_cell(row,col,motion.bridges_state):return False
+            row-=dy;col+=dx
+    return True
+
+
 def surface_events(before, after):
     events = []
     old = {state.bridge_id: state.present for state in before.bridge_states}
@@ -45,8 +60,13 @@ def plan_action(board, state, board_data, before, action, next_id,
             broken_fragile_cells=current.broken_fragile_cells, **kwargs)
     def append(kind, after, events=(), **kwargs):
         nonlocal current
-        request = AnimationRequest(1, next_id(), current, after, kind,
-            terminal_duration if kind is K.TERMINAL else move_duration if kind is K.ROLL else effect_duration,
+        duration = (terminal_duration if kind is K.TERMINAL else
+                    move_duration if kind is K.ROLL else
+                    .12 if any(e.kind is E.FRAGILE_BREAK for e in events) else
+                    .4 if any(e.kind is E.SPLIT for e in events) else
+                    .3 if any(e.kind is E.MERGE for e in events) else
+                    .15 if any(e.kind is E.ACTIVE_CUBE_CHANGE for e in events) else effect_duration)
+        request = AnimationRequest(1, next_id(), current, after, kind, duration,
             events=tuple(events), **kwargs)
         requests.append(request)
         if after is not None:
@@ -62,6 +82,14 @@ def plan_action(board, state, board_data, before, action, next_id,
             append(K.TERMINAL, None, (Event(E.FALL),), terminal=TerminalVisualOutcome(
                 E.FALL, actor_id=actor, roll_direction=DIRECTIONS[action]))
             return ActionPlan(None, tuple(requests), True)
+        if (outcome.next_state is None and outcome.failure_reason=='fall'
+                and not state.is_split() and outcome.attempted_state==outcome.motion_state
+                and _open_void_exit(board,outcome.motion_state,action)):
+            # Reuse the same continuous edge profile as an off-grid fall. Do not
+            # roll to a fabricated stop on void before releasing the actor.
+            append(K.TERMINAL,None,(Event(E.FALL),),terminal=TerminalVisualOutcome(
+                E.FALL,actor_id=actor,roll_direction=DIRECTIONS[action]))
+            return ActionPlan(None,tuple(requests),True)
         append(K.ROLL, motion, surface_events(current, motion),
                direction=DIRECTIONS[action], actor_id=actor)
     target_state = outcome.next_state or outcome.attempted_state
@@ -84,5 +112,11 @@ def plan_action(board, state, board_data, before, action, next_id,
                                  else target_state.active_cube]
                         if target_state.is_split() else None)
         append(K.TERMINAL, None, (Event(E.FALL),),
-               terminal=TerminalVisualOutcome(E.FALL, actor_id=failed_actor))
+               terminal=TerminalVisualOutcome(E.FALL, actor_id=failed_actor,
+                   collapse_cell=cell if outcome.failure_reason == 'fragile' else None))
+    elif board.is_goal(outcome.next_state):
+        # Goal suction is the last phase of this action, so Core commit, Moves
+        # and the result notification happen together after its completion.
+        append(K.TERMINAL, None, (Event(E.GOAL_COMPLETE),),
+               terminal=TerminalVisualOutcome(E.GOAL_COMPLETE))
     return ActionPlan(outcome.next_state, tuple(requests), outcome.next_state is None)

@@ -1,0 +1,41 @@
+{
+  "status": "VISUAL OVERHAUL COMPLETE",
+  "baseline": "f602351659af24dec1215f2c6dc593165dcd768d",
+  "regression": {
+    "tests": 489,
+    "failures": 0,
+    "errors": 0,
+    "log": "unittest.log"
+  },
+  "native_manual": {
+    "groups": 33,
+    "report": "native-input-report.json"
+  },
+  "real_clock_solvers": {
+    "runs": 66,
+    "report": "wall-clock-solvers-report.json"
+  },
+  "current_catalog_solvers": {
+    "runs": 108,
+    "report": "current-catalog-report.json"
+  },
+  "quality": {
+    "native_switches": 20,
+    "report": "quality-report.json"
+  },
+  "screenshots": "native Panda3D framebuffers; see visual-report.json",
+  "clips": {
+    "source": "real framebuffers; explicit animation DTOs labelled NOT GAMEPLAY",
+    "files": [
+      "basic-roll.gif",
+      "fragile.gif",
+      "goal.gif",
+      "split.gif",
+      "merge.gif",
+      "flag.gif"
+    ],
+    "flag": "clock-driven cloth only; snapshot unchanged"
+  },
+  "performance_scope": "llvmpipe software renderer, not a GPU performance guarantee",
+  "git_mutation": "none; no commit/push/merge/checkout/reset/clean"
+}

@@ -1,0 +1,53 @@
+{
+  "input": "X11 XTest native mouse and keyboard",
+  "checks": [
+    "dark: 7 native icons replace one card without moving the block",
+    "dark: card body blocks board clicks and move-preview hover",
+    "dark: same icon and real X close card",
+    "dark: four target resolutions, no HUD overlap or board behind card",
+    "light: 7 native icons replace one card without moving the block",
+    "light: card body blocks board clicks and move-preview hover",
+    "light: same icon and real X close card",
+    "light: four target resolutions, no HUD overlap or board behind card",
+    "20 theme changes preserve selected card, widgets/listeners/tasks/outputs",
+    "Keyboard roll works while card is open",
+    "Native guide click during roll does not cancel or duplicate the action",
+    "Restart and level changes keep the existing rail/card",
+    "Six solver buttons, true worker metrics and clock replay work with guide open",
+    "Unsupported size hides cleanly; valid resize restores selected card"
+  ],
+  "images": [
+    "/tmp/physical-fall-guide/dark-rail-closed.png",
+    "/tmp/physical-fall-guide/dark-card-open.png",
+    "/tmp/physical-fall-guide/dark-card-1024.png",
+    "/tmp/physical-fall-guide/dark-card-1920.png",
+    "/tmp/physical-fall-guide/light-rail-closed.png",
+    "/tmp/physical-fall-guide/light-card-open.png",
+    "/tmp/physical-fall-guide/light-card-1024.png",
+    "/tmp/physical-fall-guide/light-card-1920.png"
+  ],
+  "20_theme_updates": {
+    "before": {
+      "widgets": 131,
+      "listeners": 80,
+      "tasks": 13,
+      "outputs": 1,
+      "guide_nodes": 29
+    },
+    "after": {
+      "widgets": 131,
+      "listeners": 80,
+      "tasks": 13,
+      "outputs": 1,
+      "guide_nodes": 29
+    }
+  },
+  "after_dispose": {
+    "widgets": 0,
+    "listeners": 0,
+    "tasks": 0,
+    "outputs": 0,
+    "guide_nodes": 0
+  },
+  "status": "PASS"
+}

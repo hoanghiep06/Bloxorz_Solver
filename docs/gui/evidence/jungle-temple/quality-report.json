@@ -1,0 +1,70 @@
+{
+  "input": "native XTest",
+  "profiles": [
+    {
+      "choice": "high",
+      "effective": "high",
+      "median_render_ms": 38.75,
+      "median_render_fps": 25.8,
+      "bloom": "ENABLED",
+      "resources": {
+        "outputs": 3,
+        "tasks": 14,
+        "nodes": 192,
+        "widgets": 141
+      }
+    },
+    {
+      "choice": "balanced",
+      "effective": "balanced",
+      "median_render_ms": 22.56,
+      "median_render_fps": 44.3,
+      "bloom": "DISABLED_QUALITY",
+      "resources": {
+        "outputs": 1,
+        "tasks": 14,
+        "nodes": 192,
+        "widgets": 141
+      }
+    },
+    {
+      "choice": "low",
+      "effective": "low",
+      "median_render_ms": 20.23,
+      "median_render_fps": 49.4,
+      "bloom": "DISABLED_QUALITY",
+      "resources": {
+        "outputs": 1,
+        "tasks": 14,
+        "nodes": 192,
+        "widgets": 141
+      }
+    }
+  ],
+  "checks": [
+    "Live preference updates preserve state/session/Moves; saved JSON matches every native click",
+    "Saved Balanced preference restored in a fresh game window"
+  ],
+  "20_native_switches": {
+    "before": {
+      "outputs": 1,
+      "tasks": 14,
+      "nodes": 192,
+      "widgets": 141
+    },
+    "after": {
+      "outputs": 1,
+      "tasks": 14,
+      "nodes": 192,
+      "widgets": 141
+    }
+  },
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "material_status": "GLSL_DETAIL_EMISSION",
+  "after_dispose": {
+    "outputs": 0,
+    "tasks": 0,
+    "nodes": 0,
+    "widgets": 0
+  }
+}

@@ -13,12 +13,12 @@ from src.gui.advanced_contracts import SplitCubeVisualState
 
 @unittest.skipUnless(HAS_PANDA, 'Panda3D not installed')
 class AdvancedAnimationTests(AnimationSceneCase):
-    def test_fragile_break_removes_support_and_has_moving_debris(self):
+    def test_fragile_crack_sags_before_terminal_collapse(self):
         self.build('fragile');r=self.fixture.requests[0]
         self.manager.submit(r);self.manager.advance(r.duration*.5)
         intact,broken=self.layer._fragile[(5,2)]
-        self.assertTrue(intact.isHidden());self.assertFalse(broken.isHidden())
-        self.assertGreater(broken.getZ(),0)
+        self.assertFalse(intact.isHidden());self.assertTrue(broken.isHidden())
+        self.assertLess(intact.getZ(),0)
         self.assertTrue(self.layer.renderer_root.isHidden())
         self.manager.advance(r.duration)
         self.assertTrue(self.renderer._fragile[(5,2)][0].isHidden())
@@ -97,12 +97,13 @@ class AdvancedAnimationTests(AnimationSceneCase):
         self.assertEqual(self.manager._rig._whole.getColorScale()[3],0)
         self.assertTrue(self.manager._rig._whole.isHidden())
 
-    def test_goal_shrink_fade_above_mouth_without_rim_penetration(self):
+    def test_goal_shrinks_before_sinking_without_rim_penetration(self):
         self.build('goal');r=self.fixture.requests[0];center=self.poses()[None].center
         self.manager.submit(r);self.manager.advance(r.duration*.5)
-        self.assertEqual(self.poses()[None].center,center)
+        self.assertLess(self.poses()[None].center[2],center[2])
         low,high=self.manager._rig._whole_model.getTightBounds(self.block)
-        self.assertGreaterEqual(low.z,-1e-6)
+        self.assertLessEqual(high.x-low.x,.76)
+        self.assertLessEqual(high.y-low.y,.76)
         self.assertLess(self.manager._rig._whole.getScale().x,1)
         self.manager.advance(r.duration)
         self.assertEqual(self.manager._rig._whole.getColorScale()[3],0)

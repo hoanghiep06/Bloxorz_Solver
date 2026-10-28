@@ -72,15 +72,15 @@ METRIC_LABELS = ('Moves', 'Search Time', 'Expanded Nodes', 'Solution Length', 'P
 # ---- layout constants (pixels) ----
 MARGIN, GAP, BTN_H, TEXT = 20, 10, 46, 22
 SQ = BTN_H                 # icon buttons are squares
-ICON_HALF = 14             # icon half-size in pixels
+ICON_HALF = 12             # 24px toolbar vectors; robot keeps a 26px portrait
 DIVIDER = 24               # extra space separating Exit from the other tools
-TOP_ROW = (('Exit', SQ), ('Restart', SQ), ('Guide', SQ), ('View', SQ), ('Tutorial', SQ))
+TOP_ROW = (('Exit', 104), ('Restart', 134), ('Guide', 166), ('View', SQ), ('Tutorial', SQ))
 SOLVERS = ('BFS', 'DFS', 'IDS', 'UCS', 'Greedy', 'A*')
 PLAYBACK = (('Play', SQ), ('Step', SQ))
 SOLVER_W = 84
 ROW2_Y = MARGIN + BTN_H + GAP
-LEVEL_SIZE, STATUS_SIZE = 30, 18
-TIP_SPACE = 170            # room reserved for the hover name next to the toolbar
+LEVEL_SIZE, STATUS_SIZE = 24, 17
+TIP_SPACE = 0            # room reserved for the hover name next to the toolbar
 
 
 def _top_positions():
@@ -134,12 +134,21 @@ class HudShell:
         try:
             from direct.gui.DirectGui import DirectFrame
             self.metrics = self._own(DirectFrame(parent=self.root, relief=DGG.FLAT,
-                frameColor=ui.PAPER, frameSize=(0, 1, -76, 0)))
+                frameColor=(0,0,0,0), frameSize=(0, 1, -76, 0)))
             self.surfaces = {'controls': self.bar, 'metrics': self.metrics}
             self.metric_labels = [self._label(text, 14, 0, 0, muted=True, parent=self.metrics)
                                   for text in METRIC_LABELS]
             self.metric_values = [self._label(UNKNOWN, 20, 0, 0, parent=self.metrics)
                                   for _ in METRIC_LABELS]
+            self.metric_icons=[]
+            self.metric_dividers=[]
+            for index,key in enumerate(('steps','clock','nodes','graph','chip')):
+                icon=icons.make_icon(key);icon.reparentTo(self.metrics)
+                icon.setScale(14);icon.setColor(*ui.GOLD)
+                self.metric_icons.append(icon)
+                if index:
+                    divider=ui.rounded_rect(1,48,0,ui.LINE);divider.reparentTo(self.metrics)
+                    self.metric_dividers.append(divider)
             for (name, width), x in zip(TOP_ROW, TOP_X):
                 self._add_button(name, x, MARGIN, width)
             for i, name in enumerate(SOLVERS):
@@ -164,11 +173,15 @@ class HudShell:
                                           muted=True)
             self._playback.append(self.speed_text)
 
-            self.tip = self._label('', 18, LEFT_END + 16, MARGIN + 30, muted=True)
-            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 30, align='right')
-            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 52, align='right', muted=True)
+            self.tip = self._label('', 14, MARGIN, ROW2_Y + BTN_H + 20, muted=True)
+            self.info = self._own(DirectFrame(parent=self.bar,relief=None))
+            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 24, align='right')
+            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 46, align='right', muted=True)
             self.warning = self._label('Minimum window size: 1024 x 720', 16, 0, 0, align='center',
                                        parent=self.root)
+            # The 3D region is disabled below minimum size; the host clear is
+            # pale in either theme, so this fallback needs a fixed dark ink.
+            self.warning['text_fg'] = TEXT_PRIMARY
             self.warning.hide()
             self.set_guide_visible(False)
             self.update_view_model(model)
@@ -187,13 +200,16 @@ class HudShell:
 
     def _add_button(self, name, x, y, width, group=None):
         has_icon = name in ICONS
-        button = ui.make_button(self.bar, '' if has_icon else name, x, y, width, BTN_H,
-                                None, size=TEXT, enabled=False)
+        caption = {'Exit':'Exit','Restart':'Restart','Guide':'AI Solver'}.get(name, '' if has_icon else name)
+        button = ui.make_button(self.bar, caption, x, y, width, BTN_H,
+                                None, size=19 if has_icon else TEXT, enabled=False)
         self._own(button.border)
         self._own(button)
         self.buttons[name] = button
         if has_icon:
-            self._add_icon(name, x + width / 2, y + BTN_H / 2)
+            self._add_icon(name, x + (25 if caption else width / 2), y + BTN_H / 2)
+            if caption:
+                button['text_pos'] = (width/2 + 13, -BTN_H/2 - 5)
         self._bind_tip(name, button)
         if group is not None:
             group.append(button.border)
@@ -206,7 +222,7 @@ class HudShell:
         holder.setScale(ICON_HALF)
         variants = {}
         for index, key in enumerate(ICONS[name]):
-            node = icons.make_icon(key)
+            node = icons.make_robot_icon() if name=='Guide' else icons.make_icon(key)
             node.reparentTo(holder)
             if index:
                 node.hide()
@@ -238,7 +254,10 @@ class HudShell:
                 color = tuple(self.buttons[name]['text_fg'])
             except Exception:
                 pass
-            holder.setColor(*color)
+            if name=='Guide':
+                from direct.gui import DirectGuiGlobals as DGG
+                holder.setColorScale(1,1,1,1 if self.buttons[name]['state']==DGG.NORMAL else .45)
+            else:holder.setColor(*color)
 
     def _set_visible(self, name, visible):
         widgets = [self.buttons[name].border]
@@ -333,7 +352,7 @@ class HudShell:
             widget.show() if visible else widget.hide()
 
     def _style_dynamic(self):
-        ui.style_button(self.buttons['Guide'], primary=self._guide_open)
+        ui.style_button(self.buttons['Guide'], primary=True)
         for name in SOLVERS:
             ui.style_button(self.buttons[name], primary=name == self._selected)
         self._tint_icons()
@@ -353,33 +372,39 @@ class HudShell:
         self.runtime['text_fg'] = ui.MUTED
         self.tip['text_fg'] = ui.MUTED
         self.speed_text['text_fg'] = ui.MUTED
-        self.warning['text_fg'] = ui.INK
+        self.warning['text_fg'] = TEXT_PRIMARY
         self.speed['frameColor'] = ui.LINE
         self.speed.thumb['frameColor'] = ui.PRIMARY
-        self.metrics['frameColor'] = ui.PAPER
+        self._style_metrics()
+        for icon in self.metric_icons:
+            icon.setColor(*ui.GOLD)
         for label in self.metric_labels:
             label['text_fg'] = ui.MUTED
         for label in self.metric_values:
             label['text_fg'] = ui.INK
 
     # ------------------------------------------------------------ layout/data
-    def _fit_text(self, label, text, size, max_width):
+    def _fit_text(self, label, text, size, max_width, suffix=''):
         node = self._TextNode('HUDTextMeasure')
         if node.calcWidth(text) * size <= max_width:
             label['text'] = text
             return
-        while text and node.calcWidth(text + '…') * size > max_width:
+        if suffix and text.endswith(suffix):
+            text=text[:-len(suffix)]
+        while text and node.calcWidth(text + '…' + suffix) * size > max_width:
             text = text[:-1]
-        label['text'] = text + '…'
+        label['text'] = text + '…' + suffix
 
     def _refresh_texts(self):
         width = self.layout.width if self.layout else 1024
-        self._fit_text(self.level, self.model.level_label, LEVEL_SIZE,
-                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE))
+        title=self.model.level_label
+        tail=' ('+title.rsplit(' (',1)[-1] if ' (' in title and '/' in title.rsplit(' (',1)[-1] and title.endswith(')') else ''
+        self._fit_text(self.level, title, LEVEL_SIZE,
+                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE), suffix=tail)
         self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
         cell = (width - 40) / 5
         for label, value in zip(self.metric_values, metric_values(self.model)):
-            self._fit_text(label, value, 20, cell - 20)
+            self._fit_text(label, value, 20, cell - 56)
 
     def apply_layout(self, layout):
         if self._disposed:
@@ -396,13 +421,37 @@ class HudShell:
         self.metrics.show()
         self.metrics.setPos(20, 0, -(layout.height - 94))
         self.metrics['frameSize'] = (0, layout.width - 40, -76, 0)
+        self._style_metrics()
         cell = (layout.width - 40) / 5
         for index, (label, value) in enumerate(zip(self.metric_labels, self.metric_values)):
-            label.setPos(index * cell + 10, 0, -24)
-            value.setPos(index * cell + 10, 0, -55)
-        self.level.setX(layout.width - MARGIN)
-        self.runtime.setX(layout.width - MARGIN)
+            label.setPos(index * cell + 46, 0, -24)
+            self.metric_icons[index].setPos(index*cell+24,0,-30)
+            if index:
+                self.metric_dividers[index-1].setPos(index*cell,0,-14)
+            value.setPos(index * cell + 46, 0, -55)
+        info_width = max(150,layout.width - LEFT_END - 3*MARGIN)
+        self.info.setPos(layout.width-info_width-MARGIN,0,-MARGIN)
+        self.info['geom'] = ui.rounded_rect(info_width,52,10,ui.PAPER)
+        self.level.setX(layout.width - MARGIN - 10)
+        self.runtime.setX(layout.width - MARGIN - 10)
         self._refresh_texts()
+
+    def _style_metrics(self):
+        width = self.layout.width-40 if self.layout else 1240
+        # Two nested rounded meshes provide a luminous one-pixel frame.
+        border = ui.rounded_outline(width,76,12,ui.LINE)
+        fill = ui.rounded_rect(width-2,74,11,ui.PAPER)
+        fill.reparentTo(border); fill.setPos(1,-.01,-1)
+        self.metrics['geom'] = border
+
+    def contains_pointer_pixels(self, x, y):
+        """Reserve visible toolbar/status and metric bands for the HUD."""
+        if self.layout is None or not self.layout.supported:
+            return True
+        if not (0 <= x <= self.layout.width and 0 <= y <= self.layout.height):
+            return False
+        top = ROW2_Y + BTN_H + GAP if self._guide_open else 92
+        return y <= top or y >= self.layout.height - 94
 
     def update_view_model(self, model):
         if not isinstance(model, HudViewModel):

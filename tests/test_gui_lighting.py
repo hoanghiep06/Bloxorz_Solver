@@ -152,8 +152,11 @@ class PresentationTests(unittest.TestCase):
         self.assertEqual(self.static.getState(), before)
         self.assertTrue(self.scene.hasLight(light.ambient))
 
-    def test_gradient_is_unlit_behind_bounds_without_ground_plane(self):
-        style = self.style()
+    def test_fallback_gradient_is_unlit_behind_bounds_without_ground_plane(self):
+        # Current design prefers day/night images. Exercise the fallback
+        # explicitly, independent of whether the repository assets exist.
+        with patch('src.gui.scene_style._find_image', return_value=None):
+            style = self.style()
         gradient = self.camera.find('PresentationGradient')
         self.assertFalse(gradient.isEmpty())
         self.assertFalse(gradient.getDepthWrite())
@@ -173,6 +176,18 @@ class PresentationTests(unittest.TestCase):
         self.assertLess(gradient.getY()+1, self.fit.far)
         style.dispose()
         self.assertTrue(self.camera.find('PresentationGradient').isEmpty())
+
+    def test_image_backdrop_keeps_unlit_depth_and_shadow_contract(self):
+        style = self.style()
+        backdrop = self.camera.find('PresentationBackdrop')
+        self.assertFalse(backdrop.isEmpty())
+        self.assertTrue(backdrop.hasTexture())
+        self.assertFalse(backdrop.getDepthWrite())
+        self.assertFalse(backdrop.getDepthTest())
+        self.assertEqual(backdrop.getBinName(), 'background')
+        self.assertTrue(backdrop.isHidden(SHADOW_MASK))
+        style.dispose()
+        self.assertTrue(backdrop.isEmpty() or self.camera.find('PresentationBackdrop').isEmpty())
 
     def test_aa_state_depends_on_framebuffer_readback(self):
         for samples, enabled, status in ((0, True, 'UNAVAILABLE'), (4, True, 'MSAA_4X'),

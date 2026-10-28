@@ -1,0 +1,20 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":99".
+{
+  "status": "PASS",
+  "cases": 0,
+  "checks": [
+    "Default gameplay creates no assist nodes or updater task",
+    "Native Up -> FALL -> result; R restarts; Mechanics Guide preserved",
+    "Native mouse fall + HUD Restart + H tutorial in Iso/Top/Follow without assist",
+    "15 pause/resume/restart cases; no stale terminal or callbacks"
+  ],
+  "after_dispose": {
+    "tasks": 0,
+    "widgets": 0,
+    "outputs": 0,
+    "listeners": 0
+  }
+}

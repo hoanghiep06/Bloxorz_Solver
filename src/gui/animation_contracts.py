@@ -97,6 +97,7 @@ class TerminalVisualOutcome:
     actor_id: str | None = None  # None denotes WHOLE; strings denote stable cube IDs.
     fall_distance: float = 3.0
     roll_direction: RollDirection | None = None
+    collapse_cell: tuple[int, int] | None = None
 
     def __post_init__(self):
         if self.kind not in (EventKind.FALL, EventKind.GOAL_COMPLETE):
@@ -107,6 +108,11 @@ class TerminalVisualOutcome:
         if self.roll_direction is not None and (self.kind is not EventKind.FALL
                 or type(self.roll_direction) is not RollDirection):
             raise ValueError('Only FALL can include an explicit roll direction.')
+        if self.collapse_cell is not None:
+            if (self.kind is not EventKind.FALL or type(self.collapse_cell) is not tuple
+                    or len(self.collapse_cell) != 2
+                    or any(type(v) is not int for v in self.collapse_cell)):
+                raise ValueError('collapse_cell must be an integer cell on a FALL outcome.')
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,6 +223,10 @@ def validate_request(request, board):
         ids = {c.cube_id for c in before.cubes} if before.block_mode is Mode.SPLIT else {None}
         if request.terminal.actor_id not in ids:
             raise ValueError('Terminal actor is not present in before snapshot.')
+        cell = request.terminal.collapse_cell
+        if cell is not None and (cell not in board.fragile_cells
+                                 or cell not in before.broken_fragile_cells):
+            raise ValueError('collapse_cell must refer to a broken fragile tile in before snapshot.')
         if request.terminal.kind is EventKind.GOAL_COMPLETE:
             if before.whole_pose is None or before.whole_pose.orientation.value != 'STANDING' or before.whole_pose.anchor_cell not in board.goal_cells:
                 raise ValueError('Goal visual profile requires an explicit standing whole at a goal.')
