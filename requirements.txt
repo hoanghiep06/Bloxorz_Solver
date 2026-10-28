@@ -1,1 +1,4 @@
 panda3d==1.10.16
+pytest
+numpy
+Pillow

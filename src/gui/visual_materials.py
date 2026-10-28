@@ -1,6 +1,6 @@
 """Shared UV textures + capability-checked GLSL materials; no gameplay or tasks.
 
-Assets are original generated PNGs (procedural magma + authored stone albedo). Meshes keep their exact support envelope.
+Assets are original generated PNGs (procedural magma + ice + authored stone albedo). Meshes keep their exact support envelope.
 RGBA alpha in the asset is an emission MASK, never object transparency. In the
 fixed-function fallback the same texture RGB includes visible hot fissures.
 """
@@ -80,17 +80,23 @@ def texture(name):
 @lru_cache(maxsize=32)
 def state(kind, theme='light'):
     node = NodePath('TempleMaterial')
-    name = {'stone': 'temple-stone', 'magma':'magma','fragile':'fragile','metal':'metal','glow':'white','flag':'white'}[kind]
+    name = {'stone': 'temple-stone', 'magma':'magma','ice':'ice','fragile':'fragile',
+            'metal':'metal','glow':'white','flag':'white'}[kind]
     node.setTexture(texture(name), 1)
     if _shader is not None:
         node.setShader(_shader, 2)
         node.setShaderInput('quality_settings',_quality)
-        node.setShaderInput('detail_map', texture('magma-height' if kind=='magma' else name if kind=='stone' else 'stone-height'))
-        node.setShaderInput('emission_strength', 1.45 if kind=='magma' else .8 if kind=='fragile' else .6 if kind=='glow' else .12 if kind=='flag' else 0.)
+        node.setShaderInput('detail_map', texture('magma-height' if kind=='magma'
+            else 'ice-height' if kind=='ice'
+            else name if kind=='stone' else 'stone-height'))
+        node.setShaderInput('emission_strength', 1.45 if kind=='magma' else .9 if kind=='ice'
+            else .8 if kind=='fragile' else .6 if kind=='glow' else .12 if kind=='flag' else 0.)
         node.setShaderInput('emission_color_mode',float(kind in ('glow','flag')))
         node.setShaderInput('motion_parameters',(0.,0.,0.,0.))
-        node.setShaderInput('detail_strength', 1.8 if kind=='magma' else 0. if kind in ('glow','flag') else 1.2)
+        node.setShaderInput('detail_strength', 1.8 if kind=='magma' else 1.0 if kind=='ice'
+            else 0. if kind in ('glow','flag') else 1.2)
         node.setShaderInput('night_material', float(theme=='dark'))
+        node.setShaderInput('ice_mode', float(kind=='ice'))
     result = node.getState()
     node.removeNode()
     return result

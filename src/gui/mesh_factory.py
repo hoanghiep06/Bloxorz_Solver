@@ -31,13 +31,18 @@ GOAL_WALL = GOAL_THEME_COLORS['light']['wall']
 GOAL_FLOOR = GOAL_THEME_COLORS['light']['floor']
 GOAL_INTERIOR = GOAL_WALL
 
-# Legacy palette exported for compatibility; the active block now uses magma textures.
+# Legacy palette exported for compatibility; the active block uses magma (light) / ice (dark) textures.
 BLOCK_THEME_COLORS = {
     'light': dict(main=_rgb("8A5A34"), dark=_rgb("5C3B22"), edge=_rgb("B98A5C"),
                   inlay=_rgb("C9A074"), spot=_rgb("5F8A2E"), spot2=_rgb("86AD43")),
     'dark': dict(main=_rgb("3F7BC8"), dark=_rgb("27508F"), edge=_rgb("9CCBF5"),
                  inlay=_rgb("B9DCF8"), spot=_rgb("F7FBFF"), spot2=_rgb("DCEBFA")),
 }
+
+# Vật liệu khối theo theme: ban ngày dung nham, ban đêm băng.
+BLOCK_MATERIAL = {'light': 'magma', 'dark': 'ice'}
+# Màu cạnh vát: băng sáng và lạnh hơn, dung nham giữ màu đá ấm.
+BLOCK_EDGE_COLOR = {'light': (.46, .43, .36, 1), 'dark': (.80, .92, 1.0, 1)}
 
 
 class _MeshBuilder:
@@ -201,25 +206,25 @@ def make_block_mesh(*, pitch: float = 1.0) -> GeomNode:
 
 
 def make_themed_block_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
-    """Rigid UV-mapped volcanic cuboid; geometry never expands beyond 1×1×2."""
+    """Rigid UV-mapped cuboid (magma ban ngày, băng ban đêm); geometry never expands beyond 1×1×2."""
     _pitch(pitch)
     if theme not in BLOCK_THEME_COLORS:
         raise ValueError('theme must be light or dark')
     from src.gui.visual_materials import apply
     colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
     return apply(_beveled_box(f"MainBlockMesh-{theme}", (pitch,pitch,2*pitch),
-        .03*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
+        .03*pitch, colors, BLOCK_EDGE_COLOR[theme]), BLOCK_MATERIAL[theme], theme)
 
 
 def make_themed_cube_mesh(theme, *, pitch: float = 1.0) -> GeomNode:
-    """Split basalt shares the local UV/material pipeline of the whole actor."""
+    """Split cube shares the local UV/material pipeline of the whole actor."""
     _pitch(pitch)
     if theme not in BLOCK_THEME_COLORS:
         raise ValueError('theme must be light or dark')
     from src.gui.visual_materials import apply
     colors = {(axis,sign):(1.,1.,1.,1.) for axis in range(3) for sign in (-1,1)}
     return apply(_beveled_box(f"SplitCubeMesh-{theme}", (pitch,pitch,pitch),
-        .02*pitch, colors, (.46,.43,.36,1)), 'magma', theme)
+        .02*pitch, colors, BLOCK_EDGE_COLOR[theme]), BLOCK_MATERIAL[theme], theme)
 
 
 class MeshBuilder(_MeshBuilder):
