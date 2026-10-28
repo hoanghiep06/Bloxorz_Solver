@@ -61,6 +61,7 @@ class CameraViewController:
         self.index = 0
         self._focus = None
         self._disposed = False
+        self._presentation_owner = None
         self._set_label()
         app.accept('c', self.cycle)
         self._task = app.taskMgr.add(self._update, 'CameraViewFollow')
@@ -135,8 +136,14 @@ class CameraViewController:
         return SceneBounds((focus[0] - r, focus[1] - r, -0.18),
                            (focus[0] + r, focus[1] + r, 2.30))
 
+    def acquire_presentation(self, owner):
+        self._presentation_owner = owner
+
+    def release_presentation(self, owner):
+        if self._presentation_owner is owner:self._presentation_owner=None
+
     def _update(self, task):
-        if self._disposed or not self.spec.follow or self.camera.current_fit is None:
+        if self._disposed or self._presentation_owner is not None or not self.spec.follow or self.camera.current_fit is None:
             return task.cont
         target = self._target()
         if target is None:

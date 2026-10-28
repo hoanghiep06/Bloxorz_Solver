@@ -1,0 +1,5 @@
+{
+  "light": "PASS",
+  "dark": "PASS",
+  "input": "Desktop window; public UI callbacks, native mouse covered separately on Xvfb"
+}

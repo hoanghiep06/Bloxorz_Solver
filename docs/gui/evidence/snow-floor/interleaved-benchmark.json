@@ -1,0 +1,20 @@
+{
+  "method": "Interleaved 6 x 30 frames each; same live Level 4 geometry/camera, old Temple material vs Snow shader on unique Floor/Foundation instance holders. Only shader/texture cost comparison, not an old-look screenshot.",
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "floor_holders": 64,
+  "samples": {
+    "legacy_shader": {
+      "median_ms": 29.682990498258732,
+      "mean_ms": 30.6854081385811,
+      "p95_ms": 34.63344000192592,
+      "frames": 180
+    },
+    "snow_shader": {
+      "median_ms": 27.726355499908095,
+      "mean_ms": 27.971232699726695,
+      "p95_ms": 31.005289994936902,
+      "frames": 180
+    }
+  },
+  "median_ratio_snow_over_legacy": 0.9340822819565496
+}

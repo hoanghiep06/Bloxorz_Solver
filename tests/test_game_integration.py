@@ -213,7 +213,9 @@ class GamePipelineTests(GameIntegrationCase):
     def test_zero_action_solution_finishes_and_updates_metrics(self):
         index=self.custom({'grid':[[2]],'start':[0,0],'goal':[0,0]})
         self.assertTrue(self.controller.load_level(index))
-        c=self.controller;c.select_solver('BFS');c.start_guide('play');self.drain()
+        c=self.controller
+        self.drain()  # Capture only after the initial Goal terminal animation commits.
+        c.select_solver('BFS');c.start_guide('play');self.drain()
         self.assertEqual(c.phase,'GOAL');self.assertEqual(c.moves,0)
         model=self.hud.update_view_model.call_args.args[0]
         self.assertEqual(model.runtime_status,'GOAL REACHED')

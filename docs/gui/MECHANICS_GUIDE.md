@@ -1,71 +1,155 @@
-# Mechanics Guide Rail
+# Mechanics Guide — visual sync và định vị ô
 
-Đã thêm cột **GUIDE** gồm 7 icon vector ở mép phải, chỉ hiện trong gameplay. Mặc định không mở thẻ. Bấm icon để mở; bấm icon khác đổi nội dung trong cùng thẻ; bấm lại icon đang chọn hoặc **X** để đóng. Không thêm phím tắt, framework, dependency, cửa sổ hay task mới.
+Guide Rail gồm 7 icon khớp visual trong game. Click icon mở Help Card và, nếu có target hợp lệ trong level hiện tại, camera pan/zoom nhẹ đến target. Click lại cùng icon duyệt target tiếp theo; **X** đóng card, **Back to Board** trả camera về trước khi bắt đầu focus.
 
-## Files và cấu trúc
+Rail **58 px**, nút **40×40**, bước **48 px**, card **260 px**. Vị trí rail, font, spacing, màu panel/border và HUD giữ nguyên. Card là overlay bên trái rail; không đổi viewport khi mở, cycling hoặc focus. Nội dung giải thích và ghi chú cũ được giữ nguyên; chỉ bổ sung locator status và Back to Board.
 
-- `src/gui/mechanics_guide_data.py`: registry bất biến với tên, mô tả, ghi chú và accent của 7 cơ chế.
-- `src/gui/mechanics_guide.py`: `MechanicsGuide`, layout thuần Python và icon vector. Component sở hữu các widget; cung cấp `show_mechanic`, `close_card`, `apply_theme`, `apply_layout`, `set_visible`, `dispose`.
-- `src/gui/screens.py`: UIFlow sở hữu Guide; nối theme, resize, điều hướng và viewport qua các API sẵn có. Restart/đổi level không tạo lại rail/card, giữ lựa chọn.
-- `src/gui/mouse_control.py`: mở rộng guard HUD cho cả vùng Guide; phần chữ/padding cũng không nhận nhầm thành nước đi hoặc hover dự báo.
-- `src/gui/ui_theme.py`: thêm bốn token `GUIDE_PANEL/BORDER/INK/MUTED` vào hai theme hiện có, không đổi palette của GUI khác.
-- `src/gui/scene_style.py`: thêm crop panorama tùy chọn cho bố cục có vùng bên phải; giữ nguyên asset, ánh sáng và vật liệu hiện có.
-- `tests/test_mechanics_guide.py`, `tools/mechanics_guide_smoke.py`: component/regression và native XTest QA.
+## 1. Icon và nguồn visual
 
-Rail rộng 58 px, nút 40×40, khoảng cách 8 px. Card rộng 260 px, body 16 px, note 14 px; chiều cao dựa trên số dòng của font thật. Card tự dịch lên phía trên metrics. Sau targeted UI fix, viewport luôn dành 90 px cho rail; card là overlay độc lập bên trái rail. Mở/đổi/đóng card không refit camera hoặc dịch board. Click guard bao gồm rectangle card thực. Xem [báo cáo mới](BUGFIX_FALLING_GUIDE_TOOLBAR.md). Phần panorama tại vùng dành riêng được tiếp nối bằng crop GUI của **chính asset hiện tại**, không thêm camera hoặc thay theme. Crop trở về mặc định khi rời gameplay.
+`mechanics_icons.py` dựng icon từ palette/visual spec của mesh. Riêng Fragile dùng lại `assets/materials/fragile.png` để giữ đúng vân đá cam và vết nứt sáng của ô thật, thay nền cam phẳng trước đây. Texture RGB được cache một lần cho cả hai theme; bỏ alpha vì alpha của material là emission mask, không phải độ trong suốt. Geometry cache tối đa 14 bản (7 loại × 2 theme), mỗi instance có wrapper transform riêng để icon trong card không làm rail dịch vị trí. Không thêm asset, render-to-texture, cửa sổ hoặc render mỗi frame.
 
-## Nội dung tiếng Anh
-
-Mô tả được đối chiếu với `src/core/board.py`: `is_goal`, `is_valid_state`, `_apply_switch_effects`, `_apply_switches_for_cells`, `_apply_switches_for_standing`, `_transition`; cùng `docs/gui/GAME_INTEGRATION.md`, `GEOMETRY_TILE_SPEC.md` và glyph trong `advanced_mesh_factory.py`. Core là nguồn quyết định khi tài liệu cũ mô tả hình X/ngoặc nhưng renderer hiện tại dùng hai thanh/hai plate.
-
-| Icon / tên | Nội dung cơ chế | Ghi chú |
+| Cơ chế | Icon hiện tại | Nguồn đối chiếu |
 | --- | --- | --- |
-| Cờ / Goal | Stand the whole block upright on the goal hole to finish the level. | A single split cube cannot finish. |
-| Thanh cầu / Bridge | A linked switch can open or close this crossing. An open bridge supports the block like normal floor. | A closed bridge has no support. |
-| Vòng cyan / Soft Switch | Touch this plate with any part of the block to activate its linked bridges. | Small split cubes can activate it too. |
-| Hai thanh cyan / Heavy Switch | Stand the whole block upright on this plate to activate its linked bridges. | Lying blocks and small cubes do not activate it. |
-| Hai cube / Split Switch | Stand the whole block upright here to split it into two cubes at the configured destinations. | Space selects a cube. Cubes merge when they meet along an edge. |
-| Ô nứt cam / Fragile Tile | This tile breaks when the whole block stands upright on it. Lying across it is safe. | A small split cube is safe here. |
-| Hố rỗng / Void | There is no floor here. Moving any occupied part of the block over the gap makes it fall. | Check the full landing area before rolling. |
+| Goal | Cờ cam, cột vàng và khung hố màu cam | `advanced_mesh_factory.make_flag_mesh`, `FLAG_CLOTH/POLE/GOLD`; `mesh_factory.GOAL_THEME_COLORS` |
+| Bridge | Platform với ba thanh nối | `make_bridge_mesh`, ba rib ở −.28/0/.28 và `PALETTES.BRIDGE_*` |
+| Soft Switch | Đế tối tròn, vòng cyan rỗng | `make_switch_mesh(SOFT)`/`_ring`, radius .30/.23 |
+| Heavy Switch | Đế vuông với hai thanh cyan | `make_switch_mesh(HEAVY)`, bars tại x ±.15, .12×.52 |
+| Split Switch | Đế chữ nhật với hai plate | `make_switch_mesh(SPLIT)`, plates tại x ±.19, .24×.34 |
+| Fragile | Đá cam có vân và mạng nứt sáng, thêm bốn nhánh nứt nổi | `assets/materials/fragile.png`, `make_fragile_mesh`, endpoint crack và `PALETTES.FRAGILE_EDGE/CRACK` |
+| Void | Khung khoảng trống, tâm không có mặt sàn | Advanced/Basic tile kind `VOID` |
 
-Không giả định mọi switch đều toggle: cách open/close/permanent phụ thuộc cấu hình Core. Guide chỉ cung cấp thông tin, không gọi transition, solver hoặc sửa state.
+Không dùng tint đơn sắc trên toàn icon: cờ và khung, đế tối và glyph cyan vẫn phân biệt. Các contour giống hệt nhau giữa Light/Dark; chỉ palette nền/độ tương phản đổi. Icon biểu diễn nhận dạng canonical của cơ chế, không giả lập trạng thái activated của switch.
 
-## Theme và tương tác
+## 2. Lookup target
 
-Light dùng panel trắng xanh; Dark dùng navy. Accent cyan/cam/amber/steel/slate giữ nguyên giữa hai mode. Đổi theme cập nhật rail và card đang mở ngay tại chỗ, giữ icon đang chọn và các widget hiện hữu. Hover có nền nhẹ; selected có viền accent. Các nút không lấy keyboard focus, không pause/cancel animation hay replay.
+`mechanics_focus.mechanic_targets(board_data, mechanic_id)` đọc immutable Basic/Advanced Board Contracts của Controller hiện tại. Không đọc pixel, vị trí actor hoặc gọi Core transition/solver.
 
-## Kiểm thử và ảnh chạy thật
+- Goal: `goal_cells`.
+- Bridge: `bridges`, giữ đúng `bridge_id` và toàn bộ cells của cùng một definition.
+- Soft/Heavy/Split: `switches`, phân biệt bằng `SwitchVisualKind`.
+- Fragile: các cell được adapter xác định là `FRAGILE`, gồm metadata mà adapter đã ánh xạ vào tiles.
+- Void: chỉ các cell `VOID` trong ma trận board; không suy từ platform absent và không chọn ngoài bounds.
 
-- Baseline trước triển khai: **489 test PASS**.
-- Regression sau triển khai: **499 test PASS**, không skip lỗi baseline.
-- **14 nhóm native XTest PASS trên Auto/Balanced và lặp lại 14 nhóm trên High/bloom**: 7 icon ở cả hai theme; đổi nội dung, toggle/X; click phần body; hover guard; resize 1024×720, 1280×720, 1366×768, 1920×1080; bàn phím khi card mở; click Guide giữa animation; Restart/đổi màn; sáu nút solver, worker/metrics và replay theo clock thật; fallback kích thước nhỏ và phục hồi.
-- 20 lần đổi theme khi card mở: **113 widget, 78 listener, 14 task, 1 graphics output, 29 Guide nodes** trước/sau bằng nhau trên Auto/Balanced. Trên High/bloom: **113 widget, 79 listener, 14 task, 3 outputs, 29 Guide nodes** cũng giữ nguyên. Sau dispose ở cả hai mức: tất cả bằng **0**.
-- Không sửa Core, Controller, solvers, rolling math, 3D mesh, level hoặc callback gameplay.
+Một bridge nhiều cell là một target; chọn cell thực gần centroid nhất, tie-break row-major. Highlight có thể bao quanh tất cả cells của bridge đó, không thêm mặt đỡ.
 
-Ảnh framebuffer thực tế (ba ảnh đầu ở High/bloom; ảnh kiểm tra kích thước ở Auto/Balanced):
+World position dùng `geometry_math.cell_to_world(row, col, rows, cols, pitch=1)` đang có; focus plane Z=.06 để nhận diện mặt ô. Không hardcode tọa độ level trong implementation.
 
-- [Dark — chỉ rail](evidence/mechanics-guide/dark-rail-closed.png).
-- [Dark — card mở](evidence/mechanics-guide/dark-card-open.png).
-- [Light — card mở](evidence/mechanics-guide/light-card-open.png).
-- [Dark 1024×720](evidence/mechanics-guide/dark-card-1024.png) · [Light 1024×720](evidence/mechanics-guide/light-card-1024.png).
-- [Dark 1920×1080](evidence/mechanics-guide/dark-card-1920.png) · [Light 1920×1080](evidence/mechanics-guide/light-card-1920.png).
-- [Native report](evidence/mechanics-guide/report.json), [High/bloom report](evidence/mechanics-guide/high-report.json), [baseline log](evidence/mechanics-guide/baseline-tests.log), [regression log](evidence/mechanics-guide/regression-tests.log).
+## 3. Camera focus API
 
-```bash
-.venv/bin/python -B main.py
-.venv/bin/python -B -m unittest discover -s tests
-xvfb-run -a -s '-screen 0 2200x1400x24 +extension GLX' \
-  .venv/bin/python -B -m tools.mechanics_guide_smoke
+`MechanicsFocus` sở hữu lookup/cycling, camera lease, timeline và highlight. `MechanicsGuide` vẫn sở hữu widget, icon, Help Card và theme.
+
+API chính:
+
+```python
+mechanic_targets(board_data, mechanic_id)  # tuple[FocusTarget, ...]
+focus.select(mechanic_id)
+focus.restore()                         # smooth Back to Board / X
+focus.reset(restore=False)              # level/navigation lifecycle
+focus.advance(elapsed_seconds)          # deterministic elapsed-time sampling
+focus.dispose()
 ```
 
-QA dùng profile tạm và bộ fixtures cơ chế; không thay level hoặc save người chơi. Guide cũng hiện với catalog 18 level sản phẩm.
+`BoardCameraController.capture_presentation()` lưu actual position/quaternion, lens FOV/near/far, config và CameraFit. `apply_presentation()` sample view mà không refit light/background hoặc sửa viewport. Hook `on_user_view_change` nhường quyền khi controller refit/change view/resize. `CameraViewController.acquire_presentation/release_presentation` chỉ tạm ngưng Follow khi Guide sở hữu view.
 
-## Giới hạn
+Pan/zoom dùng **0,55 giây**, cubic ease-in-out. Giữ quaternion thực tế, giảm distance tối đa 14%, có giới hạn tránh zoom quá gần. Target được chiếu vào tâm vùng an toàn bên trái card và rail, dưới header và trên metrics. Nếu result dialog hiện, chọn vùng trống bên trái dialog. Không đổi kích thước rail/HUD.
 
-Nội dung hướng dẫn là registry tĩnh, hiện đủ 7 cơ chế ở mọi level; không tự giải thích ID cầu của từng switch. Card không phải modal: người chơi vẫn có thể lăn/rơi khi đọc. Dưới 1024×720, Guide ẩn cùng fallback kích thước tối thiểu hiện có; khi tăng lại sẽ giữ lựa chọn. Không thêm tooltip hoặc hiệu ứng mở thẻ để tránh tăng scope.
+## 4. Duyệt nhiều target
 
-Không commit, push, merge, reset, chuyển nhánh hoặc xóa thay đổi chưa commit/untracked.
+Targets sắp xếp theo representative cell row-major rồi ID. Mỗi mechanic có index độc lập. Click lần đầu chọn index 0; click tiếp chuyển tiếp và quay vòng. Card hiển thị `2 / 5` ở dòng locator thay vì làm tiêu đề dài/tràn.
 
-## Xác minh trước khi push
+Đổi level hoặc Restart reset index, đóng card và dọn target/highlight cũ. Context dùng identity Board DTO và session ID đang có; không tạo ID gameplay mới.
 
-Đã đồng bộ hai commit remote `b93127a` (cờ đích trong animation) và `6f70603` (tutorial). Giữ cơ chế animated surface tiếp quản cờ của remote, tránh hiển thị hai bản cờ khi hiệu ứng chạy. Regression **499/499 PASS**; chạy lại **14 nhóm native UI PASS**, gồm sáu solver/replay. Với tutorial mới: 131 widget, 80 listener, 14 task, 1 output, 29 Guide nodes giữ nguyên sau 20 lần đổi theme; sau dispose đều bằng 0. [Native report mới](evidence/mechanics-guide/pre-push-report.json) · [Regression mới](evidence/mechanics-guide/pre-push-tests.log).
+## 5. Khôi phục camera và quyền điều khiển
+
+Ảnh chụp camera chỉ lấy ở lần focus đầu tiên; cycling không ghi đè ảnh chụp gốc. Back to Board và X trả về ảnh chụp đó bằng animation 0,55 giây, gồm pose thực tế, góc đã xoay và lens/framing. Không ép về Iso mặc định. Đã test góc 137° và Follow.
+
+- Người dùng đổi view bằng C/nút camera hoặc controller configure/reframe: hủy lease và giữ camera do người dùng chọn; không áp callback return cũ.
+- Direct `setPos/setHpr` hoặc lens input cũng được phát hiện bằng so sánh camera với sample gần nhất; Guide không ghi đè ở frame tiếp theo.
+- Resize/new level refit camera: hủy lease trước fit mới; không áp lại FOV/aspect của cửa sổ cũ.
+- Gameplay bắt đầu trong lúc Guide đang focus: dọn highlight và trả view gốc ngay để nhường quyền, không hủy animation gameplay. Back/X bình thường vẫn dùng animation mượt.
+- Restart cùng board phục hồi view gốc và xóa context; đổi board/thoát để hệ navigation/framing hiện tại quyết định camera mới.
+
+Một task locator duy nhất thuộc UIFlow; không thêm task mỗi click. Dispose tháo hook/lease, xóa highlight và task sở hữu.
+
+## 6. Không tồn tại, inactive và broken
+
+- Không có mechanic: card vẫn mở với **Not present in this level**. Không di chuyển camera hoặc tạo marker. Nếu trước đó đang focus nơi khác, giữ view hiện tại và vẫn cho Back to Board.
+- Bridge absent: vẫn focus definition, hiển thị **Currently inactive**, chỉ outline; không dựng platform hoặc sửa bridge flag.
+- Fragile broken: đọc `broken_fragile_cells` của snapshot render hiện tại và hiển thị **Currently broken**; không phục hồi tile. Có regression tái hiện fragile failure thật rồi click Guide trong `FELL`.
+- Intro/tutorial, Rolling/Falling/Split/Merge, search hoặc solver replay: vẫn mở card, từ chối focus với **Focus unavailable during animation or replay.** Không lấy pose actor trung gian.
+
+Highlight là line outline 3D trong `effects_root`, pulse/fade **1,1 giây**; depth test giữ nguyên, depth write tắt, không cast shadow, không material/collision/floor mesh. Hết thời gian, Back, user camera input, Restart, đổi level hoặc dispose đều xóa node.
+
+## 7. Light/Dark và layout
+
+Hai theme giữ cùng contour và semantic visual. Màu lấy từ palette mesh đang có, panel/text tiếp tục dùng theme tokens hiện tại; font medium/semibold và alpha chữ 1 không đổi. Không sửa 3D meshes, materials hoặc background themes.
+
+Mỗi icon instance có transform riêng dù geometry dùng cache. Hover/pressed/selected không thay transform/frameSize. Card thay chiều cao theo nội dung thêm nhưng rail/reserved width không thay. Vùng click guard vẫn bao phủ body/padding/card/rail; click locator không thành manual move trên board.
+
+## 8. Files thay đổi trong task này
+
+- `src/gui/mechanics_icons.py` — icon specification và geometry cache.
+- `src/gui/mechanics_focus.py` — lookup, cycling, camera ownership/interpolation, highlight/lifecycle.
+- `src/gui/mechanics_guide.py` — sử dụng icon nhiều màu; locator text, Back button và callback focus.
+- `src/gui/camera.py` — capture/apply presentation và hook trước refit.
+- `src/gui/camera_views.py` — lease cho Follow camera.
+- `src/gui/screens.py` — tạo helper, safe area và wiring tối thiểu cho Restart/level/navigation/dispose.
+- `tests/test_mechanics_focus.py` — lookup/ownership/gameplay tests.
+- `tests/test_mechanics_guide.py` — kiểm tra palette vertex colour thay kỳ vọng tint đơn sắc cũ; giữ nguyên các kiểm tra rail position/bounds.
+- `tools/mechanics_focus_smoke.py` — native runtime QA.
+
+Không sửa Core, Solver, Controller gameplay, animation math, Split/Merge Teleport, level files, 3D tile meshes hoặc materials trong task này. Các thay đổi chưa commit trước task, gồm About, current-state solving và teleport, được bảo toàn.
+
+## 9. Tests
+
+Baseline liên quan trước sửa: **12 Guide tests PASS**, **12 camera tests PASS**; full suite trước task là 569 PASS.
+
+Test mới gồm: 7 target kinds; Basic/Advanced data; bounds của Void; bridge nhiều cell và inactive; fragile broken thật; multicolour icon spec; clone transform độc lập; safe projection; Back/X khôi phục đúng view; cycling/reset; absent/busy feedback; camera input takeover; Follow; midpoint/endpoint tại 30/60/120 FPS; task budget; không mutate state/Moves; sáu solver; highlight cleanup; rail cố định qua theme/click và dispose.
+
+```bash
+.venv/bin/python -B -m unittest discover -s tests
+.venv/bin/python -B -m unittest discover -s tests -p test_mechanics_focus.py
+.venv/bin/python -B -m unittest discover -s tests -p test_mechanics_guide.py
+```
+
+**Kết quả cuối: 586 tests PASS**, 160,465 s (chạy cùng native UI QA); 17 test mới tập trung và 11 nhóm runtime PASS. Log: [report.json](evidence/mechanics-focus/report.json), [regression](evidence/mechanics-focus/regression.txt).
+
+## 10. Runtime screenshots / clip
+
+Chạy game Panda3D thật trong GLX GraphicsWindow dưới Xvfb. XTest gửi click/phím thật tới DirectGUI/MouseWatcher. Screenshot và các frame pan/zoom lấy từ framebuffer, không có mock screenshot.
+
+```bash
+xvfb-run -a -s '-screen 0 2200x1400x24 +extension GLX' \
+  .venv/bin/python -B -m tools.mechanics_focus_smoke \
+  --output /tmp/mechanics-focus-ui
+```
+
+Matrix gồm sandbox nhiều cơ chế ở cả Light/Dark; floor/Goal-only và absent Split; Bridge absent/present; Fragile và level không Split; Back/X; góc camera tùy chỉnh/C takeover; click giữa live roll; Restart/đổi level; 1024×720, 1280×720, 1366×768, 1920×1080; cả sáu solver chạy bằng worker thật đến Goal với Moves giữ đúng.
+
+Ảnh trước/sau focus và clip được lưu tại [evidence/mechanics-focus](evidence/mechanics-focus/).
+
+- [Light trước focus](evidence/mechanics-focus/light-before-focus.png) · [Light focus Goal](evidence/mechanics-focus/light-goal-focused.png).
+- [Dark trước focus](evidence/mechanics-focus/dark-before-focus.png) · [Dark focus Goal](evidence/mechanics-focus/dark-goal-focused.png).
+- [Bridge absent: chỉ outline](evidence/mechanics-focus/inactive-bridge-outline-only.png) · [Không có Split](evidence/mechanics-focus/absent-split-information-only.png).
+- [Clip pan/zoom và Back](evidence/mechanics-focus/focus-and-back.gif).
+
+![Focus Goal ở Dark](evidence/mechanics-focus/dark-goal-focused.png)
+
+ Chạy bình thường bằng:
+
+```bash
+.venv/bin/python -B -m src.gui.game_app
+# Catalog mechanics để kiểm tra riêng:
+.venv/bin/python -B -m src.gui.game_app --levels tests/fixtures/mechanics
+```
+
+## 11. Giới hạn và policy
+
+- Focus bị từ chối khi gameplay busy; không queue tự động. Người chơi click lại khi action/replay hoàn tất.
+- Đây là zoom nhẹ và pan định vị; ở target sát mép, một phần board có thể ra ngoài viewport, vẫn giữ ngữ cảnh quanh target. Back khôi phục view trước đó.
+- Resize hủy focus và để camera framing hiện tại refit theo kích thước mới; không giữ camera lease cũ.
+- Guide giữ orientation/quaternion hiện có; không bổ sung hệ điều khiển orbit mới. Raw camera changes được phát hiện ở update kế tiếp.
+- Dưới kích thước tối thiểu 1024×720, Guide ẩn theo layout fallback hiện tại.
+- Runtime matrix dùng fixtures và các đường chơi cụ thể, không khẳng định duyệt hết mọi trạng thái của mọi level. Clip lấy mẫu frame, không phải benchmark FPS.
+
+Không commit, push, merge, reset, clean, stash hoặc chuyển branch.

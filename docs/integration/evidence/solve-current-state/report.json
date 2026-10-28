@@ -1,0 +1,266 @@
+{
+  "input": "X11 XTest mouse/keyboard on a real Panda3D GLX GraphicsWindow",
+  "checks": [
+    "Native Main -> Start -> Level 1 navigation",
+    "BFS: 9 manual moves, horizontal root, stable pose during async solve, Step/Play, continuous Moves and final dialog",
+    "A*: vertical current root and remaining-length HUD",
+    "All six: changed bridge flags and split with cube-1 active, actual worker + native buttons + full animation replay",
+    "Dark theme A* from current horizontal pose",
+    "No Solution retains state/pose/session, native manual input resumes; explicit Restart resets",
+    "Closing solver panel stops pending work/replay without rewinding manual progress",
+    "Restart during search cancels/discards result and retains the new initial session"
+  ],
+  "runs": [
+    {
+      "solver": "BFS",
+      "level": "level_01",
+      "root": "State(1, 2, HORIZONTAL)",
+      "manual_moves": 9,
+      "remaining": 6,
+      "final_moves": 15,
+      "commits": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ]
+    },
+    {
+      "solver": "A*",
+      "level": "level_01",
+      "root": "State(2, 4, VERTICAL)",
+      "manual_moves": 3,
+      "remaining": 4,
+      "final_moves": 7,
+      "commits": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "solver": "BFS",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "BFS",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 2,
+      "final_moves": 5,
+      "commits": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "solver": "DFS",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "DFS",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 27,
+      "final_moves": 30,
+      "commits": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30
+      ]
+    },
+    {
+      "solver": "IDS",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "IDS",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 2,
+      "final_moves": 5,
+      "commits": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "solver": "UCS",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "UCS",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 2,
+      "final_moves": 5,
+      "commits": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "solver": "Greedy",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "Greedy",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 2,
+      "final_moves": 5,
+      "commits": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "solver": "A*",
+      "level": "level_03_soft_bridge",
+      "root": "State(0, 3, STANDING, bridges_state=(True,))",
+      "manual_moves": 2,
+      "remaining": 2,
+      "final_moves": 4,
+      "commits": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "solver": "A*",
+      "level": "level_05_split",
+      "root": "State(SPLIT, cubes=((0, 6), (0, 4)), active=1, bridges_state=())",
+      "manual_moves": 3,
+      "remaining": 2,
+      "final_moves": 5,
+      "commits": [
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "solver": "A*",
+      "level": "level_01",
+      "root": "State(1, 2, HORIZONTAL)",
+      "manual_moves": 1,
+      "remaining": 6,
+      "final_moves": 7,
+      "commits": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  ],
+  "screenshots": [
+    "basic-before-solve.png",
+    "basic-solving-no-reset.png",
+    "basic-first-step.png",
+    "basic-complete.png",
+    "dark-current-state-complete.png",
+    "no-solution-preserved.png"
+  ],
+  "status": "PASS",
+  "baseline": {
+    "head": "2cb6140",
+    "branch": "feat/team-code/phase2-game-gui",
+    "tests": 530,
+    "status": "PASS"
+  },
+  "regression": {
+    "tests": 547,
+    "seconds": 111.512,
+    "status": "PASS",
+    "log": "regression.txt"
+  }
+}

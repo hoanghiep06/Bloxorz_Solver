@@ -1,0 +1,63 @@
+{
+  "input": "Real Panda3D GLX GraphicsWindow + X11 XTest, live Core mechanics fixture",
+  "checks": [
+    "light: charge/disassembly/dual-stream/materialize/active framebuffer beats; exact Core endpoints and continued cube-1 play",
+    "dark: charge/disassembly/dual-stream/materialize/active framebuffer beats; exact Core endpoints and continued cube-1 play",
+    "Native solver Play/Pause/Step freezes all VFX, then commits exactly one entire split action",
+    "Restart and change-level in transit clean VFX and invalidate the old action",
+    "Iso/Top/Follow, 0.25x/1x/4x and resize retain exact final cubes; no extra VFX task/window"
+  ],
+  "images": [
+    "light-charge.png",
+    "light-disassemble.png",
+    "light-dual-streams.png",
+    "light-materialize.png",
+    "light-active.png",
+    "light-committed-cubes.png",
+    "dark-charge.png",
+    "dark-disassemble.png",
+    "dark-dual-streams.png",
+    "dark-materialize.png",
+    "dark-active.png",
+    "dark-committed-cubes.png",
+    "paused-replay-energy.png",
+    "view-0-rate-0.25.png",
+    "view-1-rate-4.png",
+    "view-2-rate-1.png"
+  ],
+  "runs": [
+    {
+      "theme": "light",
+      "rate": 0.65,
+      "cubes": "((2, 7), (6, 10))",
+      "moves": 4,
+      "frames": 23
+    },
+    {
+      "theme": "dark",
+      "rate": 0.65,
+      "cubes": "((2, 7), (6, 10))",
+      "moves": 4,
+      "frames": 0
+    }
+  ],
+  "windows": 1,
+  "status": "PASS",
+  "baseline": {
+    "tests": 547,
+    "status": "PASS",
+    "log": "baseline.txt"
+  },
+  "regression": {
+    "tests": 560,
+    "seconds": 106.842,
+    "status": "PASS",
+    "log": "regression.txt"
+  },
+  "clip": {
+    "file": "teleport-0_65x.gif",
+    "frames": 23,
+    "rate": 0.65,
+    "source": "Live framebuffer sampling; approximate playback timing"
+  }
+}

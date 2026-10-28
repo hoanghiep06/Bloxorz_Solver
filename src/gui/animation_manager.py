@@ -14,8 +14,10 @@ from src.gui.animation_math import (
 )
 from src.gui.animation_timeline import AnimationTimeline
 from src.gui.fall_math import FallPlan
+from src.gui.split_teleport_math import SplitTeleportPlan, MergeTeleportPlan
+from src.gui.split_teleport_vfx import SplitTeleportVFX
 from src.gui.animation_effects import AnimatedActorRig, event_progress
-from src.gui.advanced_contracts import validate_snapshot
+from src.gui.advanced_contracts import validate_snapshot, SwitchVisualKind
 
 
 class AnimationManager:
@@ -52,12 +54,17 @@ class AnimationManager:
         self._progress = 0.0
         self._terminal = None
         self._fall = None
+        self._split_plan = self._split_vfx = None
         self._recent_ids = deque(maxlen=128)
         self._task_mgr, self._task = task_mgr, None
         self._rig = None
         self._snapshot, self._poses = snapshot, poses
         try:
             self._rig = AnimatedActorRig(block_root, pitch=pitch)
+            # Prewarm on boards declaring a split switch, so activation does not
+            # allocate geometry or change the stable scene resource budget.
+            if any(switch.kind is SwitchVisualKind.SPLIT for switch in self.board.switches):
+                self._split_vfx = SplitTeleportVFX(self._rig.root,pitch=pitch)
             renderer.show_snapshot(as_visual_snapshot(snapshot))
             renderer.set_actor_visuals_visible(False)
             self._draw(poses, as_visual_snapshot(snapshot).active_cube_id)
@@ -154,6 +161,18 @@ class AnimationManager:
         self._recent_ids.append((request.session_id, request.request_id))
         self._status, self._progress = Status.PLAYING, 0.0
         try:
+            self._split_plan = None
+            for event in request.events:
+                if event.kind is EventKind.SPLIT:
+                    self._split_plan = SplitTeleportPlan(self._start_poses[None], target,
+                        event.cube_ids, event.active_cube_id, self._pitch)
+                elif event.kind is EventKind.MERGE:
+                    self._split_plan = MergeTeleportPlan(self._start_poses,target[None],
+                        event.cube_ids,as_visual_snapshot(request.before_snapshot).active_cube_id,self._pitch)
+                if event.kind in (EventKind.SPLIT,EventKind.MERGE):
+                    if self._split_vfx is None:
+                        self._split_vfx = SplitTeleportVFX(self._rig.root,pitch=self._pitch)
+                    self._split_vfx.configure(self._split_plan)
             self._sample(0)
         except Exception as error:
             self._fail(error)
@@ -181,35 +200,12 @@ class AnimationManager:
             if progress < event.start:
                 continue
             u = smoothstep(event_progress(event, progress))
-            if event.kind is EventKind.SPLIT:
-                source = self._start_poses[None]
-                poses = {}
-                for cube_id, sign in zip(event.cube_ids, (-1, 1)):
-                    start = add(source.center, rotate(source.quaternion, (0, 0, sign*self._pitch/2)))
-                    # Teleport only while invisible. Never sweep an actor
-                    # through cells that Core did not visit.
-                    center = start if u < .5 else self._targets[cube_id].center
-                    poses[cube_id] = VisualPose(center, source.quaternion, (self._pitch,)*3)
-                    opacity[cube_id] = abs(2*u-1)
-                if u == 0:
-                    poses = self._start_poses.copy()
-                active = event.active_cube_id
-            elif event.kind is EventKind.MERGE:
-                destination = self._targets[None]
-                poses = {}
-                halves = [add(destination.center, rotate(destination.quaternion,
-                              (0, 0, sign*self._pitch/2))) for sign in (-1, 1)]
-                # Stable cube IDs may arrive in either spatial order.
-                first = self._start_poses[event.cube_ids[0]].center
-                if sum((first[i]-halves[1][i])**2 for i in range(3)) < sum(
-                        (first[i]-halves[0][i])**2 for i in range(3)):
-                    halves.reverse()
-                for cube_id, target in zip(event.cube_ids, halves):
-                    start = self._start_poses[cube_id]
-                    poses[cube_id] = replace(start, center=lerp(start.center, target, u))
-                if u == 1:
-                    poses = {None: destination}
-                active = before.active_cube_id if u < 1 else None
+            if event.kind in (EventKind.SPLIT,EventKind.MERGE):
+                frame = self._split_plan.sample(event_progress(event, progress))
+                poses, opacity, scales, weights = frame.poses, frame.opacity, frame.scales, frame.weights
+                self._split_vfx.sample(frame)
+                active = event.active_cube_id if event.kind is EventKind.SPLIT else (
+                    before.active_cube_id if None not in poses else None)
             elif event.kind is EventKind.ACTIVE_CUBE_CHANGE:
                 weights = {}
                 if before.active_cube_id is not None:
@@ -250,6 +246,8 @@ class AnimationManager:
             self._sample(progress)
             complete = progress >= 1
             if complete:
+                if self._split_vfx is not None:
+                    self._split_vfx.release()
                 if self.surface_layer is not None:
                     self.surface_layer.release()
                 if self._request.after_snapshot is not None:
@@ -265,6 +263,9 @@ class AnimationManager:
         return self._progress
 
     def _restore_before(self):
+        if self._split_vfx is not None:
+            self._split_vfx.release()
+        self._split_plan = None
         if self.surface_layer is not None:
             self.surface_layer.release()
         self._poses = self._start_poses.copy()
@@ -364,6 +365,9 @@ class AnimationManager:
                     self.surface_layer.release()
                 self.renderer.set_actor_visuals_visible(True)
             finally:
+                if self._split_vfx is not None:
+                    self._split_vfx.dispose()
+                self._split_plan = None
                 if self._rig is not None:
                     self._rig.dispose()
                 self._disposed = True

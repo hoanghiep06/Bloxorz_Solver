@@ -3,10 +3,10 @@ import importlib
 import multiprocessing
 
 
-def _run(connection, board, module, class_name):
+def _run(connection, board, module, class_name, start_state=None):
     try:
         solver = getattr(importlib.import_module(module), class_name)(board)
-        connection.send((True, solver.solve()))
+        connection.send((True, solver.solve() if start_state is None else solver.solve(start_state=start_state)))
     except BaseException as error:
         try:
             connection.send((False, f'{type(error).__name__}: {error}'))
@@ -17,10 +17,10 @@ def _run(connection, board, module, class_name):
 
 
 class SolverJob:
-    def __init__(self, board, module, class_name):
+    def __init__(self, board, module, class_name, start_state=None):
         context = multiprocessing.get_context('spawn')
         self.connection, child = context.Pipe(duplex=False)
-        self.process = context.Process(target=_run, args=(child, board, module, class_name), daemon=True)
+        self.process = context.Process(target=_run, args=(child, board, module, class_name, start_state), daemon=True)
         self._closed = False
         try:
             self.process.start()

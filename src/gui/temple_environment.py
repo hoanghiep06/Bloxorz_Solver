@@ -1,6 +1,6 @@
 """Deterministic edge-only botanical details; never support geometry over void."""
 import random
-from panda3d.core import TextureStage
+from panda3d.core import TextureStage,ShaderInput,LVecBase4f
 from src.gui.mesh_factory import MeshBuilder
 from src.gui.geometry_math import cell_to_world
 from src.gui.advanced_contracts import AdvancedTileKind as Tile
@@ -13,6 +13,15 @@ def vary_tile(node, row, col):
     node.setTexOffset(TextureStage.getDefault(),rng.random(),rng.random())
     value = rng.uniform(.88,1.05)
     node.setColorScale(value,value,value,1)
+    dark=node.find('TileTheme-dark')
+    if not dark.isEmpty():
+        # Unique instance parent, never modify the shared prototype/material.
+        dark.setTexRotate(TextureStage.getDefault(),rng.choice((0,90,180,270)))
+        # Legacy Jungle tint remains on the parent. Snow has its own restrained
+        # variation; do not double-darken white snow with the Jungle multiplier.
+        dark.setColorScaleOff(1)
+        dark.setShaderInput(ShaderInput('snow_variation',
+            LVecBase4f(rng.uniform(.97,1.04),rng.uniform(.45,.95),0.,0.),1))
 
 
 def add_edge_growth(parent, board, *, pitch=1.):
@@ -42,12 +51,16 @@ def add_edge_growth(parent, board, *, pitch=1.):
             lower=[(x+a*.40*pitch,y+b*.40*pitch,-depth*pitch) for a,b in corners]
             for theme,b in stones.items():
                 b.uv_offset=(rng.random(),rng.random())
-                color=(.70,.75,.54,1) if theme=='light' else (.54,.65,.82,1)
+                if theme=='light':
+                    color=(.70,.75,.54,1)
+                else:
+                    from src.gui.visual_materials import SNOW_PALETTE
+                    color=SNOW_PALETTE['side']
                 for i in range(4):
                     j=(i+1)%4
                     a,bb=corners[i],corners[j]
                     b.face((upper[i],upper[j],lower[j],lower[i]),(a[0]+bb[0],a[1]+bb[1],-.15),color)
-                b.face(lower,(0,0,-1),color)
+                b.face(lower,(0,0,-1),color if theme=='light' else SNOW_PALETTE['underside'])
             for dr,dc in edges:
                 # Leaves extend vertically, within the existing slab's XY footprint.
                 for j in range(3):
@@ -67,7 +80,7 @@ def add_edge_growth(parent, board, *, pitch=1.):
     from src.gui.visual_materials import apply
     for theme in ('light','dark'):
         holder=root.attachNewNode('TileTheme-'+theme)
-        holder.attachNewNode(apply(stones[theme].finish(),'stone',theme))
+        holder.attachNewNode(apply(stones[theme].finish(),'stone',theme,pitch=pitch))
         holder.attachNewNode(plants[theme].finish()).setTwoSided(True)
         if theme!=TILE_THEME:holder.hide()
     return root

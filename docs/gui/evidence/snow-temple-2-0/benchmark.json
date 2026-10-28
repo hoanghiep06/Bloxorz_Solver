@@ -1,0 +1,20 @@
+{
+  "method": "Interleaved 6 x 30 frames each; same live Level 4 geometry/camera, previous Frosted Stone shader vs Snow Temple 2 shader using the same current textures on unique Floor/Foundation instance holders. Only shader/texture cost comparison, not an old-look screenshot.",
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "floor_holders": 64,
+  "samples": {
+    "snow_v1_shader": {
+      "median_ms": 33.708544502587756,
+      "mean_ms": 34.99920915520407,
+      "p95_ms": 48.60179399838671,
+      "frames": 180
+    },
+    "snow_2_shader": {
+      "median_ms": 35.30963200319093,
+      "mean_ms": 36.14307451639939,
+      "p95_ms": 41.493124001135584,
+      "frames": 180
+    }
+  },
+  "median_ratio_snow_over_legacy": 1.047497971930537
+}

@@ -1,0 +1,79 @@
+{
+  "stage": "after",
+  "screenshots": [
+    "dark-level_01-1280x720.png",
+    "dark-level_04-1280x720.png",
+    "dark-level_11-1280x720.png",
+    "dark-level_18-1280x720.png",
+    "light-level_04-1280x720.png",
+    "light-level_11-1280x720.png",
+    "dark-level_04-1024x720.png",
+    "dark-level_04-1920x1080.png",
+    "dark-stone-close-up.png",
+    "dark-platform-sides.png",
+    "dark-platform-underside.png",
+    "dark-fragile-guide-focus.png",
+    "dark-manual-fall-result.png"
+  ],
+  "scenes": [
+    {
+      "theme": "dark",
+      "level": "level_01",
+      "nodes": 198,
+      "geoms": 109,
+      "tasks": 12,
+      "mean_frame_ms": 50.99356064856693
+    },
+    {
+      "theme": "dark",
+      "level": "level_04",
+      "nodes": 418,
+      "geoms": 197,
+      "tasks": 13,
+      "mean_frame_ms": 54.80156954981794
+    },
+    {
+      "theme": "dark",
+      "level": "level_11",
+      "nodes": 397,
+      "geoms": 267,
+      "tasks": 12,
+      "mean_frame_ms": 45.76664119995257
+    },
+    {
+      "theme": "dark",
+      "level": "level_18",
+      "nodes": 949,
+      "geoms": 590,
+      "tasks": 12,
+      "mean_frame_ms": 44.77105899968592
+    },
+    {
+      "theme": "light",
+      "level": "level_04",
+      "nodes": 418,
+      "geoms": 197,
+      "tasks": 12,
+      "mean_frame_ms": 37.760377850645455
+    },
+    {
+      "theme": "light",
+      "level": "level_11",
+      "nodes": 397,
+      "geoms": 267,
+      "tasks": 12,
+      "mean_frame_ms": 36.12685845037049
+    }
+  ],
+  "checks": [
+    "Guide Fragile target, Back restore and unchanged Core/Moves PASS",
+    "12 Light/Dark switches: stable nodes, no texture reload, unchanged Core/snapshot PASS",
+    "Compiled Snow shader samples real normal/roughness map; flat-map A/B changes floor framebuffer PASS",
+    "Native Right rolls; Core-danger move falls with result; Restart restores intact board PASS"
+  ],
+  "normal_map_changed_samples": 101,
+  "material_status": "GLSL_DETAIL_EMISSION",
+  "snow_material_status": "GLSL_NORMAL_ROUGHNESS_FROST",
+  "gpu": "llvmpipe (LLVM 21.1.8, 256 bits)",
+  "status": "PASS"
+}

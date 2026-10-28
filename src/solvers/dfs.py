@@ -10,7 +10,7 @@ class DFSSolver(BaseSolver):
     """
 
     def _search(self) -> Optional[List[str]]:
-        initial_state = self.board.get_initial_state()
+        initial_state = self.get_start_state()
 
         # stack lưu: (state, state_cha, action_tu_cha_sang_state)
         stack = [(initial_state, None, None)]

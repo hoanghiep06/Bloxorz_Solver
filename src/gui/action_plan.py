@@ -1,5 +1,6 @@
 """One authoritative Core action -> explicit, cancellable visual phases."""
 from dataclasses import dataclass, replace
+from src.gui.split_teleport_math import SPLIT_TELEPORT_DURATION, MERGE_TELEPORT_DURATION
 from src.gui.game_adapter import CUBE_IDS, build_game_snapshot
 from src.gui.animation_math import RollDirection
 from src.gui.animation_contracts import (
@@ -63,8 +64,8 @@ def plan_action(board, state, board_data, before, action, next_id,
         duration = (terminal_duration if kind is K.TERMINAL else
                     move_duration if kind is K.ROLL else
                     .12 if any(e.kind is E.FRAGILE_BREAK for e in events) else
-                    .4 if any(e.kind is E.SPLIT for e in events) else
-                    .3 if any(e.kind is E.MERGE for e in events) else
+                    SPLIT_TELEPORT_DURATION if any(e.kind is E.SPLIT for e in events) else
+                    MERGE_TELEPORT_DURATION if any(e.kind is E.MERGE for e in events) else
                     .15 if any(e.kind is E.ACTIVE_CUBE_CHANGE for e in events) else effect_duration)
         request = AnimationRequest(1, next_id(), current, after, kind, duration,
             events=tuple(events), **kwargs)

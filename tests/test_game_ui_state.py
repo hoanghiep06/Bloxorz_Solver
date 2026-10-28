@@ -81,7 +81,7 @@ class GameUiStateTests(SceneFixture):
         self.assertFalse(self.c.guide_active)
         self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
 
-    def test_immediate_solver_selection_clears_previous_result_dialog(self):
+    def test_solver_selection_preserves_terminal_state_and_result_dialog(self):
         for outcome in ('win', 'fail'):
             with self.subTest(outcome=outcome):
                 self.c.phase = 'GOAL' if outcome == 'win' else 'FELL'
@@ -90,8 +90,8 @@ class GameUiStateTests(SceneFixture):
                 self.assertFalse(self.hud.buttons['Guide'].border.isHidden())
                 self.flow.toggle_guide()
                 self.hud.buttons['BFS']['command']()
-                self.assertEqual(self.c.phase, 'READY')
-                self.assertFalse(self.screen.result_visible)
+                self.assertEqual(self.c.phase, 'GOAL' if outcome == 'win' else 'FELL')
+                self.assertTrue(self.screen.result_visible)
                 self.flow.toggle_guide()
 
     def buttons(self):
@@ -199,7 +199,7 @@ class GameUiStateTests(SceneFixture):
         self.hud.buttons['Step']['command']()
         self.c.manager.advance(2)
         self.assertTrue(self.c.guide_active)
-        self.assertEqual(self.c.moves, 1)
+        self.assertEqual(self.c.moves, 2)  # One manual move plus one replay move.
 
     def test_closing_panel_during_pending_solve_cancels_the_job(self):
         self.flow.toggle_guide()

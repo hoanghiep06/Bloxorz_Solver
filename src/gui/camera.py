@@ -59,6 +59,17 @@ class CameraFit:
     bounds: SceneBounds
 
 
+@dataclass(frozen=True)
+class CameraPresentation:
+    """Restorable presentation only; no board/player state or new camera."""
+    fit: CameraFit
+    config: CameraConfig
+    position: tuple
+    quaternion: tuple
+    fov: tuple
+    near_far: tuple
+
+
 def _finite(value, field):
     if type(value) not in (int, float) or not math.isfinite(value):
         raise ValueError(f'{field} must be a finite number (not bool).')
@@ -158,7 +169,26 @@ class BoardCameraController:
         self._dimensions = None
         self._window = self._provider = self._listener = None
         self._on_refit = None
+        self.on_user_view_change = None
         self._disposed = False
+
+    def capture_presentation(self):
+        if self._disposed or self.current_fit is None:
+            return None
+        return CameraPresentation(self.current_fit,self.config,tuple(self.camera.getPos()),
+            tuple(self.camera.getQuat()),tuple(self.lens.getFov()),
+            (self.lens.getNear(),self.lens.getFar()))
+
+    def apply_presentation(self, view):
+        """Sample a leased UI camera animation without refitting board/light bounds."""
+        from panda3d.core import Quat
+        if self._disposed:return
+        self.current_fit,self.config=view.fit,view.config
+        self.camera.setPos(*view.position);self.camera.setQuat(Quat(*view.quaternion))
+        self.lens.setFov(*view.fov);self.lens.setNearFar(*view.near_far)
+
+    def _user_view_change(self):
+        if self.on_user_view_change:self.on_user_view_change()
 
     def fit_board(self, board_data, width, height, *, pitch=1.0, bounds=None, notify=True):
         """Fit on load/configuration changes. Invalid/minimized sizes keep the previous pose.
@@ -169,6 +199,7 @@ class BoardCameraController:
             raise RuntimeError('Camera controller is disposed.')
         if width == 0 or height == 0:
             return False
+        self._user_view_change()
         fit = fit_camera(board_data, width, height, pitch=pitch, config=self.config, bounds=bounds)
         self._board, self._pitch, self._bounds = board_data, pitch, bounds
         self._dimensions = (width, height)
@@ -262,5 +293,6 @@ class BoardCameraController:
         if self._listener:
             self._listener.ignoreAll()
         self._listener = self._window = self._provider = self._on_refit = None
+        self.on_user_view_change = None
         self.camera = self.lens = self._board = self.current_fit = None
         self._disposed = True

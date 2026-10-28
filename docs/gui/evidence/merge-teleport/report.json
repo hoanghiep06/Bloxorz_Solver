@@ -1,0 +1,88 @@
+{
+  "input": "Panda3D GLX GraphicsWindow + X11 XTest, existing mechanics fixtures",
+  "checks": [
+    "light: five fusion beats on H/V Core merges, one commit, shared split pool and continued whole movement",
+    "dark: five fusion beats on H/V Core merges, one commit, shared split pool and continued whole movement",
+    "Native solver Pause freezes fusion; Step completes exactly one merge; Play rolls whole to Goal",
+    "Restart/change level during convergence clean VFX and discard stale commit",
+    "Iso/Top/Follow, resize and 0.25x/1x/4x end in the same Core whole state"
+  ],
+  "images": [
+    "light-horizontal-charge.png",
+    "light-horizontal-dissolve.png",
+    "light-horizontal-converge.png",
+    "light-horizontal-reconstruct.png",
+    "light-horizontal-settle.png",
+    "light-horizontal-whole.png",
+    "light-vertical-charge.png",
+    "light-vertical-dissolve.png",
+    "light-vertical-converge.png",
+    "light-vertical-reconstruct.png",
+    "light-vertical-settle.png",
+    "light-vertical-whole.png",
+    "dark-horizontal-charge.png",
+    "dark-horizontal-dissolve.png",
+    "dark-horizontal-converge.png",
+    "dark-horizontal-reconstruct.png",
+    "dark-horizontal-settle.png",
+    "dark-horizontal-whole.png",
+    "dark-vertical-charge.png",
+    "dark-vertical-dissolve.png",
+    "dark-vertical-converge.png",
+    "dark-vertical-reconstruct.png",
+    "dark-vertical-settle.png",
+    "dark-vertical-whole.png",
+    "native-paused-merge.png",
+    "view-0-rate-0.25.png",
+    "view-1-rate-4.png",
+    "view-2-rate-1.png"
+  ],
+  "runs": [
+    {
+      "theme": "light",
+      "orientation": "horizontal",
+      "moves_before": 6,
+      "moves_after_merge": 7,
+      "target": "State(6, 8, HORIZONTAL, bridges_state=(False, True))",
+      "frames": 21
+    },
+    {
+      "theme": "light",
+      "orientation": "vertical",
+      "moves_before": 6,
+      "moves_after_merge": 7,
+      "target": "State(5, 9, VERTICAL, bridges_state=(False, True))",
+      "frames": 0
+    },
+    {
+      "theme": "dark",
+      "orientation": "horizontal",
+      "moves_before": 6,
+      "moves_after_merge": 7,
+      "target": "State(6, 8, HORIZONTAL, bridges_state=(False, True))",
+      "frames": 0
+    },
+    {
+      "theme": "dark",
+      "orientation": "vertical",
+      "moves_before": 6,
+      "moves_after_merge": 7,
+      "target": "State(5, 9, VERTICAL, bridges_state=(False, True))",
+      "frames": 0
+    }
+  ],
+  "windows": 1,
+  "status": "PASS",
+  "regression": {
+    "tests": 569,
+    "status": "PASS",
+    "seconds": 108.639,
+    "log": "regression.txt"
+  },
+  "clip": {
+    "file": "merge-0_65x.gif",
+    "rate": 0.65,
+    "frames": 21,
+    "source": "Actual live framebuffer sampling, approximate timing"
+  }
+}

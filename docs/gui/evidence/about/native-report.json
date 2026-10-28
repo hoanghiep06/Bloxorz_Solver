@@ -1,0 +1,41 @@
+{
+  "checks": [
+    "light: native About/Back, correct names, disabled demo, four sizes; same 3D scene/window",
+    "dark: native About/Back, correct names, disabled demo, four sizes; same 3D scene/window",
+    "Configured demo native click dispatches correct browser URL without blocking UI; default restored disabled",
+    "Start/Settings/Quit and Escape retain their callbacks",
+    "20 native About/Back cycles retain widget/listener/task/output counts"
+  ],
+  "images": [
+    "/tmp/about-page-native/light-about-1280.png",
+    "/tmp/about-page-native/light-about-1366.png",
+    "/tmp/about-page-native/light-about-1920.png",
+    "/tmp/about-page-native/light-about-1024.png",
+    "/tmp/about-page-native/dark-about-1280.png",
+    "/tmp/about-page-native/dark-about-1366.png",
+    "/tmp/about-page-native/dark-about-1920.png",
+    "/tmp/about-page-native/dark-about-1024.png"
+  ],
+  "input": "X11 XTest real mouse/keys; browser mocked",
+  "20_cycles": {
+    "before": {
+      "widgets": 220,
+      "listeners": 113,
+      "tasks": 14,
+      "outputs": 1
+    },
+    "after": {
+      "widgets": 220,
+      "listeners": 113,
+      "tasks": 14,
+      "outputs": 1
+    }
+  },
+  "after_dispose": {
+    "widgets": 0,
+    "listeners": 0,
+    "tasks": 0,
+    "outputs": 0
+  },
+  "status": "PASS"
+}

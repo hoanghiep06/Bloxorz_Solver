@@ -1,0 +1,81 @@
+{
+  "jungle_pixel_comparison": [
+    {
+      "level": "04",
+      "whole_frame_changed_pixels": 0,
+      "gameplay_area_y90_to610_changed_pixels": 0,
+      "max_channel_difference": 0,
+      "note": "Bit-identical entire screenshot."
+    },
+    {
+      "level": "11",
+      "whole_frame_changed_pixels": 15,
+      "gameplay_area_y90_to610_changed_pixels": 0,
+      "max_channel_difference": 1,
+      "note": "Level 11 has a 1/255 rounding difference on 15 HUD pixels at y=45; no board/background change."
+    }
+  ],
+  "scene_resources_and_timing": [
+    {
+      "theme": "dark",
+      "level": "level_01",
+      "nodes_before": 198,
+      "nodes_after": 198,
+      "geoms_before": 109,
+      "geoms_after": 109,
+      "mean_frame_ms_before": 34.28,
+      "mean_frame_ms_after": 50.99
+    },
+    {
+      "theme": "dark",
+      "level": "level_04",
+      "nodes_before": 418,
+      "nodes_after": 418,
+      "geoms_before": 197,
+      "geoms_after": 197,
+      "mean_frame_ms_before": 35.74,
+      "mean_frame_ms_after": 54.8
+    },
+    {
+      "theme": "dark",
+      "level": "level_11",
+      "nodes_before": 397,
+      "nodes_after": 397,
+      "geoms_before": 267,
+      "geoms_after": 267,
+      "mean_frame_ms_before": 35.64,
+      "mean_frame_ms_after": 45.77
+    },
+    {
+      "theme": "dark",
+      "level": "level_18",
+      "nodes_before": 949,
+      "nodes_after": 949,
+      "geoms_before": 590,
+      "geoms_after": 590,
+      "mean_frame_ms_before": 31.49,
+      "mean_frame_ms_after": 44.77
+    },
+    {
+      "theme": "light",
+      "level": "level_04",
+      "nodes_before": 418,
+      "nodes_after": 418,
+      "geoms_before": 197,
+      "geoms_after": 197,
+      "mean_frame_ms_before": 31.86,
+      "mean_frame_ms_after": 37.76
+    },
+    {
+      "theme": "light",
+      "level": "level_11",
+      "nodes_before": 397,
+      "nodes_after": 397,
+      "geoms_before": 267,
+      "geoms_after": 267,
+      "mean_frame_ms_before": 26.4,
+      "mean_frame_ms_after": 36.13
+    }
+  ],
+  "timing_note": "Diagnostic samples on llvmpipe under different CPU load; not a controlled GPU benchmark."
+}

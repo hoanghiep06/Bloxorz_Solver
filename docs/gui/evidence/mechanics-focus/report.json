@@ -1,0 +1,393 @@
+{
+  "input": "Panda3D GLX GraphicsWindow; actual X11 XTest mouse/key input",
+  "checks": [
+    "light: seven mesh-matching icons, exact safe targets, stable rail, cycling, Back/X restore and unchanged Core/Moves",
+    "dark: seven mesh-matching icons, exact safe targets, stable rail, cycling, Back/X restore and unchanged Core/Moves",
+    "Basic level: Goal focus works; absent Split opens card without moving camera/creating a marker",
+    "Bridge absent/present both locate definition; focus does not open platforms or toggle state",
+    "Fragile level focuses real tile; level without Split has no phantom target",
+    "Rotated camera restores exactly; native C takes ownership and cancels Guide movement",
+    "Guide click during live roll opens help, rejects focus and preserves the gameplay action",
+    "Restart, level changes and four sizes clear/renew context safely, with no rail shifts or ghost highlights",
+    "Six spawned solvers reach Goal; Guide focus rejected during search/replay without changing roots/Moves",
+    "light: basic Goal/absent Split, inactive Bridge and Fragile levels validated separately",
+    "dark: basic Goal/absent Split, inactive Bridge and Fragile levels validated separately"
+  ],
+  "images": [
+    "light-before-focus.png",
+    "light-goal-focused.png",
+    "light-bridge-focused.png",
+    "light-soft_switch-focused.png",
+    "light-heavy_switch-focused.png",
+    "light-split_switch-focused.png",
+    "light-fragile-focused.png",
+    "light-void-focused.png",
+    "dark-before-focus.png",
+    "dark-goal-focused.png",
+    "dark-bridge-focused.png",
+    "dark-soft_switch-focused.png",
+    "dark-heavy_switch-focused.png",
+    "dark-split_switch-focused.png",
+    "dark-fragile-focused.png",
+    "dark-void-focused.png",
+    "absent-split-information-only.png",
+    "inactive-bridge-outline-only.png",
+    "light-basic-no-split.png",
+    "light-inactive-bridge.png",
+    "light-fragile-level.png",
+    "dark-basic-no-split.png",
+    "dark-inactive-bridge.png",
+    "dark-fragile-level.png"
+  ],
+  "targets": [
+    {
+      "mechanic": "goal",
+      "cell": [
+        4,
+        10
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        2,
+        9
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "soft_switch",
+      "cell": [
+        6,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "heavy_switch",
+      "cell": [
+        2,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "split_switch",
+      "cell": [
+        4,
+        4
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        2,
+        5
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        4,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "void",
+      "cell": [
+        0,
+        0
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "goal",
+      "cell": [
+        4,
+        10
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        2,
+        9
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "soft_switch",
+      "cell": [
+        6,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "heavy_switch",
+      "cell": [
+        2,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "split_switch",
+      "cell": [
+        4,
+        4
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        2,
+        5
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        4,
+        3
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "void",
+      "cell": [
+        0,
+        0
+      ],
+      "pixel": [
+        469.00003179910664,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "goal",
+      "cell": [
+        1,
+        6
+      ],
+      "pixel": [
+        469.0000317991065,
+        375.00001198207286
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        469.0000008863456,
+        374.99995466715404
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        469.0000008863456,
+        374.99995466715404
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        0,
+        3
+      ],
+      "pixel": [
+        469.0000317991066,
+        375.000011982073
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        341.00000747973445,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        511.99999847328354,
+        399.0
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        789.0000039497414,
+        555.0
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        469.00000711569766,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "goal",
+      "cell": [
+        1,
+        6
+      ],
+      "pixel": [
+        469.0000063110948,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        469.00000711569766,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        0,
+        3
+      ],
+      "pixel": [
+        469.00000711569766,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "goal",
+      "cell": [
+        1,
+        6
+      ],
+      "pixel": [
+        469.0000063110948,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "bridge",
+      "cell": [
+        0,
+        4
+      ],
+      "pixel": [
+        469.00000711569766,
+        375.0
+      ]
+    },
+    {
+      "mechanic": "fragile",
+      "cell": [
+        0,
+        3
+      ],
+      "pixel": [
+        469.00000711569766,
+        375.0
+      ]
+    }
+  ],
+  "status": "PASS",
+  "regression": {
+    "tests": 586,
+    "status": "PASS",
+    "seconds": 160.465,
+    "log": "regression.txt"
+  },
+  "baseline": {
+    "guide_tests": 12,
+    "camera_tests": 12,
+    "status": "PASS",
+    "head": "2cb6140",
+    "branch": "feat/team-code/phase2-game-gui"
+  },
+  "clip": {
+    "file": "focus-and-back.gif",
+    "frames": 12,
+    "source": "Real framebuffer during focus/back; sampled, approximate timing"
+  }
+}

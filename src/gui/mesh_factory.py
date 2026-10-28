@@ -159,13 +159,20 @@ def make_floor_mesh(*, pitch: float = 1.0, theme='light') -> GeomNode:
     _pitch(pitch)
     colors = {(axis, sign): FLOOR_TOP if axis == 2 and sign == 1 else FLOOR_SIDE
               for axis in range(3) for sign in (-1, 1)}
+    edge=FLOOR_EDGE
+    if theme=='dark':
+        from src.gui.visual_materials import SNOW_PALETTE as snow
+        colors={(axis,sign):snow['top'] if (axis,sign)==(2,1) else
+                snow['underside'] if (axis,sign)==(2,-1) else snow['side']
+                for axis in range(3) for sign in (-1,1)}
+        edge=snow['bevel']
     node = _beveled_box("FloorMesh", (0.96 * pitch, 0.96 * pitch, 0.18 * pitch),
-                        0.02 * pitch, colors, FLOOR_EDGE)
+                        0.02 * pitch, colors, edge)
     # Bake the tile offset into vertices; the reusable instance transform is XY only.
     from panda3d.core import Mat4
     node.modifyGeom(0).transformVertices(Mat4.translateMat(0, 0, -0.09 * pitch))
     from src.gui.visual_materials import apply
-    return apply(node, "stone", theme)
+    return apply(node, "stone", theme, pitch=pitch)
 
 
 def make_goal_mesh(*, pitch: float = 1.0, theme: str = 'light') -> GeomNode:

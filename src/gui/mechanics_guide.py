@@ -52,46 +52,14 @@ def guide_layout(width, height, selected=None, card_height=230):
     return GuideLayout(rail,card,width-rail.x+12)
 
 
-def mechanic_icon(mechanic_id):
-    """Vector silhouettes match the live 3D flag, ribs and switch glyphs."""
-    rect,band,circle=icons._rect,icons._band,icons._circle_points
-    square=[(-.8,-.8),(.8,-.8),(.8,.8),(-.8,.8)]
-    inside=[(-.64,-.64),(.64,-.64),(.64,.64),(-.64,.64)]
-    if mechanic_id=='goal':
-        tris=rect(-.66,-.85,-.49,.9)+[((-.49,.82),(.85,.33),(-.49,-.05))]+rect(-.85,-.9,-.25,-.78)
-    elif mechanic_id=='bridge':
-        tris=rect(-.88,-.82,-.72,.82)+rect(.72,-.82,.88,.82)
-        for z in (-.6,0,.6):tris+=rect(-.72,z-.14,.72,z+.14)
-    elif mechanic_id=='soft_switch':
-        tris=band(circle(.82),circle(.59))
-    elif mechanic_id=='heavy_switch':
-        tris=rect(-.65,-.8,-.24,.8)+rect(.24,-.8,.65,.8)
-    elif mechanic_id=='split_switch':
-        tris=rect(-.9,-.5,-.15,.5)+rect(.15,-.5,.9,.5)
-        tris+=[((-.9,.5),(-.65,.78),(-.15,.5)),((.15,.5),(.4,.78),(.9,.5))]
-    elif mechanic_id=='fragile':
-        tris=band(square,inside)
-        points=[(-.28,.7),(.12,.22),(-.16,-.18),(.24,-.7)]
-        for (x,z),(xx,zz) in zip(points,points[1:]):
-            tris += [((x-.08,z),(x+.08,z),(xx+.08,zz)),((x-.08,z),(xx+.08,zz),(xx-.08,zz))]
-        tris += [((-.04,.1),(.55,.33),(.05,.25))]
-    else:
-        tris=band(square,inside)+rect(-.6,-.56,.6,-.43)
-    data=GeomVertexData('MechanicIcon-'+mechanic_id,GeomVertexFormat.getV3(),Geom.UHStatic)
-    writer=GeomVertexWriter(data,'vertex');primitive=GeomTriangles(Geom.UHStatic)
-    for i,tri in enumerate(tris):
-        for x,z in tri:writer.addData3f(x,0,z)
-        primitive.addVertices(i*3,i*3+1,i*3+2)
-    geom=Geom(data);geom.addPrimitive(primitive)
-    node=GeomNode('MechanicIcon-'+mechanic_id);node.addGeom(geom)
-    path=NodePath(node);path.setTwoSided(True);path.setLightOff(1);path.setShaderOff(1)
-    return path
+from src.gui.mechanics_icons import mechanic_icon
 
 
 class MechanicsGuide:
-    def __init__(self, parent, *, on_change=None):
+    def __init__(self, parent, *, on_change=None, on_select=None, on_close=None, on_back=None):
         self.root=parent.attachNewNode('MechanicsGuide',-10)
         self._on_change=on_change
+        self._on_select,self._on_close,self._on_back=on_select,on_close,on_back
         self._widgets=[];self._disposed=False;self._visible=False
         self.selected=None;self.layout=None;self._size=None;self._card_height=230
         self.root.hide()
@@ -109,7 +77,7 @@ class MechanicsGuide:
                 command=lambda key=item.id:self.show_mechanic(key)))
             self.buttons[item.id]=button
             icon=mechanic_icon(item.id);icon.reparentTo(button)
-            icon.setPos(20,-.02,-20);icon.setScale(12)
+            icon.setPos(20,-.02,-20);icon.setScale(17)
             self._icons[item.id]=icon
         self.shadow=self.root.attachNewNode('GuideCardShadow')
         self.card=self._own(DirectFrame(parent=self.root,relief=None,state=DGG.NORMAL))
@@ -125,6 +93,14 @@ class MechanicsGuide:
             text_font=_guide_font(True),
             text_pos=(13,-18),frameSize=(0,26,-26,0),pos=(CARD_WIDTH-34,-.05,-8),
             relief=None,pressEffect=0,command=self.close_card))
+        self.locator=self._label(self.card,'',14,16,190)
+        self.locator['text_wordwrap']=(CARD_WIDTH-32)/14
+        self.back_button=self._own(DirectButton(parent=self.card,text='Back to Board',text_scale=14,
+            text_font=_guide_font(),text_pos=((CARD_WIDTH-32)/2,-20),
+            frameSize=(0,CARD_WIDTH-32,-30,0),pos=(16,-.05,-210),relief=None,pressEffect=0,
+            command=lambda:self._on_back() if self._on_back else None))
+        self._focus_message='';self._can_restore=False
+        self.back_button.hide();self.locator.hide()
         self.card.hide();self.shadow.hide()
         self.apply_theme(ui.CURRENT)
 
@@ -146,25 +122,45 @@ class MechanicsGuide:
     def show_mechanic(self, mechanic_id):
         if self._disposed:return
         item=BY_ID[mechanic_id]
-        if self.selected==mechanic_id:
+        if self.selected==mechanic_id and self._on_select is None:
             self.close_card();return
         self.selected=mechanic_id
         self.title['text']=item.name
         self.body['text']=item.description
         self.note['text']=item.note
-        note_y=82+self._rows(item.description,16)*20+16
-        self.note.setZ(-note_y)
-        self._card_height=note_y+self._rows(item.note,14)*18+16
+        self._focus_message='';self._can_restore=False
+        self._layout_card()
         for child in self.large_icon.getChildren():child.removeNode()
-        icon=mechanic_icon(mechanic_id);icon.reparentTo(self.large_icon)
-        icon.setColor(*ui.rgba(item.accent))
+        icon=mechanic_icon(mechanic_id,self._theme);icon.reparentTo(self.large_icon)
         self._restyle()
         if self._size:self.apply_layout(*self._size)
         if self._on_change:self._on_change()
+        if self._on_select:self._on_select(mechanic_id)
+
+    def _layout_card(self):
+        item=BY_ID[self.selected]
+        note_y=82+self._rows(item.description,16)*20+16
+        self.note.setZ(-note_y)
+        bottom=note_y+self._rows(item.note,14)*18+16
+        self.locator['text']=self._focus_message
+        self.locator.setZ(-bottom)
+        self.locator.show() if self._focus_message else self.locator.hide()
+        if self._focus_message:bottom+=self._rows(self._focus_message,14)*18+12
+        self.back_button.setZ(-bottom)
+        self.back_button.show() if self._can_restore else self.back_button.hide()
+        if self._can_restore:bottom+=38
+        self._card_height=bottom
+
+    def set_focus_info(self,message,can_restore=False):
+        if self._disposed or self.selected is None:return
+        self._focus_message,self._can_restore=message,can_restore
+        self._layout_card();self._restyle()
+        if self._size:self.apply_layout(*self._size)
 
     def close_card(self):
         if self._disposed:return
         self.selected=None
+        if self._on_close:self._on_close()
         self.card.hide();self.shadow.hide()
         self._restyle()
         if self._size:self.apply_layout(*self._size)
@@ -183,7 +179,15 @@ class MechanicsGuide:
         self.heading['text_fg']=self.title['text_fg']=self._ink
         self.body['text_fg']=self._body_ink
         self.note['text_fg']=self._muted
+        self.locator['text_fg']=self._body_ink
+        self.back_button['text_fg']=self._ink
         self.close_button['text_fg']=self._ink
+        for item in MECHANICS:
+            old=self._icons[item.id];parent=old.getParent();pos=old.getPos();scale=old.getScale();old.removeNode()
+            icon=mechanic_icon(item.id,self._theme);icon.reparentTo(parent);icon.setPos(pos);icon.setScale(scale)
+            self._icons[item.id]=icon
+        for child in self.large_icon.getChildren():child.removeNode()
+        if self.selected:mechanic_icon(self.selected,self._theme).reparentTo(self.large_icon)
         self._restyle()
         root=Path(__file__).resolve().parents[2]/'assets/backgrounds'
         name='winter-temple.png' if self._theme=='dark' else 'jungle-temple.png'
@@ -212,7 +216,8 @@ class MechanicsGuide:
                 ui.rounded_outline(40,40,8,outline,2 if selected else 1).reparentTo(geom)
                 states.append(geom)
             button['geom']=tuple(states)
-            self._icons[item.id].setColor(*accent)
+            # Vertex palette preserves the flag/frame, dark bases and glyph colours.
+        self.back_button['geom']=tuple(ui.rounded_rect(CARD_WIDTH-32,30,6,c) for c in (self._panel,self._border,self._border,self._panel))
         self.close_button['geom']=tuple(ui.rounded_rect(26,26,6,c) for c in (self._panel,self._border,self._border,self._panel))
 
     def apply_layout(self,width,height):
@@ -260,4 +265,4 @@ class MechanicsGuide:
         for widget in reversed(self._widgets):widget.destroy()
         self._widgets.clear();self.buttons.clear();self._icons.clear()
         self.root.removeNode()
-        self._on_change=None
+        self._on_change=self._on_select=self._on_close=self._on_back=None
