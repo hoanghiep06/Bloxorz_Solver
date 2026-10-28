@@ -1,15 +1,16 @@
 """DirectGUI HUD: icon toolbar at the top-left and the level name at the top-right.
 
-Row 1: square icon buttons (Exit | Restart, AI Solver, View, Help). Hovering an
+Row 1: square icon buttons (Exit | Restart, Solver, View, Help). Hovering an
 icon shows its name next to the toolbar.
-Row 2 (only while AI Solver is open): algorithm chips, then Play/Step icons and
+Row 2 (only while Solver is open): algorithm chips, then Play/Step icons and
 the speed slider once an algorithm is chosen. There is no "Hide Solution"
-button: pressing the AI Solver icon again closes the solver and its solution.
+button: pressing the Solver icon again closes the solver and its solution.
 Controls are bound by the host (bind_action/bind_speed).
 """
 
 from dataclasses import dataclass
 import math
+import re
 
 from src.gui import icons
 from src.gui import ui_theme as ui
@@ -60,6 +61,13 @@ def _color(hex_value):
     return tuple(int(hex_value[index:index + 2], 16) / 255 for index in (0, 2, 4)) + (1,)
 
 
+def display_level_label(label: str) -> str:
+    """'level_01' / 'Level 01 (1/18)' -> 'Level 01'."""
+    label = re.sub(r'\s*\(\s*\d+\s*/\s*\d+\s*\)\s*$', '', label.strip())
+    match = re.match(r'(?i)^level[_\s-]*(\d+)', label)
+    return f'Level {match.group(1)}' if match else label
+
+
 # Kept for modules/tests that still import them.
 BG_MAIN = _color('F1F4F7')
 BG_SECONDARY = _color('E7EFF5')
@@ -81,6 +89,7 @@ SOLVER_W = 84
 ROW2_Y = MARGIN + BTN_H + GAP
 LEVEL_SIZE, STATUS_SIZE = 24, 17
 TIP_SPACE = 0            # room reserved for the hover name next to the toolbar
+INFO_PAD, INFO_MIN_W = 36, 110   # padding (both sides) and min width of the level-name frame
 
 
 def _top_positions():
@@ -100,7 +109,7 @@ ICONS = {
     'Tutorial': ('help',), 'Play': ('play', 'pause'), 'Step': ('step',),
 }
 TIPS = {
-    'Exit': 'Exit', 'Restart': 'Restart (R)', 'Guide': 'AI Solver', 'View': 'View: Iso (C)',
+    'Exit': 'Exit', 'Restart': 'Restart (R)', 'Guide': 'Solver', 'View': 'View: Iso (C)',
     'Tutorial': 'Help (H)', 'Play': 'Play / Pause', 'Step': 'Step',
 }
 
@@ -200,7 +209,7 @@ class HudShell:
 
     def _add_button(self, name, x, y, width, group=None):
         has_icon = name in ICONS
-        caption = {'Exit':'Exit','Restart':'Restart','Guide':'AI Solver'}.get(name, '' if has_icon else name)
+        caption = {'Exit':'Exit','Restart':'Restart','Guide':'Solver'}.get(name, '' if has_icon else name)
         button = ui.make_button(self.bar, caption, x, y, width, BTN_H,
                                 None, size=19 if has_icon else TEXT, enabled=False)
         self._own(button.border)
@@ -270,7 +279,7 @@ class HudShell:
     def bind_action(self, name, callback):
         """Enable one button and run callback() when it is clicked.
 
-        'Close' has no button any more: its callback runs when the AI Solver
+        'Close' has no button any more: its callback runs when the Solver
         icon is pressed while the solver is open.
         """
         from direct.gui import DirectGuiGlobals as DGG
@@ -317,14 +326,23 @@ class HudShell:
         return self._guide_open
 
     def set_guide_visible(self, visible):
-        """AI Solver toggled: show the algorithm row. Closing clears everything."""
+        """Solver toggled: show the algorithm row. Closing clears everything."""
         self._guide_open = bool(visible)
         for widget in self._solvers:
             widget.show() if visible else widget.hide()
+        self._sync_metrics()
         if not visible:
             self._selected = None
             self._set_playback(False)
         self._style_dynamic()
+
+    def _sync_metrics(self):
+        """Metric frames (Moves / Search Time / ...) only show while Solver is open."""
+        supported = self.layout is None or self.layout.supported
+        if self._guide_open and supported:
+            self.metrics.show()
+        else:
+            self.metrics.hide()
 
     def select_solver(self, name):
         """Algorithm chosen: highlight it and reveal Play/Step and the speed slider."""
@@ -340,7 +358,7 @@ class HudShell:
         self._tips['View'] = f'{text} (C)'
 
     def set_guide_mode(self, active):
-        """While a solution runs, hide Restart. The AI Solver icon stays as the way out."""
+        """While a solution runs, hide Restart. The Solver icon stays as the way out."""
         self._guide_mode = bool(active)
         self._refresh_top()
 
@@ -376,6 +394,7 @@ class HudShell:
         self.speed['frameColor'] = ui.LINE
         self.speed.thumb['frameColor'] = ui.PRIMARY
         self._style_metrics()
+        self._layout_info()   # the info frame is rebuilt with the new PAPER colour
         for icon in self.metric_icons:
             icon.setColor(*ui.GOLD)
         for label in self.metric_labels:
@@ -397,14 +416,25 @@ class HudShell:
 
     def _refresh_texts(self):
         width = self.layout.width if self.layout else 1024
-        title=self.model.level_label
-        tail=' ('+title.rsplit(' (',1)[-1] if ' (' in title and '/' in title.rsplit(' (',1)[-1] and title.endswith(')') else ''
+        title = display_level_label(self.model.level_label)
         self._fit_text(self.level, title, LEVEL_SIZE,
-                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE), suffix=tail)
+                       max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE))
         self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
         cell = (width - 40) / 5
         for label, value in zip(self.metric_values, metric_values(self.model)):
             self._fit_text(label, value, 20, cell - 56)
+        self._layout_info()
+
+    def _layout_info(self):
+        """Level-name frame shrinks to the text width and hugs the right edge."""
+        if self._disposed or self.layout is None or not self.layout.supported:
+            return
+        node = self._TextNode('HUDTextMeasure')
+        level_w = node.calcWidth(self.level['text']) * LEVEL_SIZE
+        run_w = node.calcWidth(self.runtime['text']) * STATUS_SIZE
+        info_width = max(INFO_MIN_W, max(level_w, run_w) + INFO_PAD)
+        self.info.setPos(self.layout.width - info_width - MARGIN, 0, -MARGIN)
+        self.info['geom'] = ui.rounded_rect(info_width, 52, 10, ui.PAPER)
 
     def apply_layout(self, layout):
         if self._disposed:
@@ -418,7 +448,7 @@ class HudShell:
             return
         self.warning.hide()
         self.bar.show()
-        self.metrics.show()
+        self._sync_metrics()
         self.metrics.setPos(20, 0, -(layout.height - 94))
         self.metrics['frameSize'] = (0, layout.width - 40, -76, 0)
         self._style_metrics()
@@ -429,12 +459,9 @@ class HudShell:
             if index:
                 self.metric_dividers[index-1].setPos(index*cell,0,-14)
             value.setPos(index * cell + 46, 0, -55)
-        info_width = max(150,layout.width - LEFT_END - 3*MARGIN)
-        self.info.setPos(layout.width-info_width-MARGIN,0,-MARGIN)
-        self.info['geom'] = ui.rounded_rect(info_width,52,10,ui.PAPER)
         self.level.setX(layout.width - MARGIN - 10)
         self.runtime.setX(layout.width - MARGIN - 10)
-        self._refresh_texts()
+        self._refresh_texts()   # also sizes/positions the info frame
 
     def _style_metrics(self):
         width = self.layout.width-40 if self.layout else 1240
@@ -451,7 +478,7 @@ class HudShell:
         if not (0 <= x <= self.layout.width and 0 <= y <= self.layout.height):
             return False
         top = ROW2_Y + BTN_H + GAP if self._guide_open else 92
-        return y <= top or y >= self.layout.height - 94
+        return y <= top or (self._guide_open and y >= self.layout.height - 94)
 
     def update_view_model(self, model):
         if not isinstance(model, HudViewModel):
