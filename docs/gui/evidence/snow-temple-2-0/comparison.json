@@ -1,0 +1,67 @@
+{
+  "jungle": [
+    {
+      "level": "04",
+      "whole_frame_changed_pixels": 0,
+      "gameplay_area_changed_pixels": 0,
+      "max_channel_difference": 0
+    },
+    {
+      "level": "11",
+      "whole_frame_changed_pixels": 0,
+      "gameplay_area_changed_pixels": 0,
+      "max_channel_difference": 0
+    }
+  ],
+  "resources": [
+    {
+      "theme": "dark",
+      "level": "level_01",
+      "nodes_before": 198,
+      "nodes_after": 198,
+      "geoms_before": 109,
+      "geoms_after": 109
+    },
+    {
+      "theme": "dark",
+      "level": "level_04",
+      "nodes_before": 418,
+      "nodes_after": 418,
+      "geoms_before": 197,
+      "geoms_after": 197
+    },
+    {
+      "theme": "dark",
+      "level": "level_11",
+      "nodes_before": 397,
+      "nodes_after": 397,
+      "geoms_before": 267,
+      "geoms_after": 267
+    },
+    {
+      "theme": "dark",
+      "level": "level_18",
+      "nodes_before": 949,
+      "nodes_after": 949,
+      "geoms_before": 590,
+      "geoms_after": 590
+    },
+    {
+      "theme": "light",
+      "level": "level_04",
+      "nodes_before": 418,
+      "nodes_after": 418,
+      "geoms_before": 197,
+      "geoms_after": 197
+    },
+    {
+      "theme": "light",
+      "level": "level_11",
+      "nodes_before": 397,
+      "nodes_after": 397,
+      "geoms_before": 267,
+      "geoms_after": 267
+    }
+  ],
+  "note": "Scene timings were recorded under different CPU loads; see benchmark.json for interleaved shader-cost comparison."
+}

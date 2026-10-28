@@ -10,7 +10,7 @@ class IDSSolver(BaseSolver):
     """
 
     def _search(self) -> Optional[List[str]]:
-        initial_state = self.board.get_initial_state()
+        initial_state = self.get_start_state()
         limit = 0
         prev_visited_count = -1
 

@@ -94,6 +94,8 @@ class CameraViewController:
         self._dragging = False
         self.drag_happened = False
         self._keys_relative = False
+        self._presentation_owner = None
+        self._orbit_target = None
         self._set_label()
         app.accept('c', self.cycle)
         self._listener = DirectObject()
@@ -110,7 +112,7 @@ class CameraViewController:
     @property
     def user_modified(self):
         """True while the camera is rotated/zoomed away from the current view."""
-        return (abs(self._yaw) >= .5 or abs(self._pitch) >= .5
+        return (self._orbit_target is not None or abs(self._yaw) >= .5 or abs(self._pitch) >= .5
                 or abs(self._zoom_target - 1) > .01 or abs(self._zoom - 1) > .01)
 
     # ------------------------------------------------------------ switching
@@ -154,6 +156,7 @@ class CameraViewController:
 
     # ------------------------------------------------------------ user orbit / zoom
     def _clear_user(self):
+        self._orbit_target = None
         self._yaw = self._pitch = 0.0
         self._zoom = self._zoom_target = 1.0
 
@@ -165,7 +168,7 @@ class CameraViewController:
         return replace(base, azimuth=base.azimuth + self._yaw, elevation=elevation)
 
     def _apply_user(self):
-        self.camera.orbit(self._current_config(), self._zoom)
+        self.camera.orbit(self._current_config(), self._zoom, target=self._orbit_target)
         self._sync_keys()
         self._set_label()
 
@@ -210,6 +213,7 @@ class CameraViewController:
     def _wheel(self, direction):
         if self._disposed or not self._pointer_ok():
             return
+        self._take_presentation()
         factor = ZOOM_STEP if direction > 0 else 1 / ZOOM_STEP
         self._zoom_target = min(ZOOM_MAX, max(ZOOM_MIN, self._zoom_target * factor))
 
@@ -234,6 +238,7 @@ class CameraViewController:
         self._last = (mx, my)
         if dx == 0 and dy == 0:
             return False
+        self._take_presentation()
         self._yaw = _wrap_degrees(self._yaw - dx * ORBIT_YAW_PER_PX * (-1 if INVERT_YAW else 1))
         self._pitch += dy * ORBIT_PITCH_PER_PX * (-1 if INVERT_PITCH else 1)
         return True
@@ -292,6 +297,26 @@ class CameraViewController:
         return SceneBounds((focus[0] - r, focus[1] - r, -0.18),
                            (focus[0] + r, focus[1] + r, 2.30))
 
+    def _take_presentation(self):
+        """New drag/wheel input takes over the actual focused pose, not the old fit."""
+        if self._presentation_owner is None:
+            return
+        from src.gui.camera import fit_camera
+        fit = self.camera.current_fit
+        self.camera._user_view_change()
+        self._orbit_target = fit.target
+        self._yaw = _wrap_degrees(self.camera.config.azimuth-self.spec.config.azimuth)
+        self._pitch = self.camera.config.elevation-self.spec.config.elevation
+        reference = fit_camera(self.camera._board,*self.camera._dimensions,
+            pitch=self.camera._pitch,config=self.camera.config,bounds=self.camera._bounds)
+        self._zoom = self._zoom_target = fit.distance/reference.distance
+
+    def acquire_presentation(self, owner):
+        self._presentation_owner = owner
+
+    def release_presentation(self, owner):
+        if self._presentation_owner is owner:self._presentation_owner=None
+
     def _update(self, task):
         if self._disposed or self.camera.current_fit is None:
             return task.cont
@@ -304,10 +329,14 @@ class CameraViewController:
             self._dragging = False
             self._apply_user()
         changed = self._poll_drag()
+        # Follow and previously queued wheel easing must not overwrite Guide samples.
+        # Polling drag first still lets explicit player input take camera ownership.
+        if self._presentation_owner is not None:
+            return task.cont
         changed = self._ease_zoom(dt) or changed
         if changed:
             self._apply_user()
-        if not self.spec.follow:
+        if not self.spec.follow or self._orbit_target is not None:
             return task.cont
         target = self._target()
         if target is None:

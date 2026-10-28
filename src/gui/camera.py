@@ -62,6 +62,17 @@ class CameraFit:
     bounds: SceneBounds
 
 
+@dataclass(frozen=True)
+class CameraPresentation:
+    """Restorable presentation only; no board/player state or new camera."""
+    fit: CameraFit
+    config: CameraConfig
+    position: tuple
+    quaternion: tuple
+    fov: tuple
+    near_far: tuple
+
+
 def _finite(value, field):
     if type(value) not in (int, float) or not math.isfinite(value):
         raise ValueError(f'{field} must be a finite number (not bool).')
@@ -184,17 +195,39 @@ class BoardCameraController:
         self._dimensions = None
         self._window = self._provider = self._listener = None
         self._on_refit = None
+        self.on_user_view_change = None
         self._disposed = False
 
-    def fit_board(self, board_data, width, height, *, pitch=1.0, bounds=None, notify=True):
+    def capture_presentation(self):
+        if self._disposed or self.current_fit is None:
+            return None
+        return CameraPresentation(self.current_fit,self.config,tuple(self.camera.getPos()),
+            tuple(self.camera.getQuat()),tuple(self.lens.getFov()),
+            (self.lens.getNear(),self.lens.getFar()))
+
+    def apply_presentation(self, view):
+        """Sample a leased UI camera animation without refitting board/light bounds."""
+        from panda3d.core import Quat
+        if self._disposed:return
+        self.current_fit,self.config=view.fit,view.config
+        self.camera.setPos(*view.position);self.camera.setQuat(Quat(*view.quaternion))
+        self.lens.setFov(*view.fov);self.lens.setNearFar(*view.near_far)
+
+    def _user_view_change(self):
+        if self.on_user_view_change:self.on_user_view_change()
+
+    def fit_board(self, board_data, width, height, *, pitch=1.0, bounds=None, notify=True, user_change=True):
         """Fit on load/configuration changes. Invalid/minimized sizes keep the previous pose.
 
-        notify=False skips the on_refit callback (used by per-frame follow reframing).
+        notify=False skips the on_refit callback. user_change=False also preserves
+        a UI camera lease, for automatic per-frame Follow reframing only.
         """
         if self._disposed:
             raise RuntimeError('Camera controller is disposed.')
         if width == 0 or height == 0:
             return False
+        if user_change:
+            self._user_view_change()
         fit = fit_camera(board_data, width, height, pitch=pitch, config=self.config,
                          bounds=bounds, zoom=self.zoom)
         reference = None
@@ -258,13 +291,22 @@ class BoardCameraController:
         return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
                               bounds=bounds, notify=notify)
 
-    def orbit(self, config: CameraConfig, zoom: float, *, notify=False):
+    def orbit(self, config: CameraConfig, zoom: float, *, notify=False, target=None):
         """User orbit/zoom: new angle and zoom around the SAME framed bounds."""
         if self._disposed or self._board is None or self._dimensions is None:
             return False
         self.config, self.zoom = config, zoom
-        return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
-                              bounds=self._bounds, notify=notify)
+        fitted = self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
+                                bounds=self._bounds, notify=notify)
+        if fitted and target is not None:
+            # Continue from a Guide focus without snapping back to the board centre.
+            fit = self.current_fit
+            offset = tuple(a-b for a,b in zip(target,fit.target))
+            position = tuple(a+b for a,b in zip(fit.position,offset))
+            self.current_fit = replace(fit, target=target, position=position)
+            self.camera.setPos(*position)
+            self.camera.lookAt(*target)
+        return fitted
 
     def reframe(self, bounds, config: CameraConfig | None = None):
         """Per-frame reframe for follow cameras (optionally rotating); skips on_refit."""
@@ -273,7 +315,7 @@ class BoardCameraController:
         if config is not None:
             self.config = config
         return self.fit_board(self._board, *self._dimensions, pitch=self._pitch,
-                              bounds=bounds, notify=False)
+                              bounds=bounds, notify=False, user_change=False)
 
     def bind_window(self, window, *, viewport_size=None, on_refit=None):
         """Subscribe once per event with a separate DirectObject owner.
@@ -313,5 +355,6 @@ class BoardCameraController:
         if self._listener:
             self._listener.ignoreAll()
         self._listener = self._window = self._provider = self._on_refit = None
+        self.on_user_view_change = None
         self.camera = self.lens = self._board = self.current_fit = None
         self._disposed = True

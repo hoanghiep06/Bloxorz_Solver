@@ -1,6 +1,6 @@
-"""Menu flow: Main -> Levels -> Game, plus Settings. DirectGUI widgets on pixel2d.
+"""Menu flow: Main -> Levels -> Game, plus Settings and About. DirectGUI widgets on pixel2d.
 
-The 3D scene is the background everywhere: the main menu and settings run an
+The 3D scene is the background everywhere: the main menu, settings and About run an
 attract-mode solver demo, Level Select keeps the scene still, and the Game screen
 hands the scene to the player and shows the HUD.
 """
@@ -18,9 +18,11 @@ from src.gui.level_intro import LevelIntro
 from src.gui.mouse_control import controlled_cells, pick_action, pointer_over_hud
 from src.gui.move_arrows import MoveAssistLayer
 from src.gui.mechanics_guide import MechanicsGuide
+from src.gui.mechanics_focus import MechanicsFocus
 from src.gui.profile import star_rating
 from src.gui.game_adapter import prepare_level
 from src.gui.solver_worker import SolverJob
+from src.gui.about_page import build_about
 
 
 def destroy_items(items):
@@ -112,7 +114,15 @@ class MainMenu(Screen):
         bw, bh, x, y = 300, 58, cx - 150, height * .46
         self.button('Start', x, y, bw, bh, lambda: self.flow.show('levels'), primary=True, size=26)
         self.button('Settings', x, y + 76, bw, bh, lambda: self.flow.show('settings'), size=26)
-        self.button('Quit', x, y + 152, bw, bh, self.flow.app.userExit, size=26)
+        self.button('About', x, y + 152, bw, bh, lambda: self.flow.show('about'), size=26)
+        self.button('Quit', x, y + 228, bw, bh, self.flow.app.userExit, size=26)
+
+
+class AboutPage(Screen):
+    name = 'about'
+
+    def build(self,width,height):
+        self.content=build_about(self,width,height)
 
 
 class LevelSelect(Screen):
@@ -431,7 +441,7 @@ class UIFlow:
         self.ambient.set_theme(ui.CURRENT)
 
         self.screens = {cls.name: cls(self)
-                        for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
+                        for cls in (MainMenu, AboutPage, LevelSelect, SettingsScreen, GameScreen)}
         self.intro = LevelIntro(app, self._intro_done)
         import os
         self.arrows = MoveAssistLayer(app, controller, self._arrows_visible,
@@ -439,6 +449,9 @@ class UIFlow:
         self.mechanics = MechanicsGuide(app.pixel2d,on_change=self._mechanics_changed)
         app.mechanics_guide=self.mechanics
         self.mechanics.apply_layout(*self.size)
+        self.mechanics_focus=MechanicsFocus(app,controller,app.presentation.camera,self.mechanics,
+            views=getattr(app,'game_views',None),allowed=self._mechanics_focus_allowed,
+            safe_rect=self._mechanics_safe_rect)
 
         self._listener = DirectObject()
         self._listener.accept('window-event', self._window_event)
@@ -562,6 +575,18 @@ class UIFlow:
     def _full_region(width, height):
         return Rect(0, 0, width, height)
 
+    def _mechanics_focus_allowed(self):
+        tutorial=getattr(self.app,'game_tutorial',None)
+        return (self.name=='game' and not self.intro.active
+                and not (tutorial is not None and tutorial.visible))
+
+    def _mechanics_safe_rect(self):
+        width,height=self.size
+        card=self.mechanics.layout.card
+        right=card.x-24 if card else width-self.mechanics.reserved_width-32
+        if self.screens['game'].result_visible:right=min(right,(width-400)/2-24)
+        return (32,140,max(80,right-32),max(80,height-250))
+
     def _mechanics_changed(self):
         # Guide owns its overlay layout. No camera/viewport refit on card clicks.
         pass
@@ -575,6 +600,13 @@ class UIFlow:
     def show(self, name):
         if self._disposed:
             return
+        if self.name!=name and self.name in ('main','about') and name in ('main','about'):
+            # These pages share one preview. Do not cancel/reset its running
+            # solver, restart attract mode or refit its unchanged viewport.
+            self.screens[self.name].hide()
+            self.name=name
+            self.screens[name].show()
+            return
         self.intro.finish(notify=False)
         if self.name:
             self.screens[self.name].hide()
@@ -583,13 +615,14 @@ class UIFlow:
         self.mechanics.set_visible(game)
         if not game:self.app.presentation.style.set_background_canvas()
         if not game:
+            self.mechanics_focus.reset()
             self._cancel_par()
             self.controller.cancel_guide()      # leaving the level drops any guide state
         self.ambient.set_intensity(.45 if game else 1.0)
         self.ambient.show()
         hud, viewport = self.app.dashboard.hud, self.app.dashboard.viewport
         hud.root.show() if game else hud.root.hide()
-        viewport.set_region_override({'main': self._left_region, 'levels': self._full_region,
+        viewport.set_region_override({'main': self._left_region, 'about': self._left_region, 'levels': self._full_region,
                                       'settings': self._full_region,
                                       'game': self._game_region}.get(name))
         self.controller.input_enabled = game
@@ -615,7 +648,7 @@ class UIFlow:
         if tutorial is not None and tutorial.visible:
             tutorial.hide()
             return
-        target = {'levels': 'main', 'settings': 'main', 'game': 'levels'}.get(self.name)
+        target = {'levels': 'main', 'settings': 'main', 'about': 'main', 'game': 'levels'}.get(self.name)
         if target:
             self.show(target)
 
@@ -630,6 +663,7 @@ class UIFlow:
     def start_level(self, index):
         if not self.is_supported(index):
             return
+        self.mechanics_focus.reset()
         self._cancel_par()
         self.attract.stop()
         self.screens['game'].hide_result()
@@ -651,13 +685,16 @@ class UIFlow:
             hud.set_guide_visible(True)
 
     def _finish_guide(self):
-        """Solution finished: the block goes back to the start for the player."""
+        """Solution finished: preserve the solved state and show the result."""
         self.controller.end_guide()
         self.app.dashboard.hud.set_guide_visible(False)
+        if self.name == 'game' and self.controller.phase == 'GOAL':
+            self.screens['game'].show_result()
 
     # ---------------------------------------------------------------- events
     def on_game_event(self, name):
         if name == 'restart':
+            self.mechanics_focus.reset(restore=True)
             self.screens['game'].hide_result()
             return
         if self.name != 'game':
@@ -668,7 +705,13 @@ class UIFlow:
             self.screens['game'].show_fail()            # khung thua: Retry / Exit
         if name == 'goal':
             if self.controller.guide_active:
-                self.later(self._finish_guide)          # solution done: give the block back
+                session, revision = self.controller.session_id, self.controller.revision
+                def finish_current():
+                    if (self.controller.session_id == session
+                            and self.controller.revision == revision
+                            and self.controller.phase == 'GOAL'):
+                        self._finish_guide()
+                self.later(finish_current)
             else:
                 self.screens['game'].show_result()      # the player finished it
 
@@ -725,6 +768,7 @@ class UIFlow:
         self.attract.stop()
         self.intro.finish(notify=False)
         self.arrows.dispose()
+        self.mechanics_focus.dispose()
         self.mechanics.dispose()
         if getattr(self.app,'mechanics_guide',None) is self.mechanics:
             del self.app.mechanics_guide

@@ -79,7 +79,10 @@ class GuideWidgetTests(SceneFixture):
             self.assertEqual(g.selected,'split_switch')
             self.assertEqual(tuple(g.buttons.values()),buttons)
             self.assertEqual(self.counts(),widgets)
-            self.assertAlmostEqual(g._icons['soft_switch'].getColor()[0],0x4e/255,delta=1/1024)  # Panda ColorAttrib quantization
+            from src.gui.mechanics_icons import icon_polygons
+            from src.gui.advanced_mesh_factory import PALETTES
+            self.assertIn(PALETTES[theme]['SOFT_COLOR'],[color for _,color in icon_polygons('soft_switch',theme)])
+            self.assertFalse(g._icons['soft_switch'].hasColor())  # Per-vertex palette, no monochrome tint.
             self.assertFalse(g.card.isHidden())
         self.assertEqual(g._ink[:3],tuple(v/255 for v in (0x17,0x32,0x4d)))
 

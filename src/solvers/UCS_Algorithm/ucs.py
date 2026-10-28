@@ -26,7 +26,7 @@ class UCSSolver(BaseSolver):
         return self.solution_state
 
     def _search(self) -> Optional[List[str]]:
-        start = self.board.get_initial_state()
+        start = self.get_start_state()
         self.total_cost = 0.0
         self.solution = None
         self.solution_state = [start]
@@ -120,7 +120,7 @@ class UCSSolver(BaseSolver):
             return list(self.solution_state)
 
         actions = list(solution or [])
-        states = [self.board.get_initial_state()]
+        states = [self.get_start_state()]
         current = states[0]
 
         for action in actions:

@@ -22,6 +22,22 @@ class SolverWorkerTests(unittest.TestCase):
         self.assertEqual(result.solution_length,7)
         self.assertGreater(result.expanded_nodes,0)
         self.assertGreaterEqual(result.peak_memory,0)
+    def test_all_six_spawned_workers_receive_current_split_cube_identity(self):
+        import importlib
+        from src.gui.controller import SOLVER_SPECS
+        board=Board(str(Path(__file__).parent/'fixtures/mechanics/level_05_split.json'))
+        root=board.get_initial_state()
+        for action in ('R','R','SPACE'):root=board.transition(root,action)
+        for name,(module,cls) in SOLVER_SPECS.items():
+            with self.subTest(solver=name):
+                job=SolverJob(board,module,cls,root);self.addCleanup(job.cancel)
+                ok,result=self.wait(job)
+                self.assertTrue(ok,result);self.assertEqual(result.start_state,root)
+                self.assertEqual(result.start_state.active_cube,1)
+                end=root
+                for action in result.actions:end=board.transition(end,action)
+                self.assertTrue(board.is_goal(end))
+
     def test_worker_exception_is_returned_as_error(self):
         job=SolverJob(self.board,'solver_test_support','FailingSolver');self.addCleanup(job.cancel)
         ok,error=self.wait(job)

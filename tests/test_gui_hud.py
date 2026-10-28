@@ -117,10 +117,11 @@ class HudWidgetTests(unittest.TestCase):
         low,high=self.hud.info['geom'].getTightBounds()
         self.assertLessEqual(-(low.z+self.hud.info.getZ(self.hud.bar)),ROW2_Y)
 
-    def test_small_window_keeps_level_progress_when_title_is_elided(self):
+    def test_small_window_elides_title_after_team_level_label_normalization(self):
         self.hud.update_view_model(HudViewModel(level_label='Advanced Mechanics Sandbox (9 x 13) (11/18)'))
         self.hud.apply_layout(calculate_layout(1024,720))
-        self.assertTrue(self.hud.level['text'].endswith('(11/18)'))
+        self.assertNotIn('(11/18)',self.hud.level['text'])
+        self.assertEqual(self.hud.model.level_label,'Advanced Mechanics Sandbox (9 x 13) (11/18)')
         self.assertIn('…',self.hud.level['text'])
 
     def test_long_labels_elided_and_small_window_recovers(self):

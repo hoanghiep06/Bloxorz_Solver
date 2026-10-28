@@ -1,0 +1,26 @@
+{
+  "checks": [
+    "light: native orbit/scroll, Guide Back restores exact view, wheel/drag takeover, C reset; no unintended moves",
+    "light: real magma actor, GLSL Snow coexistence and latest team Solver/metrics panel preserved",
+    "dark: native orbit/scroll, Guide Back restores exact view, wheel/drag takeover, C reset; no unintended moves",
+    "dark: real ice actor, GLSL Snow coexistence and latest team Solver/metrics panel preserved"
+  ],
+  "images": [
+    "light-view-0-orbit-zoom.png",
+    "light-view-0-guide.png",
+    "light-view-1-orbit-zoom.png",
+    "light-view-1-guide.png",
+    "light-view-2-orbit-zoom.png",
+    "light-view-2-guide.png",
+    "light-material-and-floor.png",
+    "dark-view-0-orbit-zoom.png",
+    "dark-view-0-guide.png",
+    "dark-view-1-orbit-zoom.png",
+    "dark-view-1-guide.png",
+    "dark-view-2-orbit-zoom.png",
+    "dark-view-2-guide.png",
+    "dark-material-and-floor.png"
+  ],
+  "input": "Actual Panda3D GLX window and X11 XTest",
+  "status": "PASS"
+}

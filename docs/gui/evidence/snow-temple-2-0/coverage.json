@@ -1,0 +1,13 @@
+{
+  "atlas_classified_fraction": 0.7997035980224609,
+  "atlas_weighted_fraction": 0.8032010508518593,
+  "actual_uv_64_tiles": {
+    "classified_min": 0.7625,
+    "classified_max": 0.8475,
+    "classified_mean": 0.800654296875,
+    "weighted_min": 0.7686691239872016,
+    "weighted_max": 0.8495294165090308,
+    "weighted_mean": 0.8040779775177999
+  },
+  "method": "40 x 40 alpha samples per tile with actual face UVs and accumulated TexMatrix; test_actual_uv_transforms_keep_sixty_four_tiles_within_coverage_target verifies 75-85% bounds."
+}

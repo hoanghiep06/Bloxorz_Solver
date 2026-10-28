@@ -39,7 +39,7 @@ class AStarSolver(BaseSolver):
         return 1.0
 
     def _search(self) -> Optional[List[str]]:
-        initial_state = self.board.get_initial_state()
+        initial_state = self.get_start_state()
         if self.board.is_goal(initial_state):
             return []
 

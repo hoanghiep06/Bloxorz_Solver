@@ -37,6 +37,9 @@ class AttractMode:
             self._wait += ClockObject.getGlobalClock().getDt()
             if self._wait >= self.RESTART_DELAY:
                 self._wait = 0.0
+                # Only the menu demo loops. Gameplay Solve never rewinds.
+                if controller.phase == 'GOAL':
+                    controller.restart_level()
                 controller.run_solver('BFS')
         else:
             self._wait = 0.0

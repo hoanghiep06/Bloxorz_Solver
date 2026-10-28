@@ -1,0 +1,14 @@
+[SceneStyle] Missing background: /tmp/bloxorz-team-merge-baseline-6q5ne5uh/assets/backgrounds/jungle-temple.png
+======================================================================
+FAIL: test_small_window_keeps_level_progress_when_title_is_elided (test_gui_hud.HudWidgetTests.test_small_window_keeps_level_progress_when_title_is_elided)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/bloxorz-team-merge-baseline-6q5ne5uh/tests/test_gui_hud.py", line 123, in test_small_window_keeps_level_progress_when_title_is_elided
+    self.assertTrue(self.hud.level['text'].endswith('(11/18)'))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 522 tests in 62.891s
+
+FAILED (failures=1)

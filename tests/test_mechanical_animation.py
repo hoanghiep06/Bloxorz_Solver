@@ -28,12 +28,22 @@ class MechanicalAnimationTests(AnimationSceneCase):
     def test_teleport_never_visits_intermediate_map_cells(self):
         self.build('split');r=self.fixture.requests[0]
         self.manager.submit(r);self.manager.advance(.1*r.duration)
-        origins={key:p.center for key,p in self.poses().items()}
+        plan=self.manager._split_plan
+        origins={key:p.center for key,p in plan.starts.items()}
         targets=self.manager._targets
         for i in range(1,10):
             self.manager.advance(.09*r.duration)
             for key,pose in self.poses().items():
-                self.assertIn(pose.center,(origins[key],targets[key].center))
+                if key is None:
+                    # Intentional new charging beat retains the solid whole.
+                    self.assertLess(self.manager.progress,.24)
+                    self.assertEqual(pose,plan.source)
+                elif pose != targets[key]:
+                    # Energy disassembly may separate each half by at most .1
+                    # cell at source; no solid cube travels along the energy arc.
+                    self.assertLessEqual(sum((pose.center[j]-origins[key][j])**2
+                                             for j in range(3)),.010001)
+                else:self.assertEqual(pose.center,targets[key].center)
         # At the discontinuity both actors are invisible, with no long path.
         self.manager.cancel();r=replace(r,request_id='split-hidden')
         self.manager.submit(r);self.manager.advance(.5*r.duration)

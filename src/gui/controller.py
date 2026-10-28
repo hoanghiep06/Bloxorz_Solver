@@ -1,6 +1,7 @@
 """Main-thread gameplay orchestration; Core owns rules, visual phases own no rules."""
 from __future__ import annotations
 import importlib
+from copy import deepcopy
 import json
 import math
 import re
@@ -9,6 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from src.core.board import Board
+from src.core.state import BloxorzState
 from src.gui.action_plan import plan_action, DIRECTIONS
 from src.gui.animation_contracts import (
     AnimationEvent, AnimationKind, AnimationRequest, AnimationStatus,
@@ -37,6 +39,19 @@ class LevelEntry:
     level_id: str
     path: Path
     title: str
+
+@dataclass(frozen=True)
+class SearchCapture:
+    """Committed Core root and isolated rule context, never a render snapshot."""
+    level_index: int
+    board: Board
+    board_identity: int
+    board_revision: str
+    session_id: str
+    revision: int
+    state: BloxorzState
+    moves: int
+    algorithm: str
 
 class LevelCatalog:
 
@@ -98,6 +113,8 @@ class GameController:
         self.selected = None
         self._current_plan = None
         self._pending_requests = deque()
+        self._search_capture = None
+        self._solution_states = ()
 
     def start(self, level_index=0):
         return self._load_level(level_index)
@@ -147,6 +164,7 @@ class GameController:
     def _reset_to_start(self, *, keep_solution, preserve_result=False):
         """Cancel pending computation before invalidating old animation callbacks."""
         self._cancel_deferred()
+        self._clear_replay()
         snapshot = self._reset_state()
         self.manager.resync(snapshot)
         if not keep_solution:
@@ -206,6 +224,7 @@ class GameController:
 
     def _dispose_manager(self):
         self._epoch += 1
+        self._clear_replay()
         self._current_plan = None
         self._pending_requests.clear()
         if self._scene is not None:
@@ -244,6 +263,10 @@ class GameController:
             self._status = 'Finish or hide the solution first'
             self._refresh_hud()
             return False
+        if self.manager.is_busy or self._current_plan is not None:
+            return False
+        self._clear_replay()
+        self._status = None
         return self._submit_move(action)
 
     def _next_request_id(self):
@@ -293,6 +316,7 @@ class GameController:
             self._emit('fall')
             return
         self.state = plan.next_state
+        self._status = None
         self.moves += 1
         if self.board.is_goal(self.state):
             self.phase, self._mode = 'GOAL', Replay.IDLE
@@ -344,15 +368,54 @@ class GameController:
         self._status = f'ERROR: {message}'
         self._refresh_hud()
 
+    def _clear_replay(self):
+        self._search_capture = None
+        self._solution_states = ()
+        self._actions, self._index = (), 0
+
+    def _can_capture(self):
+        if self.manager is None or self._disposed:
+            return False
+        if (self.manager.is_busy or self._current_plan is not None
+                or self._mode is not Replay.IDLE or self.phase == 'SOLVING'):
+            self._status = 'Finish the current move or stop replay before solving'
+            self._refresh_hud()
+            return False
+        if self.phase not in ('READY', 'GOAL'):
+            self._status = 'Restart the level before solving after a fall or error'
+            self._refresh_hud()
+            return False
+        return True
+
+    def _capture_matches(self, capture):
+        return (capture is not None and not self._disposed
+                and capture is self._search_capture
+                and capture.board_identity == id(self.board)
+                and capture.board_revision == self.board_data.board_revision
+                and capture.level_index == self.level_index
+                and capture.session_id == self.session_id
+                and capture.revision == self.revision
+                and capture.state == self.state and capture.moves == self.moves)
+
     def run_solver(self, name, after='play'):
-        if name not in self._solver_specs or self.manager is None:
-            return
-        self._reset_to_start(keep_solution=False)
+        if name not in self._solver_specs or not self._can_capture():
+            return False
+        self._clear_replay()
+        # Board has mutable configuration dictionaries; isolate both worker and
+        # validation from the live Board without rebuilding initial level state.
+        capture = SearchCapture(
+            level_index=self.level_index, board=deepcopy(self.board),
+            board_identity=id(self.board), board_revision=self.board_data.board_revision,
+            session_id=self.session_id, revision=self.revision, state=self.state,
+            moves=self.moves, algorithm=name)
+        self._search_capture = capture
+        self.search = self.search_name = None
         self.used_guide = True
         self.phase = 'SOLVING'
         self._status = f'SOLVING {name}…'
         self._refresh_hud()
-        self._defer(lambda: self._solve(name, after))
+        self._defer(lambda: self._solve(name, after, capture))
+        return True
 
     def _defer(self, fn):
         if self._task_mgr is None:
@@ -374,65 +437,107 @@ class GameController:
             self._job.cancel()
             self._job = None
 
-    def _solve(self, name, after='play'):
-        """Keep Panda calls on this thread; compute and measure native-game solvers in a child process."""
+    def _solve(self, name, after='play', capture=None):
+        """Compute in the existing child process; Panda APIs stay on this thread."""
+        capture = capture or self._search_capture
+        if not self._capture_matches(capture):
+            return
         module, class_name = self._solver_specs[name]
         try:
             if self._task_mgr is None:
-                result = getattr(importlib.import_module(module), class_name)(self.board).solve()
-                self._finish_search(name, after, True, result)
+                result = getattr(importlib.import_module(module), class_name)(
+                    deepcopy(capture.board)).solve(start_state=capture.state)
+                self._finish_search(name, after, True, result, capture)
             else:
-                self._job = self._job_factory(self.board, module, class_name)
+                job = self._job_factory(deepcopy(capture.board), module, class_name, capture.state)
+                self._job = job
                 epoch = self._epoch
 
                 def poll(task):
-                    if epoch != self._epoch:
+                    if epoch != self._epoch or not self._capture_matches(capture):
+                        job.cancel()
+                        if capture is self._search_capture and self._job is job:
+                            self._job = self._job_task = None
+                            self._search_failed('Search result discarded: game state changed')
                         return task.done
                     try:
-                        outcome = self._job.poll()
+                        outcome = job.poll()
                     except Exception as error:
-                        self._job.cancel()
+                        job.cancel()
                         outcome = (False, str(error))
                     if outcome is None:
                         return task.cont
                     self._job = self._job_task = None
-                    self._finish_search(name, after, *outcome)
+                    self._finish_search(name, after, *outcome, capture=capture)
                     return task.done
                 self._job_task = self._task_mgr.add(poll, f'SolverPoll-{id(self)}')
         except Exception as error:
-            self._finish_search(name, after, False, str(error))
+            self._finish_search(name, after, False, str(error), capture)
 
-    def _finish_search(self, name, after, success, result):
-        self.phase = 'READY'
-        if not success:
-            self._status = f'{name} ERROR: {result}'
-            self.guide_active = False
-            self._refresh_hud()
-            return
-        self.search, self.search_name = (result, name)
-        if not result.success:
-            self._status = f'{name}: NO SOLUTION'
-            self.guide_active = False
-            self._refresh_hud()
-            return
-        self._status = None
-        self._actions, self._index, self._mode = (tuple(result.actions), 0, Replay.IDLE)
+    def _search_failed(self, message):
+        self.phase = 'GOAL' if self.board.is_goal(self.state) else 'READY'
+        self._mode = Replay.IDLE
+        self._status = message
+        self.guide_active = False
+        self._clear_replay()
         self._refresh_hud()
-        if not self._actions:
-            if self.board.is_goal(self.state):
-                self._begin_terminal(EventKind.GOAL_COMPLETE)
-            else:
-                self._enter_error('Solver returned an empty solution outside the goal.')
+
+    @staticmethod
+    def _validate_solution(capture, result):
+        if getattr(result, 'start_state', None) != capture.state:
+            raise ValueError('Solver result root differs from captured state')
+        actions = tuple(result.actions)
+        if result.solution_length != len(actions):
+            raise ValueError('Solver solution length does not match actions')
+        board = deepcopy(capture.board)
+        states = [capture.state]
+        for action in actions:
+            if action not in board.get_actions(states[-1]):
+                raise ValueError(f'Invalid solution action: {action!r}')
+            next_state = board.transition(states[-1], action)
+            if next_state is None:
+                raise ValueError(f'Invalid solution transition: {action!r}')
+            states.append(next_state)
+        if not board.is_goal(states[-1]):
+            raise ValueError('Solver success path does not end at Goal')
+        return actions, tuple(states)
+
+    def _finish_search(self, name, after, success, result, capture=None):
+        capture = capture or self._search_capture
+        if not self._capture_matches(capture) or name != capture.algorithm:
+            return  # Restart/navigation/cancellation invalidated this exact request.
+        if not success:
+            self._search_failed(f'{name} ERROR: {result}')
             return
+        try:
+            if not result.success:
+                self.search, self.search_name = result, name
+                self._search_failed(f'{name}: NO SOLUTION')
+                return
+            actions, states = self._validate_solution(capture, result)
+        except Exception as error:
+            self._search_failed(f'{name} INVALID SOLUTION: {error}')
+            return
+        self.search, self.search_name = result, name
+        self._actions, self._solution_states = actions, states
+        self._index, self._mode = 0, Replay.IDLE
+        self.phase = 'GOAL' if self.board.is_goal(self.state) else 'READY'
+        self._status = None
+        self._refresh_hud()
+        if not actions:
+            self.guide_active = False
+            self._refresh_hud()
+            return  # Already solved: retain terminal pose, no duplicate animation/event.
         self.step() if after == 'step' else self.play()
 
     def select_solver(self, name):
-        if name not in self._solver_specs or self.manager is None:
+        if name not in self._solver_specs or not self._can_capture():
             return False
-        self._reset_to_start(keep_solution=False)
-        self.selected, self.guide_active = (name, False)
+        self._clear_replay()
+        self.search = self.search_name = None
+        self.selected, self.guide_active = name, False
+        self._status = None
         self._refresh_hud()
-        self._emit('restart')
         return True
 
     def deselect_solver(self):
@@ -444,14 +549,18 @@ class GameController:
             self._refresh_hud()
 
     def start_guide(self, mode):
-        if self.selected is None or self.phase == 'ERROR':
+        if self.selected is None or self.phase in ('ERROR', 'FELL'):
             return
-        self.guide_active = True
-        if self.search_name == self.selected and self.search is not None and self.search.success:
+        if self.phase == 'SOLVING':
+            return
+        if self._actions and self.search_name == self.selected:
+            self.guide_active = True
             self.used_guide = True
             self.play() if mode == 'play' else self.step()
-        elif self.phase != 'SOLVING':
-            self.run_solver(self.selected, after=mode)
+        elif self.run_solver(self.selected, after=mode):
+            self.guide_active = self.phase not in ('GOAL', 'ERROR') and (
+                self.phase == 'SOLVING' or bool(self._actions))
+            self._refresh_hud()
 
     def toggle_play(self):
         if self._mode is Replay.PLAYING:
@@ -460,28 +569,30 @@ class GameController:
             self.start_guide('play')
 
     def end_guide(self):
-        """Return control to the player while retaining the completed solver metrics."""
-        if self.manager is None:
-            return
-        self._reset_to_start(keep_solution=False, preserve_result=True)
-        self.selected, self.guide_active = (None, False)
-        self.used_guide = True
-        self._refresh_hud()
+        """Keep the completed state and metrics; only Restart rewinds gameplay."""
+        self.cancel_guide()
 
     def cancel_guide(self):
-        if self.manager is None or not (self.guide_active or self.selected or self.phase == 'SOLVING'):
+        if self.manager is None:
             return
-        guided = self.guide_active
-        self._reset_to_start(keep_solution=False, preserve_result=True)
-        self.selected, self.guide_active = (None, False)
-        self.used_guide = guided
+        self.stop()
+        self.selected, self.guide_active = None, False
         self._refresh_hud()
 
     def _prepare_replay(self):
-        if not self._actions or self.phase in ('SOLVING', 'ERROR'):
+        if (not self._actions or self.phase != 'READY'
+                or (self._index >= len(self._actions) and self._current_plan is None)):
             return False
-        if self._mode is Replay.IDLE and (self.moves != self._index or self._index >= len(self._actions) or self.phase in ('GOAL', 'FELL')):
-            self._reset_to_start(keep_solution=True)
+        capture = self._search_capture
+        committed = self.moves - capture.moves if capture is not None else -1
+        if (capture is None or capture.board_identity != id(self.board)
+                or capture.board_revision != self.board_data.board_revision
+                or capture.session_id != self.session_id
+                or capture.level_index != self.level_index
+                or not 0 <= committed < len(self._solution_states)
+                or self.state != self._solution_states[committed]):
+            self._search_failed('Solution no longer matches the current state; solve again')
+            return False
         return True
 
     def play(self):
@@ -516,9 +627,23 @@ class GameController:
         self._refresh_hud()
 
     def stop(self):
-        if self.manager is not None:
-            self._reset_to_start(keep_solution=True)
-            self._refresh_hud()
+        """Stop at a complete action boundary, retaining committed progress.
+
+        A paused roll/effect resumes through its remaining phases, then stops.
+        This avoids exposing an intermediate visual pose as a Core state.
+        """
+        if self.manager is None:
+            return
+        self._cancel_deferred()
+        self._clear_replay()
+        self._mode = Replay.IDLE
+        self.guide_active = False
+        if self.phase == 'SOLVING':
+            self.phase = 'GOAL' if self.board.is_goal(self.state) else 'READY'
+        self._status = None
+        if self.manager.is_busy:
+            self.manager.resume()
+        self._refresh_hud()
 
     def _replay_step(self):
         if self._index >= len(self._actions):
