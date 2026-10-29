@@ -311,11 +311,13 @@ class SettingsScreen(Screen):
 @dataclass(frozen=True)
 class ResultDialog:
     """Captured outcome; resizing only redraws it, without recording progress."""
-    kind: str
+    kind: str                      # 'win' | 'fail' | 'solver_fail'
     moves: int
     stars: int = 0
     par: int | None = None
     next_level: int | None = None
+    title: str = ''                # chỉ dùng cho 'solver_fail'
+    message: str = ''              # chỉ dùng cho 'solver_fail'; xuống dòng bằng '\n'
 
 
 class GameScreen(Screen):
@@ -332,8 +334,11 @@ class GameScreen(Screen):
 
     def build(self, width, height):
         if self._result is not None:
-            if self._result.kind == 'win':
+            kind = self._result.kind
+            if kind == 'win':
                 self._build_win(width, height, self._result)
+            elif kind == 'solver_fail':
+                self._build_solver_fail(width, height, self._result)
             else:
                 self._build_fail(width, height, self._result)
 
@@ -404,11 +409,34 @@ class GameScreen(Screen):
         self.button('Retry', bx, by, bw, 52, controller.restart_level, primary=True)
         self.button('Exit', bx + bw + gap, by, bw, 52, lambda: flow.show('levels'))
 
+    def show_solver_fail(self, title, message):
+        """Khung báo solver không giải được (hết đường đi / lỗi)."""
+        if self._result is not None:      # đang có khung thắng/thua thì không đè lên
+            return
+        self._result = ResultDialog('solver_fail', self.flow.controller.moves,
+                                    title=title, message=message)
+        self.release_later()
+        self.build(*self.flow.size)
+
+    def _build_solver_fail(self, width, height, result):
+        cw, ch = 480, 250
+        x, y = (width - cw) / 2, (height - ch) / 2
+        self.card(x, y, cw, ch, alpha=.97)
+        self.label(result.title, 34, width / 2, y + 62, align='center')
+        for i, line in enumerate(result.message.split('\n')):
+            self.label(line, 18, width / 2, y + 112 + i * 26,
+                       color=ui.MUTED, align='center')
+        bw = 160
+        self.button('OK', x + (cw - bw) / 2, y + 170, bw, 52,
+                    self.hide_result, primary=True)
+
 
 class UIFlow:
     LEFT_SHARE = .4          # main menu: buttons on the left 40%, scene on the right
     PAR_ORDER = ('BFS', 'A*', 'UCS', 'Greedy', 'IDS', 'DFS')   # BFS trước để có par sớm
     PAR_TIMEOUT = 20.0       # giây tối đa cho mỗi solver khi tính par
+    # Trạng thái của controller báo solver thất bại -> hiện khung thông báo.
+    SOLVER_FAIL_KEYS = ('NO SOLUTION', 'ERROR', 'INVALID', 'discarded')
 
     def __init__(self, app, controller, catalog, save, audio, attract):
         self.app, self.controller, self.catalog = app, controller, catalog
@@ -420,6 +448,8 @@ class UIFlow:
         self._retired = []
         self._par_job = self._par_task = None
         self._par_queue, self._par_level, self._par_started = [], None, 0.0
+        self._status_task = None
+        self._last_status = None
 
         ui.set_theme(save.settings.theme)
         self.apply_scene_theme(save.settings.theme)
@@ -454,6 +484,7 @@ class UIFlow:
         hud.bind_action('Exit', self._with_click(lambda: self.show('levels')))
         hud.bind_action('Restart', self._with_click(controller.restart_level))
         hud.bind_action('Guide', self._with_click(self.toggle_guide))
+        self._status_task = app.taskMgr.add(self._status_update, f'SolverStatus-{id(self)}')
 
     # ---------------------------------------------------------------- helpers
     def _with_click(self, command):
@@ -487,6 +518,29 @@ class UIFlow:
             except Exception:
                 self._supported[entry.level_id] = False
         return self._supported[entry.level_id]
+
+    # ---------------------------------------------------------------- solver failure dialog
+    def _status_update(self, task):
+        """Theo dõi trạng thái controller; khi solver thất bại thì mở khung thông báo."""
+        if self._disposed:
+            return task.done
+        status = getattr(self.controller, '_status', None)
+        if status != self._last_status:
+            self._last_status = status
+            if (self.name == 'game' and status
+                    and any(key in status for key in self.SOLVER_FAIL_KEYS)):
+                self._show_solver_fail(status)
+        return task.cont
+
+    def _show_solver_fail(self, status):
+        if 'NO SOLUTION' in status:
+            title = 'No Solution Found'
+            message = ('The selected algorithm could not find a path\n'
+                       'to the goal from the current position.')
+        else:
+            title = 'Solver Error'
+            message = f'The solver could not run.\n{status}'
+        self.screens['game'].show_solver_fail(title, message)
 
     # ---------------------------------------------------------------- par
     def _ensure_par(self):
@@ -765,6 +819,9 @@ class UIFlow:
             return
         self._disposed = True
         self._cancel_par()
+        if self._status_task is not None:
+            self.app.taskMgr.remove(self._status_task)
+            self._status_task = None
         for task in self._later_tasks:
             self.app.taskMgr.remove(task)
         self._later_tasks.clear()
