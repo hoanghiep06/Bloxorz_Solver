@@ -1,0 +1,20 @@
+{
+  "checks": [
+    "light: native Guide clicks use real themed mesh faces in rail/card; focus/Back intact; fixed bounds and no state/resource changes across 10 theme swaps",
+    "dark: native Guide clicks use real themed mesh faces in rail/card; focus/Back intact; fixed bounds and no state/resource changes across 10 theme swaps",
+    "1024/1280 resize preserves selected card and Guide layout"
+  ],
+  "images": [
+    "light-rail.png",
+    "light-soft_switch.png",
+    "light-heavy_switch.png",
+    "light-split_switch.png",
+    "dark-rail.png",
+    "dark-soft_switch.png",
+    "dark-heavy_switch.png",
+    "dark-split_switch.png"
+  ],
+  "input": "Panda3D GLX GraphicsWindow + X11 XTest; OpenAL Soft null output for cue checks",
+  "shader": "GLSL_EMERALD_SAPPHIRE",
+  "status": "PASS"
+}

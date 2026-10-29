@@ -1,0 +1,5 @@
+[SceneStyle] Missing background: /home/sv/Code/Bloxorz_Solver/assets/backgrounds/jungle-temple.png
+----------------------------------------------------------------------
+Ran 628 tests in 141.162s
+
+OK

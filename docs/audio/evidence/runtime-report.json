@@ -1,0 +1,63 @@
+{
+  "checks": [
+    "Real OpenAL context decodes every WAV and prewarms independent cached sound instances",
+    "light: opening impact at actual contact, upright/lying rolls scrape then impact, real sound PLAYING",
+    "light: void fall without fictitious floor impact; Fragile crack/break/wind, Soft/Heavy switch and real Bridge activation",
+    "light: split/merge five-phase energy audio, one arrival per transition, cube impacts and single Goal flourish",
+    "dark: opening impact at actual contact, upright/lying rolls scrape then impact, real sound PLAYING",
+    "dark: void fall without fictitious floor impact; Fragile crack/break/wind, Soft/Heavy switch and real Bridge activation",
+    "dark: split/merge five-phase energy audio, one arrival per transition, cube impacts and single Goal flourish",
+    "All six spawned solvers: native Play/Pause/Step, frozen audio/cue cursor, completed split/merge and single victory",
+    "Restart during wind and level change during teleport stop old session audio without stale arrivals",
+    "Native Master/SFX/Music-Ambience sliders and Mute All, both themes and two sizes, settings preserved, bounded voices/no reloads/no double ambience",
+    "Dispose releases voices, loops, SoundBank and audio task"
+  ],
+  "images": [
+    "light-goal.png",
+    "dark-goal.png",
+    "light-settings-1280.png",
+    "light-settings-1024.png",
+    "dark-settings-1280.png",
+    "dark-settings-1024.png"
+  ],
+  "backend": "Panda3D OpenAL, PulseAudio dedicated null sink + monitor capture",
+  "subjective_quality": "AUDIO SUBJECTIVE QUALITY NOT VERIFIED",
+  "preloaded_sounds": 81,
+  "mix_stats": {
+    "played": 332,
+    "dropped": 0,
+    "max_voices": 5
+  },
+  "events": [
+    "ui_click",
+    "jungle",
+    "ui_click",
+    "ui_click",
+    "ui_click",
+    "ui_click",
+    "ui_click",
+    "snow",
+    "ui_click",
+    "ui_click",
+    "ui_click",
+    "ui_click",
+    "jungle",
+    "snow"
+  ],
+  "resources_before_dispose": {
+    "voices": 1,
+    "loads": 81
+  },
+  "resources_after_dispose": {
+    "voices": 0,
+    "sound_assets": 0
+  },
+  "loopback": {
+    "channels": 2,
+    "rate": 48000,
+    "seconds": 251.56266666666667,
+    "peak": 10232,
+    "rms": 738.5306767548891
+  },
+  "status": "PASS"
+}

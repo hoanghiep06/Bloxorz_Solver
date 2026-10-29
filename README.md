@@ -71,7 +71,9 @@ Nút **AI Solver** hiện ngay khi vào màn chơi. Mở nút này để chọn 
 
 Hỗ trợ di chuyển bật sẵn cho cả phím và chuột: bốn mũi tên `OK / ! / X`, hover để xem vùng đáp, viền vàng khi sát biên. Cảnh báo đỏ vẫn cho thực hiện nước đi. Guide ẩn khi animation/replay/Tutorial đang chạy. Animation dùng lăn cứng, vỡ sáu mảnh, cầu trượt, teleport khi mờ và thu nhỏ rồi hút vào đích. Xem [thiết kế, API và kiểm thử](docs/gui/MOVE_ASSIST_ANIMATION.md).
 
-Đồ họa mới dùng khối magma có texture/emission, sàn đá, cảnh Jungle/Winter và HUD kính tối. **Settings → Graphics quality** có Auto/High/Balanced/Low, áp dụng ngay và lưu vào profile. Auto chọn Balanced khi dùng renderer phần mềm; High bật bloom. Xem [báo cáo visual, ảnh chạy thật và cách bật fallback](docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md).
+Đồ họa mới dùng khối magma có texture/emission, sàn đá, cảnh Jungle/Winter và HUD kính tối. Chất lượng đồ họa mặc định **High**, bật bloom nếu backend hỗ trợ; Settings không còn mục chọn chất lượng. File lưu cũ được đưa về High và giữ nguyên tiến độ. Xem [báo cáo visual, ảnh chạy thật và cách bật fallback](docs/gui/JUNGLE_TEMPLE_VISUAL_OVERHAUL.md).
+
+Âm thanh gameplay đồng bộ với animation: tiếp đất, lăn/va chạm, rơi, vỡ, công tắc, cầu và split/merge teleport. **Settings** có **Master volume**, **Mute All**, **Music / Ambience** và **Sound effects**. Xem [hệ audio, kiểm thử và giấy phép assets](docs/audio/GAME_AUDIO_SYSTEM.md).
 
 Chạy bộ test trong cùng môi trường:
 

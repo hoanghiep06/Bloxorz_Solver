@@ -1,0 +1,12 @@
+...........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................[SceneStyle] Missing background: /home/sv/Code/Bloxorz_Solver/assets/backgrounds/jungle-temple.png
+................................................Switch shader unavailable; opaque sculpted fallback retained.
+Traceback (most recent call last):
+  File "/home/sv/Code/Bloxorz_Solver/src/gui/switch_materials.py", line 22, in configure
+    if shader is None or shader.prepareNow(gsg.getPreparedObjects(),gsg) is None or shader.getErrorFlag():
+                                           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'types.SimpleNamespace' object has no attribute 'getPreparedObjects'
+...........
+----------------------------------------------------------------------
+Ran 646 tests in 92.768s
+
+OK

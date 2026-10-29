@@ -1,0 +1,21 @@
+{
+  "checks": [
+    "Six native activate/restart cycles preserve exact render-node/task counts and prewarmed audio load count"
+  ],
+  "images": [],
+  "input": "Panda3D GLX GraphicsWindow + X11 XTest; OpenAL Soft null output for cue checks",
+  "shader": "GLSL_EMERALD_SAPPHIRE",
+  "restart_resources": {
+    "before": [
+      181,
+      14
+    ],
+    "after": [
+      181,
+      14
+    ],
+    "cycles": 6,
+    "sound_loads": 90
+  },
+  "status": "PASS"
+}

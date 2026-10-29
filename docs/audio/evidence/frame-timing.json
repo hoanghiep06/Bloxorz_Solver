@@ -1,0 +1,13 @@
+{
+  "maintenance-disabled": {
+    "median_ms": 137.64689399977215,
+    "mean_ms": 138.87975085035578,
+    "median_fps": 7.26496596430033
+  },
+  "maintenance-enabled-with-wind": {
+    "median_ms": 138.6401575000491,
+    "mean_ms": 139.91847016304746,
+    "median_fps": 7.212917368473459
+  },
+  "mean_mix_microseconds": 2.772459999687271
+}

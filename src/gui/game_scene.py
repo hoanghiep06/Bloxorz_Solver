@@ -18,7 +18,7 @@ class GameScene:
             self.renderer = AdvancedSceneRenderer(self.roots[0], self.layer.renderer_root, self.roots[2])
             self.renderer.load_board(board)
             self.manager = AnimationManager(self.renderer, board, snapshot, self.roots[2],
-                                            surface_layer=self.layer, task_mgr=app.taskMgr)
+                                            surface_layer=self.layer, task_mgr=app.taskMgr, audio=getattr(app,'game_audio',None))
         except BaseException:
             self.dispose()
             raise

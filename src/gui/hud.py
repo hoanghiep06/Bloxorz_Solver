@@ -129,6 +129,7 @@ class HudShell:
         self._holders = {}        # button name -> icon holder NodePath
         self._variants = {}       # button name -> {icon key: NodePath}
         self._tips = dict(TIPS)
+        self.on_ui_audio = None
         self._close_callback = None
         self._guide_open = False
         self._selected = None
@@ -184,8 +185,8 @@ class HudShell:
 
             self.tip = self._label('', 14, MARGIN, ROW2_Y + BTN_H + 20, muted=True)
             self.info = self._own(DirectFrame(parent=self.bar,relief=None))
-            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 24, align='right')
-            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 46, align='right', muted=True)
+            self.level = self._label('', LEVEL_SIZE, 0, MARGIN + 24, align='center')
+            self.runtime = self._label('', STATUS_SIZE, 0, MARGIN + 46, align='center', muted=True)
             self.warning = self._label('Minimum window size: 1024 x 720', 16, 0, 0, align='center',
                                        parent=self.root)
             # The 3D region is disabled below minimum size; the host clear is
@@ -302,7 +303,10 @@ class HudShell:
                     self.set_guide_visible(False)
                 else:
                     original()
-        button['command'] = callback
+        def clicked():
+            if self.on_ui_audio:self.on_ui_audio('ui_back' if name=='Exit' else 'ui_click')
+            callback()
+        button['command'] = clicked
         button['state'] = DGG.NORMAL
         ui.style_button(button, primary=False)
         self._style_dynamic()
@@ -419,7 +423,11 @@ class HudShell:
         title = display_level_label(self.model.level_label)
         self._fit_text(self.level, title, LEVEL_SIZE,
                        max(80, width - LEFT_END - 3 * MARGIN - TIP_SPACE))
-        self._fit_text(self.runtime, self.model.runtime_status, STATUS_SIZE, 300)
+        # The compact title intentionally omits the catalog fraction. Keep it
+        # visible in the status line, including when a long title is elided.
+        counter = re.search(r'\(\s*(\d+\s*/\s*\d+)\s*\)\s*$', self.model.level_label)
+        suffix = f' | {counter.group(1)}' if counter else ''
+        self._fit_text(self.runtime, self.model.runtime_status + suffix, STATUS_SIZE, 300, suffix=suffix)
         cell = (width - 40) / 5
         for label, value in zip(self.metric_values, metric_values(self.model)):
             self._fit_text(label, value, 20, cell - 56)
@@ -435,6 +443,9 @@ class HudShell:
         info_width = max(INFO_MIN_W, max(level_w, run_w) + INFO_PAD)
         self.info.setPos(self.layout.width - info_width - MARGIN, 0, -MARGIN)
         self.info['geom'] = ui.rounded_rect(info_width, 52, 10, ui.PAPER)
+        center_x = self.layout.width - MARGIN - info_width / 2
+        self.level.setX(center_x)
+        self.runtime.setX(center_x)
 
     def apply_layout(self, layout):
         if self._disposed:
@@ -459,8 +470,6 @@ class HudShell:
             if index:
                 self.metric_dividers[index-1].setPos(index*cell,0,-14)
             value.setPos(index * cell + 46, 0, -55)
-        self.level.setX(layout.width - MARGIN - 10)
-        self.runtime.setX(layout.width - MARGIN - 10)
         self._refresh_texts()   # also sizes/positions the info frame
 
     def _style_metrics(self):
@@ -492,6 +501,7 @@ class HudShell:
         if self._disposed:
             return
         self._disposed = True
+        self.on_ui_audio = None
         for widget in reversed(self._widgets):
             widget.destroy()
         self._widgets.clear()

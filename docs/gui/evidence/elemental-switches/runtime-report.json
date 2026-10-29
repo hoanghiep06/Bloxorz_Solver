@@ -1,0 +1,68 @@
+{
+  "checks": [
+    "light: all three sculpted switches in actual sandbox; Guide focus/Back/icons stable without gameplay activation",
+    "light: native Soft/Heavy/Split activation captures, event audio once, exact bridge flags and one teleport/cube pair",
+    "dark: all three sculpted switches in actual sandbox; Guide focus/Back/icons stable without gameplay activation",
+    "dark: native Soft/Heavy/Split activation captures, event audio once, exact bridge flags and one teleport/cube pair",
+    "Pause freezes switch poses/particles; mid-animation skin change cancels cosmetic bursts, preserves request/state and completes bridge update",
+    "24 theme changes preserve Core/snapshot/Moves and exact node count; cached meshes/materials, no ghost theme particles",
+    "BFS: replay reached real Core Goal in 5 actions, equal to returned solution length",
+    "DFS: replay reached real Core Goal in 19 actions, equal to returned solution length",
+    "IDS: replay reached real Core Goal in 5 actions, equal to returned solution length",
+    "UCS: replay reached real Core Goal in 5 actions, equal to returned solution length",
+    "Greedy: replay reached real Core Goal in 5 actions, equal to returned solution length",
+    "A*: replay reached real Core Goal in 5 actions, equal to returned solution length",
+    "All six spawned solvers reach Goal with shared switch/bridge/split/merge presentation and no extra action commits",
+    "Native restart and level change during pulse release particles/audio/actuators without stale callbacks",
+    "Iso/Top/Follow and 1024/1280 layouts render new switch silhouettes and stable Guide"
+  ],
+  "images": [
+    "light-all-idle.png",
+    "light-guide-icons.png",
+    "light-soft-active.png",
+    "light-heavy-active.png",
+    "light-split-active.png",
+    "dark-all-idle.png",
+    "dark-guide-icons.png",
+    "dark-soft-active.png",
+    "dark-heavy-active.png",
+    "dark-split-active.png",
+    "view-0-1024.png",
+    "view-1-1024.png",
+    "view-2-1024.png",
+    "view-0-1280.png",
+    "view-1-1280.png",
+    "view-2-1280.png"
+  ],
+  "input": "Panda3D GLX GraphicsWindow + X11 XTest; OpenAL Soft null output for cue checks",
+  "shader": "GLSL_EMERALD_SAPPHIRE",
+  "theme_cycles": 24,
+  "nodes": 1274,
+  "solvers": {
+    "BFS": {
+      "moves": 5,
+      "solution_length": 5
+    },
+    "DFS": {
+      "moves": 19,
+      "solution_length": 19
+    },
+    "IDS": {
+      "moves": 5,
+      "solution_length": 5
+    },
+    "UCS": {
+      "moves": 5,
+      "solution_length": 5
+    },
+    "Greedy": {
+      "moves": 5,
+      "solution_length": 5
+    },
+    "A*": {
+      "moves": 5,
+      "solution_length": 5
+    }
+  },
+  "status": "PASS"
+}

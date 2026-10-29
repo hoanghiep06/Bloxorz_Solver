@@ -62,10 +62,11 @@ class MechanicsLookupTests(unittest.TestCase):
             for key,token in (('bridge','BRIDGE_RIB'),('heavy_switch','HEAVY_COLOR'),
                               ('split_switch','SPLIT_COLOR'),('fragile','CRACK'),('soft_switch','SOFT_COLOR')):
                 self.assertIn(PALETTES[theme][token],[c for _,c in specs[key]])
-            self.assertEqual(len(specs['heavy_switch']),4) # base/edge and exactly two bars
-            self.assertEqual(len(specs['split_switch']),4) # actual rectangular twin plates
+            from src.gui.elemental_switches import switch_icon_polygons
+            for key,kind in (('soft_switch',SwitchVisualKind.SOFT),('heavy_switch',SwitchVisualKind.HEAVY),('split_switch',SwitchVisualKind.SPLIT)):
+                self.assertEqual(specs[key],switch_icon_polygons(kind,theme))
             self.assertEqual(len(specs['void']),4) # outline only, no centre fill
-        for key in IDS:
+        for key in ('goal','bridge','fragile','void'):
             self.assertEqual([p for p,c in icon_polygons(key,'light')],[p for p,c in icon_polygons(key,'dark')])
         a,b=mechanic_icon('goal'),mechanic_icon('goal');a.setX(99)
         self.assertEqual(b.getX(),0);a.removeNode();b.removeNode()

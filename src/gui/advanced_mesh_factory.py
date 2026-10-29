@@ -4,7 +4,7 @@ Tiles have a supporting top at Z=0; raised markings are separated from that
 plane. Broken debris remains below it. No collision or state logic lives here.
 
 Each theme has a distinct surface palette. Thermal fragile remains warm;
-pressure glyphs stay cyan and activated glyphs green/teal in either environment.
+switches use sculpted Ancient Emerald / Frozen Sapphire material families.
 """
 
 import math
@@ -44,6 +44,12 @@ PALETTES = {
         SPLIT_COLOR=_c(110, 202, 255),
         ACTIVE=_c(90, 228, 196), ACTIVE_SIDE=_c(30, 128, 118)),
 }
+# Compatibility colour tokens now refer to the shared elemental definitions.
+from src.gui.elemental_switches import PALETTE as SWITCH_PALETTE
+for _theme,_switch in SWITCH_PALETTE.items():
+    PALETTES[_theme].update(SWITCH_BASE=_switch['base'],SWITCH_BASE_EDGE=_switch['edge'],
+        SOFT_COLOR=_switch['energy'],SOFT_SIDE=_switch['shadow'],HEAVY_COLOR=_switch['energy'],
+        SPLIT_COLOR=_switch['energy'],ACTIVE=_switch['highlight'],ACTIVE_SIDE=_switch['shadow'])
 THEMES = ('light', 'dark')
 
 
@@ -176,26 +182,9 @@ def make_switch_mesh(kind, *, activated=False, pitch=1.0, theme='light'):
     _pitch(pitch)
     if type(kind) is not SwitchVisualKind or type(activated) is not bool:
         raise TypeError('Expected SwitchVisualKind and bool activated.')
-    p = _palette(theme)
-    base, base_edge = p['SWITCH_BASE'], p['SWITCH_BASE_EDGE']
-    if kind is SwitchVisualKind.SOFT:
-        color, side = ((p['ACTIVE'], p['ACTIVE_SIDE']) if activated
-                       else (p['SOFT_COLOR'], p['SOFT_SIDE']))
-        # Vòng tối bên ngoài làm nổi nút tròn trên mọi màu sàn.
-        return _combine('SoftSwitchMesh', [
-            _disc(pitch, base, base, radius=.40, z0=.005, z1=.035, name='SoftSwitchRing'),
-            _ring(pitch, color, active=activated)])
-    if kind is SwitchVisualKind.HEAVY:
-        color = p['ACTIVE'] if activated else p['HEAVY_COLOR']
-        # Đế vuông + dấu cộng lớn: khác hẳn nút tròn và nút tách.
-        return _combine('HeavySwitchMesh', [
-            _box('HeavyBase', (.74, .74, .06), (0, 0, .03), pitch, base, base, base_edge),
-            *[_box('HeavyBar', (.12, .52, .04), (x, 0, .08), pitch, color, color, color) for x in (-.15,.15)]])
-    color = p['ACTIVE'] if activated else p['SPLIT_COLOR']
-    return _combine('SplitSwitchMesh', [
-        _box('SplitBase', (.76, .62, .04), (0, 0, .02), pitch, base, base, base_edge),
-        *[_box('SplitPlate', (.24, .34, .07), (x, 0, .07), pitch,
-               color, base, color) for x in (-.19, .19)]])
+    _palette(theme)
+    from src.gui.elemental_switches import switch_mesh
+    return switch_mesh(kind,theme,activated,pitch)
 
 
 def make_split_cube_mesh(*, pitch=1.0):

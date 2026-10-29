@@ -1,0 +1,14 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":99".
+AL lib: (WW) alc_initconfig: No capture backend available!
+{
+  "status": "PASS",
+  "checks": [
+    "Real OpenAL fresh window restores persisted master/SFX/mute",
+    "Native unmute starts exactly one ambience voice",
+    "Latest build intro and roll cues play once",
+    "Dispose drops music references, voices, bank and stale maintenance callback is inert"
+  ]
+}

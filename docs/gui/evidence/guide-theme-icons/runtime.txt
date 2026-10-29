@@ -1,0 +1,8 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":99".
+AL lib: (WW) alc_initconfig: No capture backend available!
+PASS light: native Guide clicks use real themed mesh faces in rail/card; focus/Back intact; fixed bounds and no state/resource changes across 10 theme swaps
+PASS dark: native Guide clicks use real themed mesh faces in rail/card; focus/Back intact; fixed bounds and no state/resource changes across 10 theme swaps
+PASS 1024/1280 resize preserves selected card and Guide layout

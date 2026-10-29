@@ -39,7 +39,8 @@ class AdvancedAnimationTests(AnimationSceneCase):
         self.build('switches');r=self.fixture.requests[0]
         self.manager.submit(r);self.manager.advance(r.duration*.3)
         off,on=self.layer._switches['soft']
-        self.assertLess(off.getZ(),0)
+        self.assertEqual(off.getZ(),0)  # the socket no longer sinks into the floor
+        self.assertLess(off.find('**/SwitchActuator-0').getZ(),0)
         self.manager.advance(r.duration)
         for off,on in self.renderer._switches.values():
             self.assertTrue(off.isHidden());self.assertFalse(on.isHidden())

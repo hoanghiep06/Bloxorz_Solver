@@ -1,0 +1,10 @@
+{
+  "status": "PASS",
+  "checks": [
+    "Real OpenAL fresh window restores persisted master/SFX/mute",
+    "Native unmute starts exactly one ambience voice",
+    "Latest build intro and roll cues play once",
+    "Dispose drops music references, voices, bank and stale maintenance callback is inert"
+  ],
+  "backend": "OpenAL Soft null output, restore-only validation; audible pipeline captured separately via Pulse monitor"
+}

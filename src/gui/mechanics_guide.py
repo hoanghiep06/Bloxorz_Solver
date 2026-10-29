@@ -53,6 +53,7 @@ def guide_layout(width, height, selected=None, card_height=230):
 
 
 from src.gui.mechanics_icons import mechanic_icon
+from src.gui.elemental_switches import PALETTE as SWITCH_PALETTE
 
 
 class MechanicsGuide:
@@ -61,6 +62,7 @@ class MechanicsGuide:
         self._on_change=on_change
         self._on_select,self._on_close,self._on_back=on_select,on_close,on_back
         self._widgets=[];self._disposed=False;self._visible=False
+        self.on_ui_audio=None
         self.selected=None;self.layout=None;self._size=None;self._card_height=230
         self.root.hide()
         # Continue the existing panorama in the area reserved by the viewport.
@@ -74,7 +76,7 @@ class MechanicsGuide:
         for i,item in enumerate(MECHANICS):
             button=self._own(DirectButton(parent=self.rail,relief=None,
                 frameSize=(0,40,-40,0),pos=(9,0,-(24+i*STEP)),pressEffect=0,
-                command=lambda key=item.id:self.show_mechanic(key)))
+                command=lambda key=item.id:self._ui_click(lambda:self.show_mechanic(key))))
             self.buttons[item.id]=button
             icon=mechanic_icon(item.id);icon.reparentTo(button)
             icon.setPos(20,-.02,-20);icon.setScale(17)
@@ -92,13 +94,13 @@ class MechanicsGuide:
         self.close_button=self._own(DirectButton(parent=self.card,text='X',text_scale=14,
             text_font=_guide_font(True),
             text_pos=(13,-18),frameSize=(0,26,-26,0),pos=(CARD_WIDTH-34,-.05,-8),
-            relief=None,pressEffect=0,command=self.close_card))
+            relief=None,pressEffect=0,command=lambda:self._ui_click(self.close_card)))
         self.locator=self._label(self.card,'',14,16,190)
         self.locator['text_wordwrap']=(CARD_WIDTH-32)/14
         self.back_button=self._own(DirectButton(parent=self.card,text='Back to Board',text_scale=14,
             text_font=_guide_font(),text_pos=((CARD_WIDTH-32)/2,-20),
             frameSize=(0,CARD_WIDTH-32,-30,0),pos=(16,-.05,-210),relief=None,pressEffect=0,
-            command=lambda:self._on_back() if self._on_back else None))
+            command=lambda:self._ui_click(self._on_back) if self._on_back else None))
         self._focus_message='';self._can_restore=False
         self.back_button.hide();self.locator.hide()
         self.card.hide();self.shadow.hide()
@@ -118,6 +120,10 @@ class MechanicsGuide:
         node=TextNode('GuideMeasure');node.setFont(_guide_font())
         node.setWordwrap((CARD_WIDTH-32)/size);node.setText(text)
         return node.getNumRows()
+
+    def _ui_click(self,command):
+        if self.on_ui_audio:self.on_ui_audio('ui_click')
+        command()
 
     def show_mechanic(self, mechanic_id):
         if self._disposed:return
@@ -206,7 +212,9 @@ class MechanicsGuide:
         for node in self.shadow.getChildren():node.removeNode()
         ui.rounded_rect(CARD_WIDTH+4,self._card_height+4,13,(0,0,0,.18)).reparentTo(self.shadow)
         for item in MECHANICS:
-            accent=ui.rgba(item.accent);button=self.buttons[item.id]
+            accent=(SWITCH_PALETTE[self._theme]['energy'] if item.id.endswith('_switch')
+                    else ui.rgba(item.accent))
+            button=self.buttons[item.id]
             selected=self.selected==item.id
             outline=accent if selected else self._border
             states=[]
@@ -262,6 +270,7 @@ class MechanicsGuide:
     def dispose(self):
         if self._disposed:return
         self._disposed=True
+        self.on_ui_audio=None
         for widget in reversed(self._widgets):widget.destroy()
         self._widgets.clear();self.buttons.clear();self._icons.clear()
         self.root.removeNode()

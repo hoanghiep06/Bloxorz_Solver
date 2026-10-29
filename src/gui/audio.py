@@ -1,13 +1,18 @@
-"""Volume control plus procedurally synthesised sound (stdlib only, no licensed files).
+"""Unified presentation mixer, bounded SoundBank and preserved background playlist.
 
-Sounds are generated once into assets/audio/*.wav and reused afterwards.
-Background music: tracks in music/ (1.mp3, 2.mp3, ...) play one after another in a loop.
+Cinematic SFX are authored offline by tools.build_game_audio; legacy synthesis below
+is retained only for compatibility and the original fallback music.
 """
 import math
 import random
 import struct
 import tempfile
 import wave
+import time
+from collections import deque
+from dataclasses import dataclass
+from src.gui.audio_events import AudioEvent, SOUND_BANK, THEME_SOUND_FILES
+from src.gui.sound_bank import SoundBank
 from pathlib import Path
 
 RATE, MUSIC_RATE = 22050, 11025
@@ -115,20 +120,29 @@ def ensure_assets(directory=DEFAULT_DIR):
         return ensure_assets(fallback)
 
 
-class AudioManager:
-    """Hai kênh riêng: nhạc nền và hiệu ứng (lăn, click, thắng, thua).
+@dataclass
+class Voice:
+    sound: object
+    event: AudioEvent
+    scope: object
+    gain: float=1.
+    paused: bool=False
+    offset: float=0.
 
-    Mỗi kênh có công tắc bật/tắt và âm lượng độc lập, nên tắt nhạc thì tiếng game vẫn còn.
-    Nhạc nền: phát ngẫu nhiên các bài trong music/, không lặp lại cùng một bài liên tiếp.
-    Nếu không đọc được bài nào thì dùng music.wav tự tạo như cũ.
-    Silent (not crashing) without an audio device.
+
+class AudioManager:
+    """One presentation mixer for scoped gameplay, UI, ambience and existing music.
+
+    A bounded prewarmed pool supplies SFX; the original music playlist/fallback
+    remains independent. No gameplay clock, rules or state are owned here.
     """
 
     MUSIC_SHARE = .6
-    TICK = .5          # giây giữa 2 lần kiểm tra bài hết
+    TICK = .025        # voice maintenance; playlist checks are throttled to .5 s
 
     def __init__(self, base, directory=DEFAULT_DIR, music_volume=.7, sfx_volume=.7,
-                 music_enabled=True, sfx_enabled=True, music_dir=MUSIC_DIR):
+                 music_enabled=True, sfx_enabled=True, music_dir=MUSIC_DIR,
+                 master_volume=.8, muted=False, seed=193, clock=time.monotonic):
         from panda3d.core import Filename
         self._base = base
         paths = ensure_assets(directory)
@@ -136,7 +150,16 @@ class AudioManager:
         def path(name):
             return Filename.fromOsSpecific(str(paths[name]))
 
-        self._sfx = {name: base.loader.loadSfx(path(name)) for name in SFX_NAMES}
+        self.bank=SoundBank(base.loader,directory)
+        self.voices={};self._serial=0;self._disposed=False
+        self._clock=clock;self._rng=random.Random(seed);self._last_ui=-float('inf')
+        self.history=deque(maxlen=512)
+        self.stats={'played':0,'dropped':0,'max_voices':0}
+        self.gameplay_active=False;self.master_volume=self._clamp(master_volume)
+        self.muted=bool(muted);self.ambience_volume=self._clamp(music_volume)
+        self._ambience=None;self._theme=None;self._playlist_check=0.
+        self._paused_scopes=set()
+        for manager in base.sfxManagerList:manager.setVolume(1.)
 
         self._tracks = []
         for file in find_playlist(music_dir):
@@ -160,34 +183,147 @@ class AudioManager:
     # ------------------------------------------------------------ volume
     @staticmethod
     def _clamp(value):
-        return min(1.0, max(0.0, float(value)))
+        value=float(value)
+        return min(1.0,max(0.0,value)) if math.isfinite(value) else 0.
 
     def set_music_volume(self, value):
         self.music_volume = self._clamp(value)
-        self._base.musicManager.setVolume(self.music_volume * self.MUSIC_SHARE)
+        self.ambience_volume=self.music_volume
+        self._mix()
 
     def set_sfx_volume(self, value):
         self.sfx_volume = self._clamp(value)
-        for manager in self._base.sfxManagerList:
-            manager.setVolume(self.sfx_volume)
+        self._mix()
 
-    # ------------------------------------------------------------ sfx
-    def play(self, name):
-        if not self.sfx_enabled:
-            return
-        sound = self._sfx.get(name)
-        if sound is not None:
-            sound.play()
+    def set_master_volume(self,value):
+        self.master_volume=self._clamp(value);self._mix()
 
-    def set_sfx_enabled(self, enabled):
-        self.sfx_enabled = bool(enabled)
+    def set_ambience_volume(self,value):
+        self.ambience_volume=self._clamp(value);self._mix()
+
+    def set_muted(self,value):
+        self.muted=bool(value)
+        if not self.muted and self._theme and self._ambience not in self.voices:
+            theme=self._theme;self._theme=None;self.set_theme(theme)
+        self._mix()
+
+    def _mix(self):
+        if self._disposed or not hasattr(self,'_tracks'):return
+        gains={}
+        for key,v in self.voices.items():
+            spec=SOUND_BANK[v.event]
+            group=(self.ambience_volume if self.music_enabled else 0.) if spec.group=='ambience' else (self.sfx_volume if self.sfx_enabled else 0.)
+            gains[key]=group*spec.gain*v.gain
+        # Sum-of-gains budget prevents correlated, overlapping transients clipping.
+        budget=.5 if self.music_enabled and self._wanted else .7
+        headroom=min(1.,budget/max(sum(gains.values()),1e-9))
+        duck=.55 if any(SOUND_BANK[v.event].priority>=4 for v in self.voices.values()) else 1.
+        master=0. if self.muted else self.master_volume
+        self._base.musicManager.setVolume(master*self.music_volume*self.MUSIC_SHARE*duck)
+        for key,v in self.voices.items():
+            v.sound.setVolume(master*gains[key]*headroom)
+
+    def play(self,name):
+        # Compatibility for existing menu buttons; gameplay now belongs to timeline cues.
+        event={'click':AudioEvent.UI_CLICK,'roll':AudioEvent.ROLL_START,
+               'goal':AudioEvent.GOAL_COMPLETE,'fall':AudioEvent.FALL_WIND}.get(name,name)
+        return self.play_sfx(event)
+
+    def play_sfx(self,event,*,scope=None):
+        if self._disposed:return None
+        event=AudioEvent(event);spec=SOUND_BANK[event]
+        if spec.group=='gameplay' and not self.gameplay_active:return None
+        if self.muted or (spec.group!='ambience' and not self.sfx_enabled):return None
+        now=self._clock()
+        if spec.group=='ui':
+            if now-self._last_ui<.035:return None
+            self._last_ui=now
+        self._reap()
+        # Bounded 16 voices, preferentially preserve gameplay over ambience/UI.
+        if len(self.voices)>=16:
+            candidates=[k for k,v in self.voices.items() if SOUND_BANK[v.event].priority<spec.priority]
+            if not candidates:self.stats['dropped']+=1;return None
+            self.stop_loop(candidates[0])
+        choices=THEME_SOUND_FILES.get(self._theme,{}).get(event,spec.files)
+        if not any(self.bank.sounds.get(name) for name in choices):choices=spec.files
+        name=self._rng.choice(choices)
+        sound=self.bank.acquire(name,{id(v.sound) for v in self.voices.values()})
+        if sound is None:self.stats['dropped']+=1;return None
+        self._serial+=1;handle=self._serial
+        self.voices[handle]=Voice(sound,event,scope,gain=self._rng.uniform(.95,1.))
+        sound.setLoop(spec.loop)
+        sound.setPlayRate(1. if spec.loop else self._rng.uniform(.97,1.03))
+        self._mix();sound.play()
+        if scope in self._paused_scopes:self.pause_scope(scope)
+        self.history.append((event,scope));self.stats['played']+=1
+        self.stats['max_voices']=max(self.stats['max_voices'],len(self.voices))
+        return handle
+
+    start_loop=play_sfx
+
+    def stop_loop(self,handle):
+        v=self.voices.pop(handle,None)
+        if v:v.sound.stop()
+
+    def set_voice_gain(self,handle,gain):
+        if handle in self.voices:self.voices[handle].gain=self._clamp(gain);self._mix()
+
+    def stop_scope(self,scope,*,loops_only=False,events=None):
+        for k,v in tuple(self.voices.items()):
+            if v.scope==scope and (not loops_only or SOUND_BANK[v.event].loop) and (events is None or v.event in events):self.stop_loop(k)
+        self._paused_scopes.discard(scope)
+        self._mix()
+
+    def pause_scope(self,scope):
+        self._paused_scopes.add(scope)
+        for v in self.voices.values():
+            if v.scope==scope and not v.paused:
+                v.offset=v.sound.getTime();v.sound.stop();v.paused=True
+
+    def resume_scope(self,scope):
+        self._paused_scopes.discard(scope)
+        for v in self.voices.values():
+            if v.scope==scope and v.paused:
+                v.sound.play();v.sound.setTime(v.offset);v.paused=False
+
+    def pause_gameplay_audio(self):
+        for scope in {v.scope for v in self.voices.values() if SOUND_BANK[v.event].group=='gameplay'}:self.pause_scope(scope)
+
+    def resume_gameplay_audio(self):
+        for scope in tuple(self._paused_scopes):self.resume_scope(scope)
+
+    def stop_session_audio(self,session_id=None):
+        for k,v in tuple(self.voices.items()):
+            if SOUND_BANK[v.event].group=='gameplay' and (session_id is None or
+                isinstance(v.scope,tuple) and len(v.scope)>1 and v.scope[1]==session_id):self.stop_loop(k)
+        self._paused_scopes.intersection_update(v.scope for v in self.voices.values())
+        self._mix()
+
+    def set_gameplay_active(self,active):
+        self.gameplay_active=bool(active)
+        if not active:self.stop_session_audio()
+
+    def set_theme(self,theme):
+        if theme==self._theme:return
+        self._theme=theme
+        self.stop_loop(self._ambience)
+        self._ambience=self.play_sfx(AudioEvent.SNOW if theme=='dark' else AudioEvent.JUNGLE,scope='ambience')
+
+    def set_sfx_enabled(self,enabled):
+        self.sfx_enabled=bool(enabled)
         if not self.sfx_enabled:
-            for sound in self._sfx.values():
-                sound.stop()
+            for k,v in tuple(self.voices.items()):
+                if SOUND_BANK[v.event].group!='ambience':self.stop_loop(k)
+        self._mix()
 
     def toggle_sfx(self):
         self.set_sfx_enabled(not self.sfx_enabled)
         return self.sfx_enabled
+
+    def _reap(self):
+        from panda3d.core import AudioSound
+        for k,v in tuple(self.voices.items()):
+            if not v.paused and not SOUND_BANK[v.event].loop and v.sound.status()!=AudioSound.PLAYING:self.voices.pop(k,None)
 
     # ------------------------------------------------------------ music
     def _is_playing(self):
@@ -196,12 +332,14 @@ class AudioManager:
 
     def start_music(self):
         """An toàn khi gọi nhiều lần: không phát lại nếu đang chạy."""
+        if self._disposed:return
         self._wanted = True
         if self.music_enabled and not self._is_playing():
             self._tracks[self._current].play()
 
     def set_music_enabled(self, enabled):
         self.music_enabled = bool(enabled)
+        self._mix()
         if self.music_enabled:
             if self._wanted:
                 self.start_music()
@@ -220,14 +358,22 @@ class AudioManager:
 
     def _tick(self, task):
         """Bài hiện tại phát xong thì chuyển bài kế tiếp (vòng tròn)."""
+        if self._disposed:return task.done
+        self._reap();self._mix()
+        now=self._clock()
+        if now-self._playlist_check<.5:return task.again
+        self._playlist_check=now
         if self._wanted and self.music_enabled and not self._is_playing():
             self._current = self._pick_next()
             self._tracks[self._current].play()
         return task.again
 
     def dispose(self):
+        if self._disposed:return
+        self._disposed=True
         self._base.taskMgr.remove(self._task)
-        for track in self._tracks:
-            track.stop()
-        for sound in self._sfx.values():
-            sound.stop()
+        for track in self._tracks:track.stop()
+        self._tracks.clear()
+        for handle in tuple(self.voices):self.stop_loop(handle)
+        self._paused_scopes.clear();self.bank.dispose()
+        self._base=None

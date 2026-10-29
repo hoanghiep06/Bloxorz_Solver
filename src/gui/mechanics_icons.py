@@ -7,7 +7,7 @@ from functools import lru_cache
 import math
 from panda3d.core import (Geom,GeomNode,GeomTriangles,GeomVertexData,
     GeomVertexFormat,GeomVertexWriter,NodePath,Filename,PNMImage,Texture,
-    RenderState,TextureAttrib)
+    RenderState,TextureAttrib,TransparencyAttrib)
 from src.gui.advanced_mesh_factory import PALETTES,FLAG_POLE,FLAG_CLOTH,FLAG_GOLD
 from src.gui.mesh_factory import GOAL_THEME_COLORS
 
@@ -38,18 +38,10 @@ def icon_polygons(key,theme='light'):
     elif key=='bridge':
         plate(.48,.48,p['BRIDGE_TOP'],p['BRIDGE_EDGE'])
         for y in (-.28,0,.28):out.append(rect(0,y,.39,.03,p['BRIDGE_RIB']))
-    elif key=='soft_switch':
-        # Real mesh: .40 dark base; cyan annulus .30/.23, not a filled button.
-        for i in range(48):
-            a,b=math.tau*i/48,math.tau*(i+1)/48
-            out.append((((0,0),(.40*math.cos(a),.40*math.sin(a)),(.40*math.cos(b),.40*math.sin(b))),p['SWITCH_BASE']))
-            out.append((tuple((r*math.cos(t),r*math.sin(t)) for r,t in ((.30,a),(.30,b),(.23,b),(.23,a))),p['SOFT_COLOR']))
-    elif key=='heavy_switch':
-        plate(.37,.37,p['SWITCH_BASE'],p['SWITCH_BASE_EDGE'])
-        for x in (-.15,.15):out.append(rect(x,0,.06,.26,p['HEAVY_COLOR']))
-    elif key=='split_switch':
-        plate(.38,.31,p['SWITCH_BASE'],p['SWITCH_BASE_EDGE'])
-        for x in (-.19,.19):out.append(rect(x,0,.12,.17,p['SPLIT_COLOR']))
+    elif key in ('soft_switch','heavy_switch','split_switch'):
+        from src.gui.elemental_switches import switch_icon_polygons
+        from src.gui.advanced_contracts import SwitchVisualKind
+        return switch_icon_polygons(SwitchVisualKind[key.split('_')[0].upper()],theme)
     elif key=='fragile':
         plate(.48,.48,p['FRAGILE'],p['FRAGILE_EDGE'])
         for a,b in (((-.36,-.32),(0,-.04)),((0,-.04),(.32,.34)),
@@ -108,6 +100,11 @@ def _mesh(key,theme):
         node.addGeom(_geometry(key,surface,textured=True),
                      RenderState.make(TextureAttrib.make(_fragile_texture())))
         node.addGeom(_geometry(key,polygons[2:]))
+    elif key.endswith('_switch'):
+        # A fixed transparent thumbnail canvas keeps tight UI bounds identical
+        # when the source meshes have different frost/rune silhouettes.
+        canvas=(rect(0,0,.405,.405,(0,0,0,0)),)
+        node.addGeom(_geometry(key,canvas+polygons))
     else:
         node.addGeom(_geometry(key,polygons))
     return node
@@ -117,6 +114,7 @@ def mechanic_icon(key,theme='light'):
     path=NodePath('MechanicIcon-'+key)
     path.attachNewNode(_mesh(key,theme))
     path.setTwoSided(True)
+    if key.endswith('_switch'):path.setTransparency(TransparencyAttrib.MAlpha)
     path.setLightOff(1);path.setShaderOff(1)
     # Polygons form flat graphic layers in insertion order, independent of depth.
     path.setDepthTest(False);path.setDepthWrite(False)

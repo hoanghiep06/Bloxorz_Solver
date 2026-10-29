@@ -86,6 +86,23 @@ class GuideWidgetTests(SceneFixture):
             self.assertFalse(g.card.isHidden())
         self.assertEqual(g._ink[:3],tuple(v/255 for v in (0x17,0x32,0x4d)))
 
+    def test_selected_switch_border_follows_emerald_or_sapphire_theme(self):
+        from panda3d.core import GeomVertexReader
+        from src.gui.elemental_switches import PALETTE
+        g=self.guide
+        for theme in ('light','dark'):
+            g.apply_theme(theme)
+            expected=tuple(round(v,5) for v in PALETTE[theme]['energy'])
+            for key in ('soft_switch','heavy_switch','split_switch'):
+                if g.selected==key:g.close_card()
+                g.show_mechanic(key)
+                colour_set=set()
+                for node in g.buttons[key]['geom'][0].findAllMatches('**/+GeomNode'):
+                    for geom in node.node().getGeoms():
+                        colours=GeomVertexReader(geom.getVertexData(),'color')
+                        while not colours.isAtEnd():colour_set.add(tuple(round(v,5) for v in colours.getData4f()))
+                self.assertIn(expected,colour_set)
+
     def test_readable_text_has_private_font_weight_opaque_colours_and_fits_card(self):
         from panda3d.core import TextNode
         g=self.guide;default=TextNode.getDefaultFont()

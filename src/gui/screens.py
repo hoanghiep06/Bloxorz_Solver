@@ -53,7 +53,7 @@ class Screen:
 
     def button(self, text, x, y, width, height, command, **options):
         def clicked():
-            self.flow.audio.play('click')
+            self.flow.audio.play('ui_back' if text in ('Back','Exit','Quit') else 'ui_confirm' if text in ('Start','Restart') else 'ui_click')
             command()
         button = ui.make_button(self.root, text, x, y, width, height, clicked, **options)
         self.own(button.border)
@@ -221,16 +221,15 @@ class SettingsScreen(Screen):
             self.button(text, x0 + 40 + i * 250, y0 + 240, 230, 44,
                         lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
 
-        self.label('Graphics quality',20,x0+40,y0+320,color=ui.MUTED)
-        self._quality_buttons={}
-        for i,(quality,text) in enumerate((('auto','Auto'),('high','High'),('balanced','Balanced'),('low','Low'))):
-            self._quality_buttons[quality]=self.button(text,x0+40+i*123,y0+336,112,42,
-                lambda q=quality:self._set_quality(q),primary=settings.quality==quality,size=18)
-        from src.gui import visual_quality
-        self._quality_hint=self.label(visual_quality.CURRENT.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately',14,
-            width/2,y0+402,color=ui.MUTED,align='center')
+        self.label('Master volume',20,x0+40,y0+315,color=ui.MUTED)
+        self._mute=self.button('Unmute All' if settings.muted else 'Mute All',
+            x0+40,y0+330,195,50,self._toggle_mute,primary=settings.muted,size=18)
+        self._master_text=self.label(f'{round(settings.master_volume*100)}%',20,x0+cw-40,y0+362,align='right')
+        self._master_slider=self.own(ui.make_slider(self.root,x0+265,y0+349,190,12,
+            settings.master_volume,self._on_master_volume))
+        self._master_slider.thumb.bind(DGG.B1RELEASE,self._music_released)
 
-        self.label('Music', 20, x0 + 40, y0 + 435, color=ui.MUTED)
+        self.label('Music / Ambience', 20, x0 + 40, y0 + 435, color=ui.MUTED)
         (self._music_buttons, self._music_slider,
          self._music_text) = self._audio_row(
             x0, cw, y0 + 450, settings.music, self._set_music,
@@ -281,24 +280,29 @@ class SettingsScreen(Screen):
         for value, button in self._sfx_buttons.items():
             ui.style_button(button, primary=value == enabled)
 
-    def _set_quality(self, quality):
-        self.flow.app.dashboard.set_quality(quality)
-        self.flow.save.settings.quality=quality
-        self.flow.save.save()
-        from src.gui import visual_quality
-        for name,button in self._quality_buttons.items():
-            ui.style_button(button,primary=name==quality)
-        self._quality_hint['text']=quality.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately'
-
     def _set_theme(self, theme):
         self.flow.save.settings.theme = theme
         self.flow.save.save()
         ui.set_theme(theme)
         self.flow.apply_scene_theme(theme)
+        self.flow.audio.set_theme(theme)
         self.flow.ambient.set_theme(theme)
         self.flow.app.dashboard.hud.restyle()
         self.release_later()                 # old widgets are destroyed next frame
         self.build(*self.flow.size)
+
+    def _toggle_mute(self):
+        settings=self.flow.save.settings;settings.muted=not settings.muted
+        self.flow.audio.set_muted(settings.muted);self.flow.save.save()
+        self._mute['text']='Unmute All' if settings.muted else 'Mute All'
+        ui.style_button(self._mute,primary=settings.muted)
+
+    def _on_master_volume(self):
+        if not self._ready:return
+        value=float(self._master_slider['value'])
+        self.flow.save.settings.master_volume=value
+        self.flow.audio.set_master_volume(value)
+        self._master_text['text']=f'{round(value*100)}%'
 
     def _on_music_volume(self):
         if not self._ready:
@@ -442,7 +446,7 @@ class UIFlow:
 
         self.screens = {cls.name: cls(self)
                         for cls in (MainMenu, AboutPage, LevelSelect, SettingsScreen, GameScreen)}
-        self.intro = LevelIntro(app, self._intro_done)
+        self.intro = LevelIntro(app, self._intro_done, audio=self.audio)
         import os
         self.arrows = MoveAssistLayer(app, controller, self._arrows_visible,
             enabled=os.environ.get('BLOXORZ_MOVE_ASSIST_DEBUG')=='1')
@@ -461,6 +465,8 @@ class UIFlow:
         self._listener.accept('mouse1-up', self._click)
         self._listener.accept('m', self.toggle_music)      # phím tắt bật/tắt nhạc
         hud = app.dashboard.hud
+        hud.on_ui_audio=self.audio.play
+        self.mechanics.on_ui_audio=self.audio.play
         hud.restyle()
         hud.bind_action('Exit', self._with_click(lambda: self.show('levels')))
         hud.bind_action('Restart', self._with_click(controller.restart_level))
@@ -468,10 +474,7 @@ class UIFlow:
 
     # ---------------------------------------------------------------- helpers
     def _with_click(self, command):
-        def run():
-            self.audio.play('click')
-            command()
-        return run
+        return command
 
     def later(self, function):
         def run(task):
@@ -612,6 +615,8 @@ class UIFlow:
             self.screens[self.name].hide()
         self.name = name
         game = name == 'game'
+        self.audio.set_gameplay_active(game)
+        self.audio.set_theme(self.save.settings.theme)
         self.mechanics.set_visible(game)
         if not game:self.app.presentation.style.set_background_canvas()
         if not game:
@@ -694,13 +699,13 @@ class UIFlow:
     # ---------------------------------------------------------------- events
     def on_game_event(self, name):
         if name == 'restart':
+            self.intro.finish()
+            self.audio.stop_session_audio()
             self.mechanics_focus.reset(restore=True)
             self.screens['game'].hide_result()
             return
         if self.name != 'game':
             return                       # attract mode stays silent
-        if name in ('roll', 'goal', 'fall'):
-            self.audio.play(name)
         if name == 'fall':
             self.screens['game'].show_fail()            # khung thua: Retry / Exit
         if name == 'goal':

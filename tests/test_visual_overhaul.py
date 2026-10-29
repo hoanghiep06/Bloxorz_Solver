@@ -159,20 +159,23 @@ class VisualQualityTests(unittest.TestCase):
         self.assertEqual(resolve('low','NVIDIA'),'low')
         with self.assertRaises(ValueError):resolve('bad')
 
-    def test_quality_save_migration_invalid_value_and_roundtrip(self):
+    def test_quality_defaults_high_and_migrates_old_preferences_without_losing_settings(self):
         import json,tempfile
         from src.gui.profile import SaveData
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/'save.json'
-            self.assertEqual(SaveData(path).settings.quality,'auto')
-            for setting in ({'volume':.4},{'quality':'invalid'}):
-                path.write_text(json.dumps({'settings':setting}))
-                self.assertEqual(SaveData(path).settings.quality,'auto')
-            save=SaveData(path)
-            for quality in ('auto','high','balanced','low'):
-                save.settings.quality=quality
+            self.assertEqual(SaveData(path).settings.quality,'high')
+            for old in ('auto','high','balanced','low','invalid'):
+                path.write_text(json.dumps({'settings':{'quality':old,'theme':'dark',
+                    'control_mode':'mouse','music_volume':.4},'stars':{'level_01':3}}))
+                save=SaveData(path)
+                self.assertEqual(save.settings.quality,'high')
+                self.assertEqual(save.settings.theme,'dark')
+                self.assertEqual(save.settings.control_mode,'mouse')
+                self.assertEqual(save.settings.music_volume,.4)
+                self.assertEqual(save.stars_for('level_01'),3)
                 self.assertTrue(save.save())
-                self.assertEqual(SaveData(path).settings.quality,quality)
+                self.assertEqual(json.loads(path.read_text())['settings']['quality'],'high')
 
     def test_quality_changes_preserve_cloth_clock(self):
         from src.gui import visual_materials as m,visual_quality as q

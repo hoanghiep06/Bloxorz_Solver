@@ -51,6 +51,7 @@ def create_game(levels_dir=DEFAULT_LEVELS, *, shadows=False, antialiasing=True,
         set_quality(requested if requested in CHOICES else save.settings.quality)
         audio = AudioManager(app, music_volume=save.settings.music_volume,
                              sfx_volume=save.settings.sfx_volume,
+                             master_volume=save.settings.master_volume, muted=save.settings.muted,
                              music_enabled=save.settings.music,
                              sfx_enabled=save.settings.sfx)
         app.game_audio = audio

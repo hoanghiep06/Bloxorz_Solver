@@ -30,9 +30,10 @@ class AnimationManager:
     Explicit resync/release may intentionally reset to the canonical face basis.
     """
     def __init__(self, renderer, board_data, snapshot, block_root, *, surface_layer=None,
-                 pitch=1.0, task_mgr=None):
+                 pitch=1.0, task_mgr=None, audio=None):
         self._thread = threading.get_ident()
         self.renderer = renderer
+        self._audio,self._audio_track=audio,None
         self.board = as_visual_board(board_data)
         self._pitch = pitch
         from src.gui.geometry_math import cell_to_world
@@ -173,6 +174,9 @@ class AnimationManager:
                     if self._split_vfx is None:
                         self._split_vfx = SplitTeleportVFX(self._rig.root,pitch=self._pitch)
                     self._split_vfx.configure(self._split_plan)
+            if self._audio is not None:
+                from src.gui.audio_events import AnimationAudioTrack
+                self._audio_track=AnimationAudioTrack(self._audio,request,self.board,self._fall)
             self._sample(0)
         except Exception as error:
             self._fail(error)
@@ -235,6 +239,17 @@ class AnimationManager:
         self._draw(poses, active, weights=weights, opacity=opacity, scales=scales)
         self._poses = poses
         self._progress = progress
+        self._audio_call('sample',progress)
+
+    def _audio_call(self,method,*args):
+        if self._audio_track is None:return
+        try:getattr(self._audio_track,method)(*args)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception('Audio cue failed; gameplay continues.')
+            try:self._audio.stop_scope(self._audio_track.scope)
+            except Exception:pass  # A disappearing audio device must not fail the visual action.
+            self._audio_track=None
 
     def advance(self, dt):
         self._check()
@@ -273,6 +288,8 @@ class AnimationManager:
         self._progress = 0.0
 
     def _notify(self, status, error=None):
+        self._audio_call('finish',status is Status.COMPLETED)
+        self._audio_track=None
         request, callback = self._request, self._callback
         self._request = self._callback = self._timeline = None
         self._status = status
@@ -295,6 +312,7 @@ class AnimationManager:
         if not self.is_busy or not self._timeline.pause():
             return False
         self._status = Status.PAUSED
+        self._audio_call('pause')
         return True
 
     def resume(self):
@@ -302,6 +320,7 @@ class AnimationManager:
         if not self.is_busy or not self._timeline.resume():
             return False
         self._status = Status.PLAYING
+        self._audio_call('resume')
         return True
 
     def set_playback_rate(self, rate):
@@ -333,6 +352,7 @@ class AnimationManager:
             snapshot.state_revision == current.state_revision and as_visual_snapshot(snapshot) != as_visual_snapshot(current)):
             raise ValueError('Resync cannot reuse a conflicting or stale same-session revision.')
         self._barrier = True
+        if self._audio is not None:self._audio.stop_session_audio(self._snapshot.session_id)
         try:
             if self.is_busy:
                 self._restore_before()
@@ -350,6 +370,7 @@ class AnimationManager:
         if threading.get_ident() != self._thread:
             raise RuntimeError('Dispose must run on the owning thread.')
         self._barrier = True
+        if self._audio is not None:self._audio.stop_session_audio(self._snapshot.session_id)
         try:
             if self._task is not None:
                 self._task_mgr.remove(self._task)

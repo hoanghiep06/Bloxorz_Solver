@@ -47,6 +47,23 @@ class GameUiStateTests(SceneFixture):
         return [str(widget['text']) for widget in self.screen._owned
                 if isinstance(widget, DirectLabel)]
 
+    def test_settings_omit_quality_controls_and_fit_both_themes_at_minimum_size(self):
+        from direct.gui.DirectGui import DirectButton,DirectLabel
+        from src.gui import ui_theme as ui
+        self.flow.show('settings');screen=self.flow.screens['settings']
+        for theme in ('light','dark'):
+            ui.set_theme(theme);screen.clear();screen.build(1024,720)
+            labels=[str(w['text']) for w in screen._owned if isinstance(w,DirectLabel)]
+            buttons=[str(w['text']) for w in screen._owned if isinstance(w,DirectButton)]
+            self.assertNotIn('Graphics quality',labels)
+            self.assertTrue({'Auto','High','Balanced','Low'}.isdisjoint(buttons))
+            self.assertTrue({'Keyboard','Mouse','Light','Dark','On','Off','Back'}<=set(buttons))
+            self.assertTrue({'Master volume','Music / Ambience','Sound effects'}<=set(labels))
+            self.assertEqual(self.flow.save.settings.quality,'high')
+            back=next(w for w in screen._owned if isinstance(w,DirectButton) and w['text']=='Back')
+            self.assertLessEqual(-back.getZ()+50,720)
+        ui.set_theme('light')
+
     def test_ai_button_is_immediate_on_level_entry_and_skips_intro_when_opened(self):
         with patch.object(self.flow, '_ensure_par'):
             for index in (0, 1, len(self.catalog) - 1):

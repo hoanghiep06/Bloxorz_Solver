@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "Real fixed-function window: both sculpted families remain visible; confirmed Soft/bridge action completes"
+  ],
+  "images": [
+    "light-fallback-idle.png",
+    "dark-fallback-idle.png"
+  ],
+  "input": "Panda3D GLX GraphicsWindow + X11 XTest; OpenAL Soft null output for cue checks",
+  "shader": "FIXED_FUNCTION",
+  "status": "PASS"
+}

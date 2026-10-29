@@ -1,0 +1,122 @@
+{
+  "assets/audio/sfx/bridge_close.wav": {
+    "sha256": "2da820fbe22ff7b6047a4846397feb6ea9f6a22e0cb48217471181614322289a",
+    "bytes": 53804
+  },
+  "assets/audio/sfx/bridge_open.wav": {
+    "sha256": "7af5d71c6a7e230d6ebb8bed41248f92a423bbbb4b7d02612d2e5fbbeb7dc7e9",
+    "bytes": 53804
+  },
+  "assets/audio/sfx/cube_impact.wav": {
+    "sha256": "2413035ed19e1793ba00bba3029cc0077ebda2357b10d148e984f4b28062f91d",
+    "bytes": 48044
+  },
+  "assets/audio/sfx/edge_slide.wav": {
+    "sha256": "46ad92566fb9ca5989e0621914f6e9b71bde1a555560ae40f12ab0a0cc3909c3",
+    "bytes": 46124
+  },
+  "assets/audio/sfx/fall_wind.wav": {
+    "sha256": "712bf555d7da7ab9e9c107feb5c143cdc2dfa51a11048febf357b29c3b84701f",
+    "bytes": 230444
+  },
+  "assets/audio/sfx/fragile_break.wav": {
+    "sha256": "a79feaca94fb3a8614183b89c5286907e6f1f7185d1be709c3bbd3da8f65261a",
+    "bytes": 92204
+  },
+  "assets/audio/sfx/fragile_crack.wav": {
+    "sha256": "9ea9da82eac4c192a281f4ee84780e93a336844df99c6df51e9850f884167291",
+    "bytes": 23084
+  },
+  "assets/audio/sfx/goal_energy.wav": {
+    "sha256": "8beddab82a057617cbb68060821db800beb47d804e799cbefc46b884d26385d4",
+    "bytes": 124844
+  },
+  "assets/audio/sfx/heavy_switch.wav": {
+    "sha256": "a23290dbc8a5899b3e4638438a7631d884f4473418d3a10181ba4f9241c39370",
+    "bytes": 48044
+  },
+  "assets/audio/sfx/impact_0.wav": {
+    "sha256": "a694103022dce14bb16743f3aa866d9c7fe91595d3bad7583fbe871c28292f4d",
+    "bytes": 73004
+  },
+  "assets/audio/sfx/impact_1.wav": {
+    "sha256": "ae2f1264cc631fcf32531d79d9ef0972b6f86e52ae56adb9af844fb031ffc90d",
+    "bytes": 77804
+  },
+  "assets/audio/sfx/impact_2.wav": {
+    "sha256": "1419c6a160fc8eb36f6b4d384867d512d77df5326d18f8ec422e8cb2e472a0cf",
+    "bytes": 82604
+  },
+  "assets/audio/sfx/landing.wav": {
+    "sha256": "5456a5774e0877842eb46413c036fb834741b2bf9985313900a8c72368ebab75",
+    "bytes": 124844
+  },
+  "assets/audio/sfx/roll_scrape.wav": {
+    "sha256": "8b36ff12d4d425a191d3d3b5023becd195d64ec8b6364303f5c6a9f1306c59da",
+    "bytes": 53804
+  },
+  "assets/audio/sfx/soft_switch.wav": {
+    "sha256": "2a19a5bdf4ff22e889a8e58df66d2beee9ce741f7ad6713132fe0e0d8ad179a3",
+    "bytes": 34604
+  },
+  "assets/audio/sfx/split_switch.wav": {
+    "sha256": "0a7d5155c1f88a5e81c1986369b6a2461eddf9cab8148eeca111ea2bcf2a3756",
+    "bytes": 57644
+  },
+  "assets/audio/sfx/teleport_arrival.wav": {
+    "sha256": "63202ff0ddceb2aa7f9e84e9d62622ccff94b8422cbc66e338ff5e19b8ba04b5",
+    "bytes": 73004
+  },
+  "assets/audio/sfx/teleport_charge.wav": {
+    "sha256": "5a24affce61612a21dbbdce95acfc126a0e0d5b75a7b2fe9d2a1ab15e6fc3937",
+    "bytes": 86444
+  },
+  "assets/audio/sfx/teleport_disassemble.wav": {
+    "sha256": "9f2026d6ef40af314713bf684b0c8b56f5ca48c661544ed6da3ab8554c2edb1f",
+    "bytes": 61484
+  },
+  "assets/audio/sfx/teleport_materialize.wav": {
+    "sha256": "2c19ad0d3c711ad787ebc37103b1cd7e5bb1386ed7fcf02da866b38ab175ba64",
+    "bytes": 73004
+  },
+  "assets/audio/sfx/teleport_travel.wav": {
+    "sha256": "2f5f2f88bb05292b913b62c34555016f96303596db3e4c89c16af9fa9dbc8f29",
+    "bytes": 124844
+  },
+  "assets/audio/sfx/ui_back.wav": {
+    "sha256": "f7eef627f9b6163b33e2e8d911ecfa8d731139b4f36f23f4edc1c3560f016665",
+    "bytes": 19244
+  },
+  "assets/audio/sfx/ui_click.wav": {
+    "sha256": "de73b25e0f72fd27e2d39a2f5eaf6a622daa65c3289e78c33aa5d6f7384b7a88",
+    "bytes": 14444
+  },
+  "assets/audio/sfx/ui_confirm.wav": {
+    "sha256": "590c5104646077f98a5230f3b990bffc426375f54e1412dbb7dc82b0ab16d3f2",
+    "bytes": 21164
+  },
+  "assets/audio/sfx/victory.wav": {
+    "sha256": "cd03edb04ed6dd2031b3dd7b61349c95c516bb2e6e4c40bbffe93dfb4fa5bef2",
+    "bytes": 403244
+  },
+  "assets/audio/ambience/jungle.wav": {
+    "sha256": "8371aab2df1822066e272b52a7e4c15b555b0f21cc3bc16083b9fa59b4b2d098",
+    "bytes": 1537324
+  },
+  "assets/audio/ambience/snow.wav": {
+    "sha256": "268c381d845bc0ed00523bf9fb4bd851efb1c91d9b540c9092a47e17c01b2f6e",
+    "bytes": 1537324
+  },
+  "assets/audio/sfx/heavy_switch_ice.wav": {
+    "sha256": "1ab8b4eab3037b03977f23c4e28577da7129cf02e3fb72f5c060a694d6a92f8c",
+    "bytes": 57644
+  },
+  "assets/audio/sfx/soft_switch_ice.wav": {
+    "sha256": "b18f6f21230d42558dbdfe6f49611483d5b4f9e55729265e8f3e8950a0c87030",
+    "bytes": 42284
+  },
+  "assets/audio/sfx/split_switch_ice.wav": {
+    "sha256": "20454ee27c7d10e7513a6489b719f4faa27109d49419a3e1d498c95457864a6c",
+    "bytes": 63404
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "assets/audio/sfx/heavy_switch_ice.wav": {
+    "sha256": "1ab8b4eab3037b03977f23c4e28577da7129cf02e3fb72f5c060a694d6a92f8c",
+    "bytes": 57644
+  },
+  "assets/audio/sfx/soft_switch_ice.wav": {
+    "sha256": "b18f6f21230d42558dbdfe6f49611483d5b4f9e55729265e8f3e8950a0c87030",
+    "bytes": 42284
+  },
+  "assets/audio/sfx/split_switch_ice.wav": {
+    "sha256": "20454ee27c7d10e7513a6489b719f4faa27109d49419a3e1d498c95457864a6c",
+    "bytes": 63404
+  }
+}

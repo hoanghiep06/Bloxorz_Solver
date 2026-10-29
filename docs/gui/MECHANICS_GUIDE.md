@@ -12,13 +12,13 @@ Rail **58 px**, nút **40×40**, bước **48 px**, card **260 px**. Vị trí r
 | --- | --- | --- |
 | Goal | Cờ cam, cột vàng và khung hố màu cam | `advanced_mesh_factory.make_flag_mesh`, `FLAG_CLOTH/POLE/GOLD`; `mesh_factory.GOAL_THEME_COLORS` |
 | Bridge | Platform với ba thanh nối | `make_bridge_mesh`, ba rib ở −.28/0/.28 và `PALETTES.BRIDGE_*` |
-| Soft Switch | Đế tối tròn, vòng cyan rỗng | `make_switch_mesh(SOFT)`/`_ring`, radius .30/.23 |
-| Heavy Switch | Đế vuông với hai thanh cyan | `make_switch_mesh(HEAVY)`, bars tại x ±.15, .12×.52 |
-| Split Switch | Đế chữ nhật với hai plate | `make_switch_mesh(SPLIT)`, plates tại x ±.19, .24×.34 |
+| Soft Switch | Vòng đá rune emerald / vòng sapphire phủ sương trên đế tối | `elemental_switches.switch_parts` và `switch_icon_polygons`, vòng .33/.245, socket .405 |
+| Heavy Switch | Hai thanh áp lực đồng/đá hoặc băng, rãnh năng lượng | Shared `BAR_CENTRES` x ±.18, .15×.56 |
+| Split Switch | Hai tinh thể riêng biệt, emerald tám cạnh / sapphire sáu cạnh | Shared `CRYSTAL_CENTRES` x ±.20, `crystal_outline(theme)` |
 | Fragile | Đá cam có vân và mạng nứt sáng, thêm bốn nhánh nứt nổi | `assets/materials/fragile.png`, `make_fragile_mesh`, endpoint crack và `PALETTES.FRAGILE_EDGE/CRACK` |
 | Void | Khung khoảng trống, tâm không có mặt sàn | Advanced/Basic tile kind `VOID` |
 
-Không dùng tint đơn sắc trên toàn icon: cờ và khung, đế tối và glyph cyan vẫn phân biệt. Các contour giống hệt nhau giữa Light/Dark; chỉ palette nền/độ tương phản đổi. Icon biểu diễn nhận dạng canonical của cơ chế, không giả lập trạng thái activated của switch.
+Không dùng tint đơn sắc trên toàn icon: cờ và khung, đế tối và glyph cyan vẫn phân biệt. Goal/Bridge/Fragile/Void giữ contour cũ. Ba switch giữ cùng nhận dạng vòng/hai thanh/hai tinh thể; chi tiết và nét cắt đổi theo mô hình Ancient Emerald/Frozen Sapphire thực tế. Icon biểu diễn trạng thái idle canonical, không giả lập trạng thái activated của switch. Ba icon switch được chiếu trực tiếp từ các triangle mặt trên của mesh theo theme, thay glyph giản lược cũ: đầy đủ rune/rêu/đồng ở Jungle và frost/vết nứt/tinh thể băng ở Snow. Hình học được cache tối đa 6 bản, không render-to-texture và không tính mỗi frame. Canvas trong suốt cố định giữ bounding box UI bằng nhau dù mesh có chi tiết viền khác nhau; không dựng thêm mặt sàn trong scene. Viền chọn/hover của switch dùng emerald Jungle hoặc cyan Snow từ cùng palette nguồn.
 
 ## 2. Lookup target
 
@@ -84,7 +84,7 @@ Highlight là line outline 3D trong `effects_root`, pulse/fade **1,1 giây**; de
 
 ## 7. Light/Dark và layout
 
-Hai theme giữ cùng contour và semantic visual. Màu lấy từ palette mesh đang có, panel/text tiếp tục dùng theme tokens hiện tại; font medium/semibold và alpha chữ 1 không đổi. Không sửa 3D meshes, materials hoặc background themes.
+Hai theme giữ cùng semantic visual; ba switch dùng nét cắt và palette chung nguồn với mô hình 3D (xem [Dual-theme Switch VFX](DUAL_THEME_SWITCH_VFX.md)). Màu lấy từ palette mesh đang có, panel/text tiếp tục dùng theme tokens hiện tại; font medium/semibold và alpha chữ 1 không đổi. Không sửa 3D meshes, materials hoặc background themes.
 
 Mỗi icon instance có transform riêng dù geometry dùng cache. Hover/pressed/selected không thay transform/frameSize. Card thay chiều cao theo nội dung thêm nhưng rail/reserved width không thay. Vùng click guard vẫn bao phủ body/padding/card/rail; click locator không thành manual move trên board.
 
@@ -155,3 +155,15 @@ Matrix gồm sandbox nhiều cơ chế ở cả Light/Dark; floor/Goal-only và 
 - Runtime matrix dùng fixtures và các đường chơi cụ thể, không khẳng định duyệt hết mọi trạng thái của mọi level. Clip lấy mẫu frame, không phải benchmark FPS.
 
 Không commit, push, merge, reset, clean, stash hoặc chuyển branch.
+
+
+## Follow-up: icon theo theme (2026-10-29)
+
+Soft/Heavy/Split trong cả Rail và Help Card dùng trực tiếp các mặt top/bevel/facet của mesh thật (`switch_icon_polygons`), xếp theo độ cao để giữ đúng socket/rune/latch/frost/gem. Màu lấy từ vertex palette gốc, không tint lại một glyph chung. Goal/Bridge/Fragile/Void giữ nguyên nhận dạng và palette theo theme hiện tại; đặc biệt Fragile vẫn dùng texture đá nứt thật.
+
+Không đổi layout, Help text, focus/cycling, Back to Board hoặc gameplay. **646 tests PASS** (110.589 s), gồm 13 Guide, 20 focus và 16 elemental tests. Hai kiểm tra mới xác nhận các điểm icon thực sự thuộc mesh gốc cùng chi tiết moss/frost và viền chọn dùng đúng năng lượng theo theme. Native GLX/XTest đã click từng switch ở hai theme, so Rail/card với geometry cache theo theme, kiểm tra focus/Back, 20 lần đổi theme khi card mở, bounds/node/task ổn định, State/Moves/revision không đổi và resize 1024/1280.
+
+- [Jungle thực tế](evidence/guide-theme-icons/light.png) · [Snow thực tế](evidence/guide-theme-icons/dark.png).
+- [Runtime](evidence/guide-theme-icons/runtime-report.json) · [Regression](evidence/guide-theme-icons/regression.txt).
+
+Lệnh native kiểm tra riêng: `ALSOFT_DRIVERS=null LP_NUM_THREADS=2 xvfb-run -a .venv/bin/python -B -m tools.elemental_switch_smoke --guide-only --output /tmp/bloxorz-themed-guide-ui`.

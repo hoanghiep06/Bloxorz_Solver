@@ -3,7 +3,7 @@ import os
 
 CHOICES = ('auto', 'high', 'balanced', 'low')
 DETAIL = {'high': 1.0, 'balanced': .45, 'low': 0.0}
-CURRENT = 'auto'
+CURRENT = 'high'
 EFFECTIVE = 'high'
 RENDERER = ''
 
@@ -20,8 +20,8 @@ def resolve(choice, renderer=''):
 def configure(gsg):
     global RENDERER
     RENDERER = gsg.getDriverRenderer() if gsg is not None and hasattr(gsg,'getDriverRenderer') else ''
-    choice = os.environ.get('BLOXORZ_QUALITY','auto')
-    return choose(choice if choice in CHOICES else 'auto')
+    choice = os.environ.get('BLOXORZ_QUALITY','high')
+    return choose(choice if choice in CHOICES else 'high')
 
 
 def choose(choice):

@@ -168,6 +168,8 @@ class AnimatedSurfaceLayer:
         self.animated_root.hide()
         self._fragile, self._bridges, self._switches, self._debris = {}, {}, {}, {}
         self._flags = {}
+        self._switch_rigs = {}
+        self._switch_fx = None
         self._tile_variants = {theme: [] for theme in THEMES}
         self._theme = None
         self._leased = False
@@ -178,10 +180,6 @@ class AnimatedSurfaceLayer:
             broken = {theme: make_fragile_mesh(pitch=pitch, broken=True, theme=theme)
                       for theme in THEMES}
             platform = {theme: make_bridge_mesh(pitch=pitch, theme=theme) for theme in THEMES}
-            switches = {(kind, active): {
-                            theme: make_switch_mesh(kind, activated=active, pitch=pitch, theme=theme)
-                            for theme in THEMES}
-                        for kind in SwitchVisualKind for active in (False, True)}
             fragments = {theme: make_beveled_box_mesh(name='FragileFragment-' + theme,
                 dimensions=(.30*pitch, .46*pitch, .16*pitch), bevel=.012*pitch,
                 top_color=PALETTES[theme]['FRAGILE'],
@@ -207,9 +205,13 @@ class AnimatedSurfaceLayer:
                 for cell in bridge.cells:
                     self._instance(group, platform, cell)
                 self._bridges[bridge.bridge_id] = group
+            from src.gui.switch_vfx import SwitchVisualRig,SwitchEffectPool
             for switch in board_data.switches:
-                self._switches[switch.switch_id] = tuple(self._instance(self.animated_root,
-                    switches[switch.kind, active], switch.cell) for active in (False, True))
+                rig=SwitchVisualRig(self.animated_root,switch,board_data.rows,board_data.cols,pitch)
+                self._switch_rigs[switch.switch_id]=rig
+                self._switches[switch.switch_id]=rig.roots
+                for theme,holder in rig.variants:self._tile_variants[theme].append(holder)
+            self._switch_fx=SwitchEffectPool(self.animated_root,len(board_data.switches),pitch)
             # Cờ ở ô đích: AdvancedSceneRenderer đặt cờ trong renderer_root (bị ẩn
             # khi animation chạy), nên layer phải giữ bản sao riêng để cờ không biến mất.
             flag_mesh = make_flag_mesh(pitch=pitch)
@@ -273,12 +275,8 @@ class AnimatedSurfaceLayer:
             visible(node, state.present)
             node.setZ(0)
             node.setScale(1)
-        for key, (inactive, active) in self._switches.items():
-            on = key in before.activated_switch_ids
-            visible(inactive, not on)
-            visible(active, on)
-            inactive.setZ(0)
-            active.setZ(0)
+        if self._switch_fx:self._switch_fx.reset(self._theme,(before.session_id,before.state_revision,events))
+        for key,rig in self._switch_rigs.items():rig.pose(key in before.activated_switch_ids)
         # Cờ ẩn khi khối đang nằm trên ô đích (cùng quy tắc với AdvancedSceneRenderer).
         occupied = {cube.cell for cube in before.cubes}
         if before.whole_pose is not None:
@@ -309,14 +307,30 @@ class AnimatedSurfaceLayer:
                 node.setZ(-.65*self.pitch*(1-amount))
                 node.setScale(1)  # translate a rigid platform; never squash its thickness
             elif event.kind in (EventKind.SWITCH_ACTIVATE, EventKind.SWITCH_DEACTIVATE):
-                target = event.kind is EventKind.SWITCH_ACTIVATE
-                active = target if u >= .5 else not target
-                off, on = self._switches[event.target_id]
-                visible(off, not active)
-                visible(on, active)
-                import math
-                off.setZ(-.035*self.pitch*math.sin(math.pi*u))
-                on.setZ(-.035*self.pitch*math.sin(math.pi*u))
+                from src.gui.switch_vfx import switch_frame
+                target=event.kind is EventKind.SWITCH_ACTIVATE
+                active=target if u>=.5 else not target
+                rig=self._switch_rigs[event.target_id]
+                # Split charging belongs exclusively to the confirmed SPLIT event.
+                # A standing marker/state update alone cannot launch teleport VFX.
+                frame=switch_frame(rig.kind,event_progress(event,progress))
+                if rig.kind is SwitchVisualKind.SPLIT:
+                    from src.gui.switch_vfx import SwitchFrame
+                    frame=SwitchFrame(0,0,0)
+                rig.pose(active,frame)
+                if target and rig.kind is not SwitchVisualKind.SPLIT:
+                    cell=next(s.cell for s in self.board.switches if s.switch_id==event.target_id)
+                    self._switch_fx.sample(rig.kind,cell,event_progress(event,progress),self.board.rows,self.board.cols)
+            elif event.kind is EventKind.SPLIT and before.whole_pose is not None:
+                from src.gui.switch_vfx import switch_frame
+                # Exact source cell from the validated request, never a guessed destination.
+                definition=next((s for s in self.board.switches if s.kind is SwitchVisualKind.SPLIT
+                    and s.cell==before.whole_pose.anchor_cell),None)
+                if definition is not None:
+                    t=min(1.,event_progress(event,progress)/.33)
+                    self._switch_rigs[definition.switch_id].pose(definition.switch_id in before.activated_switch_ids,
+                        switch_frame(SwitchVisualKind.SPLIT,t))
+                    self._switch_fx.sample(SwitchVisualKind.SPLIT,definition.cell,t,self.board.rows,self.board.cols,handoff=True)
 
         if collapse_cell is not None:
             intact, broken = self._fragile[collapse_cell]
@@ -344,6 +358,8 @@ class AnimatedSurfaceLayer:
         if self._leased:
             visible(self.renderer_root, not self._prior_hidden)
         self.animated_root.hide()
+        if self._switch_fx:self._switch_fx.release()
+        for rig in self._switch_rigs.values():rig.pose(False)
         for group,pieces in self._debris.values():
             group.hide()
             for piece in pieces:
@@ -356,6 +372,8 @@ class AnimatedSurfaceLayer:
         if self._disposed:
             return
         self.release()
+        if self._switch_fx:self._switch_fx.dispose()
+        self._switch_rigs.clear()
         self.renderer_root.removeNode()
         self.animated_root.removeNode()
         self.root.removeNode()

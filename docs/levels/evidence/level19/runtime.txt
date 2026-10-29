@@ -1,0 +1,132 @@
+Known pipe types:
+  glxGraphicsPipe
+(1 aux display modules not yet loaded.)
+Xlib:  extension "XFree86-DGA" missing on display ":100".
+AL lib: (WW) alc_initconfig: No capture backend available!
+PASS Production Level Select page 3 opens real Level 19; natural intro/landing completes; name and 19/19 visible
+PASS light: every Fragile/Soft/Heavy/Split/Bridge/Goal target cycles and wraps correctly; Void in bounds; no Core/Move/revision/rail mutation
+PASS bridge-open:0: native path from Start produced confirmed animation and framebuffer capture
+PASS fragile-break:5:6: native path from Start produced confirmed animation and framebuffer capture
+PASS interior-fall: native path from Start produced confirmed animation and framebuffer capture
+PASS split:4:14: native path from Start produced confirmed animation and framebuffer capture
+PASS merge: native path from Start produced confirmed animation and framebuffer capture
+PASS edge-fall: native path from Start produced confirmed animation and framebuffer capture
+PASS light: all scenarios used native moves/events, two-cube identity, Space/merge/fall and exact restart flags
+PASS dark: every Fragile/Soft/Heavy/Split/Bridge/Goal target cycles and wraps correctly; Void in bounds; no Core/Move/revision/rail mutation
+PASS bridge-open:0: native path from Start produced confirmed animation and framebuffer capture
+PASS fragile-break:5:6: native path from Start produced confirmed animation and framebuffer capture
+PASS interior-fall: native path from Start produced confirmed animation and framebuffer capture
+PASS split:4:14: native path from Start produced confirmed animation and framebuffer capture
+PASS merge: native path from Start produced confirmed animation and framebuffer capture
+PASS edge-fall: native path from Start produced confirmed animation and framebuffer capture
+PASS dark: all scenarios used native moves/events, two-cube identity, Space/merge/fall and exact restart flags
+PASS BFS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct
+PASS DFS: native worker/replay Goal, Moves=260, metrics and catalog-based Next correct
+PASS IDS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct
+PASS UCS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct
+PASS Greedy: native worker/replay Goal, Moves=24, metrics and catalog-based Next correct
+PASS A*: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct
+PASS BFS: native worker/replay Goal, Moves=22, metrics and catalog-based Next correct
+PASS Real Level 18 BFS victory → Next loads Level 19; Level 19 victory disables Next; no Level 20 access
+PASS Restart and native Exit → Levels → Back → Menu work; temporary save isolated
+{
+  "checks": [
+    "Production Level Select page 3 opens real Level 19; natural intro/landing completes; name and 19/19 visible",
+    "light: every Fragile/Soft/Heavy/Split/Bridge/Goal target cycles and wraps correctly; Void in bounds; no Core/Move/revision/rail mutation",
+    "bridge-open:0: native path from Start produced confirmed animation and framebuffer capture",
+    "fragile-break:5:6: native path from Start produced confirmed animation and framebuffer capture",
+    "interior-fall: native path from Start produced confirmed animation and framebuffer capture",
+    "split:4:14: native path from Start produced confirmed animation and framebuffer capture",
+    "merge: native path from Start produced confirmed animation and framebuffer capture",
+    "edge-fall: native path from Start produced confirmed animation and framebuffer capture",
+    "light: all scenarios used native moves/events, two-cube identity, Space/merge/fall and exact restart flags",
+    "dark: every Fragile/Soft/Heavy/Split/Bridge/Goal target cycles and wraps correctly; Void in bounds; no Core/Move/revision/rail mutation",
+    "bridge-open:0: native path from Start produced confirmed animation and framebuffer capture",
+    "fragile-break:5:6: native path from Start produced confirmed animation and framebuffer capture",
+    "interior-fall: native path from Start produced confirmed animation and framebuffer capture",
+    "split:4:14: native path from Start produced confirmed animation and framebuffer capture",
+    "merge: native path from Start produced confirmed animation and framebuffer capture",
+    "edge-fall: native path from Start produced confirmed animation and framebuffer capture",
+    "dark: all scenarios used native moves/events, two-cube identity, Space/merge/fall and exact restart flags",
+    "BFS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct",
+    "DFS: native worker/replay Goal, Moves=260, metrics and catalog-based Next correct",
+    "IDS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct",
+    "UCS: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct",
+    "Greedy: native worker/replay Goal, Moves=24, metrics and catalog-based Next correct",
+    "A*: native worker/replay Goal, Moves=16, metrics and catalog-based Next correct",
+    "BFS: native worker/replay Goal, Moves=22, metrics and catalog-based Next correct",
+    "Real Level 18 BFS victory \u2192 Next loads Level 19; Level 19 victory disables Next; no Level 20 access",
+    "Restart and native Exit \u2192 Levels \u2192 Back \u2192 Menu work; temporary save isolated"
+  ],
+  "images": [
+    "level-select-19.png",
+    "light-level19.png",
+    "light-split-guide.png",
+    "light-soft-bridge.png",
+    "light-heavy-bridge-closed.png",
+    "light-fragile-collapse.png",
+    "light-interior-void.png",
+    "light-split-teleport.png",
+    "light-merge.png",
+    "light-edge-fall.png",
+    "dark-level19.png",
+    "dark-split-guide.png",
+    "dark-soft-bridge.png",
+    "dark-heavy-bridge-closed.png",
+    "dark-fragile-collapse.png",
+    "dark-interior-void.png",
+    "dark-split-teleport.png",
+    "dark-merge.png",
+    "dark-edge-fall.png",
+    "level19-victory-last-level.png"
+  ],
+  "input": "Real GLX Panda3D window, X11 XTest, production levels catalog",
+  "audio": "OpenAL Soft decoded null output; not a speaker listening test",
+  "solvers": {
+    "BFS": {
+      "moves": 16,
+      "solution_length": 16,
+      "search_ms": 219.10632499930216,
+      "expanded_nodes": 3190
+    },
+    "DFS": {
+      "moves": 260,
+      "solution_length": 260,
+      "search_ms": 22.66847200371558,
+      "expanded_nodes": 295
+    },
+    "IDS": {
+      "moves": 16,
+      "solution_length": 16,
+      "search_ms": 1444.1499480017228,
+      "expanded_nodes": 21132
+    },
+    "UCS": {
+      "moves": 16,
+      "solution_length": 16,
+      "search_ms": 363.66971600364195,
+      "expanded_nodes": 4597
+    },
+    "Greedy": {
+      "moves": 24,
+      "solution_length": 24,
+      "search_ms": 5.3005230001872405,
+      "expanded_nodes": 59
+    },
+    "A*": {
+      "moves": 16,
+      "solution_length": 16,
+      "search_ms": 274.18343300087145,
+      "expanded_nodes": 3190
+    }
+  },
+  "level18_progression": {
+    "BFS": {
+      "moves": 22,
+      "solution_length": 22,
+      "search_ms": 76.44510400132276,
+      "expanded_nodes": 1458
+    }
+  },
+  "status": "PASS"
+}

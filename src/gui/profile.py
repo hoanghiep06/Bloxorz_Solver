@@ -13,7 +13,9 @@ THEMES = ('light', 'dark')
 class Settings:
     control_mode: str = 'keyboard'
     theme: str = 'light'
-    quality: str = 'auto'
+    quality: str = 'high'
+    master_volume: float = .8
+    muted: bool = False
     music: bool = True
     music_volume: float = 0.7
     sfx: bool = True
@@ -56,14 +58,14 @@ class SaveData:
                 self.settings.control_mode = settings['control_mode']
             if settings.get('theme') in THEMES:
                 self.settings.theme = settings['theme']
-            if settings.get('quality') in ('auto','high','balanced','low'):
-                self.settings.quality=settings['quality']
+            # Graphics quality is fixed to High; ignore obsolete saved choices.
+            self.settings.quality = 'high'
             legacy = settings.get('volume')            # save cũ: một âm lượng chung
-            for key in ('music_volume', 'sfx_volume'):
-                value = settings.get(key, legacy)
+            for key in ('master_volume', 'music_volume', 'sfx_volume'):
+                value = settings.get(key, legacy if key!='master_volume' else None)
                 if type(value) in (int, float) and 0 <= value <= 1:
                     setattr(self.settings, key, float(value))
-            for key in ('music', 'sfx'):
+            for key in ('muted', 'music', 'sfx'):
                 if type(settings.get(key)) is bool:
                     setattr(self.settings, key, settings[key])
         self.stars = _int_map(data.get('stars'))
@@ -74,6 +76,8 @@ class SaveData:
         payload = {'settings': {'control_mode': self.settings.control_mode,
                                 'theme': self.settings.theme,
                                 'quality': self.settings.quality,
+                                'master_volume': self.settings.master_volume,
+                                'muted': self.settings.muted,
                                 'music': self.settings.music,
                                 'music_volume': self.settings.music_volume,
                                 'sfx': self.settings.sfx,

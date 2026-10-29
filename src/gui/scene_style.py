@@ -105,6 +105,9 @@ def apply_tile_theme(dynamic_root, theme):
     global TILE_THEME
 
     TILE_THEME = theme if theme in ("light", "dark") else "light"
+    from src.gui.switch_vfx import clear_transients_for_theme
+    if dynamic_root is not None and not dynamic_root.isEmpty():
+        clear_transients_for_theme(dynamic_root,TILE_THEME)
     sync_tile_theme(dynamic_root)
 
 

@@ -34,6 +34,8 @@ def configure(gsg):
     global _shader, _snow_shader, STATUS, SNOW_STATUS
     from src.gui import visual_quality as q
     q.configure(gsg)
+    from src.gui import switch_materials
+    switch_materials.configure(gsg)
     set_quality(q.CURRENT)
     state.cache_clear()
     texture.cache_clear()

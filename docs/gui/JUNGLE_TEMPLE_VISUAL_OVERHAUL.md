@@ -62,7 +62,7 @@ BLOXORZ_BLOOM=0 .venv/bin/python -B main.py
 BLOXORZ_MATERIALS=fixed .venv/bin/python -B main.py
 ```
 
-Trong **Settings → Graphics quality**:
+Chất lượng mặc định **High**; Settings không còn hàng Graphics quality. Các mức sau chỉ còn dùng cho kiểm thử/chẩn đoán bằng biến môi trường `BLOXORZ_QUALITY`:
 
 | Mức | Detail normal | Bloom |
 | --- | --- | --- |
@@ -71,7 +71,7 @@ Trong **Settings → Graphics quality**:
 | Balanced | Giảm biên độ normal; bỏ halo | Tắt |
 | Low | Bỏ gradient normal và halo; giữ albedo/emission | Tắt |
 
-Đổi mức áp dụng ngay, giữ nguyên board/state/session/Moves. `BLOXORZ_QUALITY` chỉ override khi khởi động; lựa chọn trong Settings vẫn thay đổi được và lưu vào profile. Giá trị env không hợp lệ được bỏ qua. Các mức này không đổi resolution, luật, animation duration hoặc metrics. Fallback material vẫn được dùng nếu shader không khả dụng.
+File lưu cũ có mức Auto/Balanced/Low được đưa về High, giữ nguyên các thiết lập còn lại và tiến độ. `BLOXORZ_QUALITY` chỉ override khi khởi động để chẩn đoán; giá trị env không hợp lệ dùng mặc định High. Các mức này không đổi resolution, luật, animation duration hoặc metrics. Fallback material vẫn được dùng nếu shader không khả dụng.
 
 Ánh sáng cố định của material bổ sung cho rig key/fill hiện có và contact shadow được clip vào ô có sàn. Shadow map tùy chọn của rig cũ không được quảng bá là PBR shadow receiver cho shader mới.
 
@@ -197,7 +197,7 @@ Vấn đề tài liệu có sẵn ngoài phạm vi: lệnh `benchmark.py` cũ tr
 .venv/bin/python -B main.py
 ```
 
-Vào **Settings → Appearance → Light**; chọn **Graphics quality → High** để xem đầy đủ bloom (Balanced/Low nếu máy yếu), sau đó **Start → chọn level**. AI Solver mở hàng BFS/DFS/IDS/UCS/Greedy/A*. Có thể đổi theme trong Settings, camera bằng C, đổi cube bằng Space. Các nút và metrics vẫn dùng pipeline thật.
+Vào **Settings → Appearance → Light**; chất lượng High đã được chọn mặc định, sau đó **Start → chọn level**. AI Solver mở hàng BFS/DFS/IDS/UCS/Greedy/A*. Có thể đổi theme trong Settings, camera bằng C, đổi cube bằng Space. Các nút và metrics vẫn dùng pipeline thật.
 
 Để xem chính sandbox đầy đủ trong ảnh kiểm chứng, dùng **catalog fixture** rồi chọn màn 11:
 

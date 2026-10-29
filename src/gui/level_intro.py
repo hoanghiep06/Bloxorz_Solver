@@ -223,8 +223,9 @@ class LevelIntro:
     SHAKE = .05          # board shake amplitude (in tile sizes); 0 disables
     TILE_DIP = .15       # how far the landing tiles sag (in tile sizes)
 
-    def __init__(self, app, on_done=None):
+    def __init__(self, app, on_done=None, *, audio=None):
         self.app, self.on_done = app, on_done
+        self.audio=audio;self._audio_scope=None;self._wind_sound=None;self._audio_counter=0
         self.active = False
         self._hidden_growth = []
         self._items, self._t, self._task = [], 0.0, None
@@ -250,6 +251,8 @@ class LevelIntro:
     # ------------------------------------------------------------------ play
     def play(self, rows, cols):
         self.finish(notify=False)
+        self._audio_counter+=1
+        self._audio_scope=('intro',id(self),self._audio_counter)
         app = self.app
         for node in app.static_board_root.findAllMatches('**/TempleEdgeGrowth'):
             if not node.isHidden():
@@ -319,11 +322,16 @@ class LevelIntro:
 
     def _begin_drop(self):
         self._dropping = True
+        if self.audio:self._wind_sound=self.audio.play_sfx('opening_wind',scope=self._audio_scope)
         self.app.block_root.show()
         self._measure()
 
     def _land(self):
+        if self._landed:return
         self._landed = True
+        if self.audio:
+            self.audio.stop_loop(self._wind_sound)
+            self.audio.play_sfx('opening_landing',scope=self._audio_scope)
         self._dists = [min((math.hypot(w[0] - cx, w[1] - cy) for cx, cy in self._centers),
                            default=99.0) / self._pitch
                        for _, _, _, w in self._items]
@@ -370,6 +378,7 @@ class LevelIntro:
         block.setScale(sxy, sxy, sz)
 
     def _update(self, task):
+        if not self.active:return task.done
         self._t += min(ClockObject.getGlobalClock().getDt(), .05)
         t = self._t
         t_drop = self.WAVE + self.TILE_TIME
@@ -426,6 +435,9 @@ class LevelIntro:
         self._finish(notify, keep_fx=False)
 
     def _finish(self, notify, keep_fx):
+        if not keep_fx and self.audio and self._audio_scope is not None:
+            self.audio.stop_scope(self._audio_scope)
+            self._audio_scope=None
         if self._task is not None:
             self.app.taskMgr.remove(self._task)
             self._task = None
