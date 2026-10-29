@@ -5,6 +5,7 @@ attract-mode solver demo, Level Select keeps the scene still, and the Game scree
 hands the scene to the player and shows the HUD.
 """
 import math
+import time
 from dataclasses import dataclass
 
 from direct.gui import DirectGuiGlobals as DGG
@@ -204,7 +205,7 @@ class SettingsScreen(Screen):
     def build(self, width, height):
         flow, settings = self.flow, self.flow.save.settings
         self._ready = False             # slider callbacks fire during construction
-        cw, ch = 560, 690
+        cw, ch = 560, 580
         x0, y0 = (width - cw) / 2, (height - ch) / 2
         self.card(x0, y0, cw, ch, alpha=.97)
         self.label('Settings', 40, width / 2, y0 + 62, align='center')
@@ -221,24 +222,16 @@ class SettingsScreen(Screen):
             self.button(text, x0 + 40 + i * 250, y0 + 240, 230, 44,
                         lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
 
-        self.label('Master volume',20,x0+40,y0+315,color=ui.MUTED)
-        self._mute=self.button('Unmute All' if settings.muted else 'Mute All',
-            x0+40,y0+330,195,50,self._toggle_mute,primary=settings.muted,size=18)
-        self._master_text=self.label(f'{round(settings.master_volume*100)}%',20,x0+cw-40,y0+362,align='right')
-        self._master_slider=self.own(ui.make_slider(self.root,x0+265,y0+349,190,12,
-            settings.master_volume,self._on_master_volume))
-        self._master_slider.thumb.bind(DGG.B1RELEASE,self._music_released)
-
-        self.label('Music / Ambience', 20, x0 + 40, y0 + 435, color=ui.MUTED)
+        self.label('Music / Ambience', 20, x0 + 40, y0 + 325, color=ui.MUTED)
         (self._music_buttons, self._music_slider,
          self._music_text) = self._audio_row(
-            x0, cw, y0 + 450, settings.music, self._set_music,
+            x0, cw, y0 + 340, settings.music, self._set_music,
             settings.music_volume, self._on_music_volume, self._music_released)
 
-        self.label('Sound effects', 20, x0 + 40, y0 + 530, color=ui.MUTED)
+        self.label('Sound effects', 20, x0 + 40, y0 + 420, color=ui.MUTED)
         (self._sfx_buttons, self._sfx_slider,
          self._sfx_text) = self._audio_row(
-            x0, cw, y0 + 545, settings.sfx, self._set_sfx,
+            x0, cw, y0 + 435, settings.sfx, self._set_sfx,
             settings.sfx_volume, self._on_sfx_volume, self._sfx_released)
 
         self.button('Back', x0 + (cw - 200) / 2, y0 + ch - 76, 200, 50,
@@ -290,19 +283,6 @@ class SettingsScreen(Screen):
         self.flow.app.dashboard.hud.restyle()
         self.release_later()                 # old widgets are destroyed next frame
         self.build(*self.flow.size)
-
-    def _toggle_mute(self):
-        settings=self.flow.save.settings;settings.muted=not settings.muted
-        self.flow.audio.set_muted(settings.muted);self.flow.save.save()
-        self._mute['text']='Unmute All' if settings.muted else 'Mute All'
-        ui.style_button(self._mute,primary=settings.muted)
-
-    def _on_master_volume(self):
-        if not self._ready:return
-        value=float(self._master_slider['value'])
-        self.flow.save.settings.master_volume=value
-        self.flow.audio.set_master_volume(value)
-        self._master_text['text']=f'{round(value*100)}%'
 
     def _on_music_volume(self):
         if not self._ready:
@@ -427,6 +407,8 @@ class GameScreen(Screen):
 
 class UIFlow:
     LEFT_SHARE = .4          # main menu: buttons on the left 40%, scene on the right
+    PAR_ORDER = ('BFS', 'A*', 'UCS', 'Greedy', 'IDS', 'DFS')   # BFS trước để có par sớm
+    PAR_TIMEOUT = 20.0       # giây tối đa cho mỗi solver khi tính par
 
     def __init__(self, app, controller, catalog, save, audio, attract):
         self.app, self.controller, self.catalog = app, controller, catalog
@@ -437,6 +419,7 @@ class UIFlow:
         self._later_tasks = set()
         self._retired = []
         self._par_job = self._par_task = None
+        self._par_queue, self._par_level, self._par_started = [], None, 0.0
 
         ui.set_theme(save.settings.theme)
         self.apply_scene_theme(save.settings.theme)
@@ -505,34 +488,53 @@ class UIFlow:
                 self._supported[entry.level_id] = False
         return self._supported[entry.level_id]
 
+    # ---------------------------------------------------------------- par
     def _ensure_par(self):
-        """Optimal move count (BFS) is the 3-star threshold; cached in the save file."""
+        """Par = số nước ít nhất tìm được trong 6 solver; BFS chạy trước nên có par sớm."""
         entry = self.catalog[self.controller.level_index]
         if entry.level_id in self.save.par:
             return
         self._cancel_par()
-        try:
-            self._par_job = SolverJob(self.controller.board, 'src.solvers.bfs', 'BFSSolver')
-        except Exception:
-            return
-        def poll(task):
+        from src.gui.controller import SOLVER_SPECS
+        self._par_queue = [SOLVER_SPECS[n] for n in self.PAR_ORDER if n in SOLVER_SPECS]
+        self._par_level = entry.level_id
+        self._par_next()
+
+    def _par_next(self):
+        while self._par_queue:
+            module, class_name = self._par_queue.pop(0)
             try:
-                outcome = self._par_job.poll()
+                self._par_job = SolverJob(self.controller.board, module, class_name)
             except Exception:
-                self._par_job.cancel()
-                self._par_job = self._par_task = None
-                return task.done
-            if outcome is None:
+                continue
+            self._par_started = time.monotonic()
+            self._par_task = self.app.taskMgr.add(self._par_poll, f'ParSolver-{id(self)}')
+            return
+
+    def _par_poll(self, task):
+        job = self._par_job
+        try:
+            outcome = job.poll()
+        except Exception:
+            job.cancel()
+            outcome = (False, None)
+        if outcome is None:
+            if time.monotonic() - self._par_started <= self.PAR_TIMEOUT:
                 return task.cont
-            self._par_job = self._par_task = None
-            ok, result = outcome
-            if ok and result.success:
-                self.save.par[entry.level_id] = result.solution_length
+            job.cancel()                       # solver quá chậm: bỏ qua
+            outcome = (False, None)
+        self._par_job = self._par_task = None
+        ok, result = outcome
+        if ok and getattr(result, 'success', False):
+            best = self.save.par.get(self._par_level)
+            if best is None or result.solution_length < best:
+                self.save.par[self._par_level] = result.solution_length
                 self.save.save()
-            return task.done
-        self._par_task = self.app.taskMgr.add(poll, f'ParSolver-{id(self)}')
+        self._par_next()                       # solver kế tiếp (nếu còn)
+        return task.done
 
     def _cancel_par(self):
+        self._par_queue = []
         if self._par_task is not None:
             self.app.taskMgr.remove(self._par_task)
         if self._par_job is not None:
