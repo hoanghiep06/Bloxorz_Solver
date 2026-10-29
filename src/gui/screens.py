@@ -22,6 +22,9 @@ from src.gui.profile import star_rating
 from src.gui.game_adapter import prepare_level
 from src.gui.solver_worker import SolverJob
 
+# Sự kiện game phát được thành tiếng (chỉ khi đang ở màn chơi).
+GAME_SFX = ('roll', 'goal', 'fall', 'switch', 'bridge', 'crack', 'split')
+
 
 def destroy_items(items):
     from direct.gui.DirectGuiBase import DirectGuiWidget
@@ -194,7 +197,7 @@ class SettingsScreen(Screen):
     def build(self, width, height):
         flow, settings = self.flow, self.flow.save.settings
         self._ready = False             # slider callbacks fire during construction
-        cw, ch = 560, 690
+        cw, ch = 560, 580
         x0, y0 = (width - cw) / 2, (height - ch) / 2
         self.card(x0, y0, cw, ch, alpha=.97)
         self.label('Settings', 40, width / 2, y0 + 62, align='center')
@@ -211,25 +214,16 @@ class SettingsScreen(Screen):
             self.button(text, x0 + 40 + i * 250, y0 + 240, 230, 44,
                         lambda t=theme: self._set_theme(t), primary=settings.theme == theme)
 
-        self.label('Graphics quality',20,x0+40,y0+320,color=ui.MUTED)
-        self._quality_buttons={}
-        for i,(quality,text) in enumerate((('auto','Auto'),('high','High'),('balanced','Balanced'),('low','Low'))):
-            self._quality_buttons[quality]=self.button(text,x0+40+i*123,y0+336,112,42,
-                lambda q=quality:self._set_quality(q),primary=settings.quality==quality,size=18)
-        from src.gui import visual_quality
-        self._quality_hint=self.label(visual_quality.CURRENT.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately',14,
-            width/2,y0+402,color=ui.MUTED,align='center')
-
-        self.label('Music', 20, x0 + 40, y0 + 435, color=ui.MUTED)
+        self.label('Music', 20, x0 + 40, y0 + 325, color=ui.MUTED)
         (self._music_buttons, self._music_slider,
          self._music_text) = self._audio_row(
-            x0, cw, y0 + 450, settings.music, self._set_music,
+            x0, cw, y0 + 340, settings.music, self._set_music,
             settings.music_volume, self._on_music_volume, self._music_released)
 
-        self.label('Sound effects', 20, x0 + 40, y0 + 530, color=ui.MUTED)
+        self.label('Sound effects', 20, x0 + 40, y0 + 420, color=ui.MUTED)
         (self._sfx_buttons, self._sfx_slider,
          self._sfx_text) = self._audio_row(
-            x0, cw, y0 + 545, settings.sfx, self._set_sfx,
+            x0, cw, y0 + 435, settings.sfx, self._set_sfx,
             settings.sfx_volume, self._on_sfx_volume, self._sfx_released)
 
         self.button('Back', x0 + (cw - 200) / 2, y0 + ch - 76, 200, 50,
@@ -270,15 +264,6 @@ class SettingsScreen(Screen):
         self.flow.audio.set_sfx_enabled(enabled)
         for value, button in self._sfx_buttons.items():
             ui.style_button(button, primary=value == enabled)
-
-    def _set_quality(self, quality):
-        self.flow.app.dashboard.set_quality(quality)
-        self.flow.save.settings.quality=quality
-        self.flow.save.save()
-        from src.gui import visual_quality
-        for name,button in self._quality_buttons.items():
-            ui.style_button(button,primary=name==quality)
-        self._quality_hint['text']=quality.capitalize()+': '+visual_quality.EFFECTIVE.capitalize()+' / changes apply immediately'
 
     def _set_theme(self, theme):
         self.flow.save.settings.theme = theme
@@ -432,7 +417,7 @@ class UIFlow:
 
         self.screens = {cls.name: cls(self)
                         for cls in (MainMenu, LevelSelect, SettingsScreen, GameScreen)}
-        self.intro = LevelIntro(app, self._intro_done)
+        self.intro = LevelIntro(app, self._intro_done, on_sound=self.audio.play)
         import os
         self.arrows = MoveAssistLayer(app, controller, self._arrows_visible,
             enabled=os.environ.get('BLOXORZ_MOVE_ASSIST_DEBUG')=='1')
@@ -662,7 +647,7 @@ class UIFlow:
             return
         if self.name != 'game':
             return                       # attract mode stays silent
-        if name in ('roll', 'goal', 'fall'):
+        if name in GAME_SFX:
             self.audio.play(name)
         if name == 'fall':
             self.screens['game'].show_fail()            # khung thua: Retry / Exit

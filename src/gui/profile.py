@@ -56,8 +56,6 @@ class SaveData:
                 self.settings.control_mode = settings['control_mode']
             if settings.get('theme') in THEMES:
                 self.settings.theme = settings['theme']
-            if settings.get('quality') in ('auto','high','balanced','low'):
-                self.settings.quality=settings['quality']
             legacy = settings.get('volume')            # save cũ: một âm lượng chung
             for key in ('music_volume', 'sfx_volume'):
                 value = settings.get(key, legacy)

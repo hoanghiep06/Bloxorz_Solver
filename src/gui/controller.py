@@ -31,6 +31,16 @@ SOLVER_SPECS = {
     'A*': ('src.solvers.astar', 'AStarSolver'),
 }
 SPEED_RANGE = (0.25, 4.0)
+# Sự kiện hoạt cảnh -> tên hiệu ứng âm thanh (goal / fall do controller phát riêng).
+SFX_EVENTS = {
+    EventKind.SWITCH_ACTIVATE: 'switch',
+    EventKind.SWITCH_DEACTIVATE: 'switch',
+    EventKind.BRIDGE_PRESENT: 'bridge',
+    EventKind.BRIDGE_ABSENT: 'bridge',
+    EventKind.FRAGILE_BREAK: 'crack',
+    EventKind.SPLIT: 'split',
+    EventKind.MERGE: 'split',
+}
 
 @dataclass(frozen=True)
 class LevelEntry:
@@ -189,6 +199,7 @@ class GameController:
         self._cancel_deferred()
         self._dispose_manager()
         self._scene, self.manager = (new_scene, new_manager)
+        self.manager.event_sink = self._on_visual_event      # âm thanh theo sự kiện hoạt cảnh
         self.board, self.board_data, self.state = (board, data, initial)
         self.level_index = index
         self._sessions += 1
@@ -217,6 +228,12 @@ class GameController:
     def _emit(self, name):
         if self._on_event is not None:
             self._on_event(name)
+
+    def _on_visual_event(self, kind):
+        """Đổi sự kiện hoạt cảnh (switch, cầu, ô vỡ, tách/nhập) thành tên hiệu ứng âm thanh."""
+        name = SFX_EVENTS.get(kind)
+        if name is not None:
+            self._emit(name)
 
     def load_level(self, index):
         return self._load_level(index)

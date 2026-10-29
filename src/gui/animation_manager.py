@@ -26,11 +26,17 @@ class AnimationManager:
     Callback exceptions propagate after terminal bookkeeping, never create a
     second result. Cancel restores known before-state and its visual orientation.
     Explicit resync/release may intentionally reset to the canonical face basis.
+
+    event_sink(kind) là callback tuỳ chọn: được gọi đúng một lần cho mỗi sự kiện
+    của request khi tiến trình hoạt cảnh chạm mốc `start` của sự kiện đó (dùng để
+    phát âm thanh). Lỗi trong callback không làm hỏng hoạt cảnh.
     """
     def __init__(self, renderer, board_data, snapshot, block_root, *, surface_layer=None,
                  pitch=1.0, task_mgr=None):
         self._thread = threading.get_ident()
         self.renderer = renderer
+        self.event_sink = None
+        self._fired = set()
         self.board = as_visual_board(board_data)
         self._pitch = pitch
         from src.gui.geometry_math import cell_to_world
@@ -151,6 +157,7 @@ class AnimationManager:
         self._targets, self._roll = target, plan
         self._timeline = AnimationTimeline(request.duration, self._rate)
         self._request, self._callback = request, on_finished
+        self._fired = set()
         self._recent_ids.append((request.session_id, request.request_id))
         self._status, self._progress = Status.PLAYING, 0.0
         try:
@@ -167,6 +174,17 @@ class AnimationManager:
         self._rig.apply(poses, supports=tuple(xy for cell,xy in self._support_patches if cell not in broken), active_weights=({active_id: 1} if active_id is not None else {})
                         if weights is None else weights, opacity=opacity, scales=scales)
 
+    def _notify_event(self, index, kind):
+        """Báo mỗi sự kiện đúng một lần (dùng cho âm thanh)."""
+        if index in self._fired:
+            return
+        self._fired.add(index)
+        if self.event_sink is not None:
+            try:
+                self.event_sink(kind)
+            except Exception:
+                pass
+
     def _sample(self, progress):
         request = self._request
         before = as_visual_snapshot(request.before_snapshot)
@@ -177,9 +195,10 @@ class AnimationManager:
             key = request.actor_id if request.kind is AnimationKind.ROLL else request.terminal.actor_id
             poses[key] = self._roll.sample(progress if request.kind is AnimationKind.ROLL
                                            else min(1, progress / .45))
-        for event in request.events:
+        for index, event in enumerate(request.events):
             if progress < event.start:
                 continue
+            self._notify_event(index, event.kind)
             u = smoothstep(event_progress(event, progress))
             if event.kind is EventKind.SPLIT:
                 source = self._start_poses[None]

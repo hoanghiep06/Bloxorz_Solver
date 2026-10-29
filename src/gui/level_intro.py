@@ -223,8 +223,9 @@ class LevelIntro:
     SHAKE = .05          # board shake amplitude (in tile sizes); 0 disables
     TILE_DIP = .15       # how far the landing tiles sag (in tile sizes)
 
-    def __init__(self, app, on_done=None):
+    def __init__(self, app, on_done=None, on_sound=None):
         self.app, self.on_done = app, on_done
+        self.on_sound = on_sound          # on_sound('land') khi khối chạm sàn
         self.active = False
         self._hidden_growth = []
         self._items, self._t, self._task = [], 0.0, None
@@ -324,6 +325,8 @@ class LevelIntro:
 
     def _land(self):
         self._landed = True
+        if self.on_sound is not None:       # tiếng "rầm" đúng lúc chạm sàn
+            self.on_sound('land')
         self._dists = [min((math.hypot(w[0] - cx, w[1] - cy) for cx, cy in self._centers),
                            default=99.0) / self._pitch
                        for _, _, _, w in self._items]

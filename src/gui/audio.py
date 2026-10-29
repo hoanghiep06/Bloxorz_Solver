@@ -1,6 +1,7 @@
 """Volume control plus procedurally synthesised sound (stdlib only, no licensed files).
 
 Sounds are generated once into assets/audio/*.wav and reused afterwards.
+Muốn sinh lại một tiếng sau khi sửa hàm tạo: xoá file .wav tương ứng trong assets/audio/.
 Background music: tracks in music/ (1.mp3, 2.mp3, ...) play one after another in a loop.
 """
 import math
@@ -12,7 +13,9 @@ from pathlib import Path
 
 RATE, MUSIC_RATE = 22050, 11025
 DEFAULT_DIR = Path(__file__).resolve().parents[2] / 'assets' / 'audio'
-SFX_NAMES = ('click', 'roll', 'goal', 'fall')
+SFX_NAMES = ('click', 'roll', 'goal', 'fall', 'land', 'switch', 'bridge', 'crack', 'split')
+# Âm lượng riêng từng hiệu ứng (nhân với âm lượng SFX chung). Tiếng lăn phát liên tục nên để nhỏ.
+SFX_GAIN = {'roll': .4}
 MUSIC_DIR = Path(__file__).resolve().parents[2] / 'music'   # đổi thành 'assets' / 'music' nếu cần
 MUSIC_EXTS = ('.mp3', '.ogg', '.wav')
 
@@ -41,6 +44,46 @@ def _note(freq, duration, volume, decay, freq_end=None, rate=RATE):
     return out
 
 
+def _noise(duration, volume, decay, seed=1, rate=RATE):
+    """Nhiễu trắng tắt dần (tiếng đá vỡ, bụi)."""
+    rng = random.Random(seed)
+    count = int(duration * rate)
+    return [(rng.random() * 2 - 1) * volume * math.exp(-decay * i / rate)
+            * min(1.0, i / (.002 * rate)) * min(1.0, (count - i) / (.005 * rate))
+            for i in range(count)]
+
+
+def _mix(*tracks):
+    """Cộng nhiều đoạn âm chồng lên nhau (đoạn ngắn hơn được đệm im lặng)."""
+    length = max(len(t) for t in tracks)
+    return [sum(t[i] for t in tracks if i < len(t)) for i in range(length)]
+
+
+def _lowpass(samples, cutoff, rate=RATE):
+    """Bộ lọc thông thấp một cực: làm nhiễu trầm và 'đục' như tiếng đá."""
+    a = 1 - math.exp(-2 * math.pi * cutoff / rate)
+    y, out = 0.0, []
+    for x in samples:
+        y += a * (x - y)
+        out.append(y)
+    return out
+
+
+def _delay(samples, seconds, rate=RATE):
+    return [0.0] * int(seconds * rate) + samples
+
+
+def _saturate(samples, drive):
+    """Bão hoà mềm (tanh): làm tiếng đập dày, 'đầm' hơn mà không vỡ tiếng."""
+    norm = math.tanh(drive)
+    return [math.tanh(s * drive) / norm for s in samples]
+
+
+def _normalize(samples, peak):
+    top = max((abs(s) for s in samples), default=0.0) or 1.0
+    return [s * peak / top for s in samples]
+
+
 def _click():
     return _note(880, .07, .35, 45)
 
@@ -58,6 +101,45 @@ def _goal():
     for freq, length in ((523.25, .14), (659.25, .14), (783.99, .14), (1046.5, .6)):
         samples += _note(freq, length, .4, 5)
     return samples
+
+
+def _land():
+    """Khối đá nặng rơi xuống nền: cú va gắt + tiếng đục + thình thịch sâu + đá vụn + ầm vang."""
+    crack = _noise(.025, 1.0, 110, seed=21)                                  # cú va chạm gắt
+    body = _lowpass(_noise(.28, 1.4, 13, seed=22), 900)                      # thân khối đá, đục
+    knock = _note(190, .14, .7, 32, 105)                                     # tiếng "cộp" tầm trung
+    thump = _note(72, .55, 1.1, 7, 28)                                       # thình thịch sâu
+    rumble = _lowpass(_noise(.7, .9, 5.5, seed=23), 220)                     # ầm vang dư
+    debris = [_delay(_lowpass(_noise(.06, .30 - k * .05, 45, seed=30 + k), 2800),
+                     .05 + k * .055 + (k % 2) * .012)
+              for k in range(5)]                                             # sỏi đá nảy lách tách
+    mixed = _mix(crack, body, knock, thump, rumble, *debris)
+    return _normalize(_saturate(mixed, 2.2), .95)
+
+
+def _switch():
+    """'Tách' ngắn hai nốt."""
+    return _note(700, .05, .3, 60) + _note(470, .09, .3, 38)
+
+
+def _bridge():
+    """Tiếng trượt cơ khí: quét tần số nhẹ kèm nhiễu rất nhỏ."""
+    return _mix(_note(170, .4, .28, 5, 330), _noise(.4, .05, 6, seed=5))
+
+
+def _crack():
+    """Đá vỡ: vài loạt nhiễu lệch nhịp."""
+    gap = int(.05 * RATE)
+    out = _noise(.25, .55, 16, seed=11)
+    for k, seed in enumerate((12, 13), start=1):
+        burst = [0.0] * (gap * k) + _noise(.18, .4, 22, seed=seed)
+        out = _mix(out, burst)
+    return _mix(out, _note(140, .2, .3, 14, 70))
+
+
+def _split():
+    """Hai nốt quét ngược chiều."""
+    return _note(440, .1, .3, 12, 660) + _note(660, .14, .3, 10, 880)
 
 
 # Am - F - C - G pads, one octave low. Frequencies snap to 1/16 Hz so every
@@ -97,7 +179,9 @@ def _write(path, samples, rate):
 def ensure_assets(directory=DEFAULT_DIR):
     """Create missing WAV files and return {name: Path}; falls back to a temp dir."""
     makers = {'click': (_click, RATE), 'roll': (_roll, RATE), 'goal': (_goal, RATE),
-              'fall': (_fall, RATE), 'music': (_music, MUSIC_RATE)}
+              'fall': (_fall, RATE), 'land': (_land, RATE), 'switch': (_switch, RATE),
+              'bridge': (_bridge, RATE), 'crack': (_crack, RATE), 'split': (_split, RATE),
+              'music': (_music, MUSIC_RATE)}
     try:
         folder = Path(directory)
         folder.mkdir(parents=True, exist_ok=True)
@@ -116,7 +200,7 @@ def ensure_assets(directory=DEFAULT_DIR):
 
 
 class AudioManager:
-    """Hai kênh riêng: nhạc nền và hiệu ứng (lăn, click, thắng, thua).
+    """Hai kênh riêng: nhạc nền và hiệu ứng (lăn, click, thắng, thua, công tắc...).
 
     Mỗi kênh có công tắc bật/tắt và âm lượng độc lập, nên tắt nhạc thì tiếng game vẫn còn.
     Nhạc nền: phát ngẫu nhiên các bài trong music/, không lặp lại cùng một bài liên tiếp.
@@ -137,6 +221,8 @@ class AudioManager:
             return Filename.fromOsSpecific(str(paths[name]))
 
         self._sfx = {name: base.loader.loadSfx(path(name)) for name in SFX_NAMES}
+        for name, sound in self._sfx.items():
+            sound.setVolume(SFX_GAIN.get(name, 1.0))
 
         self._tracks = []
         for file in find_playlist(music_dir):
