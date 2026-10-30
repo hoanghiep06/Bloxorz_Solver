@@ -125,6 +125,8 @@ BFS also finds valid suffixes from a real split state and a state with the fragi
 
 ## 10. AI results
 
+**Weighted merge update:** the table below is historical. Default tuned A*/UCS now return 20 actions at cost 38 from Initial State, while BFS remains 16 actions. See [integration validation](../PHONG_WEIGHTED_MERGE.md) for current-state replay and both-theme runtime evidence.
+
 Measured through the existing `.solve()` implementation with its unchanged `tracemalloc` metrics, on this workstation. Seconds/peak traced KiB are measurements, not performance guarantees.
 
 | Solver | Result | Actions | Expanded nodes | Seconds | Peak Python KiB |

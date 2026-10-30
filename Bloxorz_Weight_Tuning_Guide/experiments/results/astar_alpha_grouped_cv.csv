@@ -1,0 +1,7 @@
+﻿fold,heldout_levels,selected_alpha,heldout_mean_expanded,heldout_alpha0_mean_expanded,heldout_all_success_valid_optimal
+1,level_01 level_09 level_15,1.0,161,207,True
+2,level_02 level_10 level_16,1.0,1585,2097.6666666666665,True
+3,level_03 level_05 level_11,1.0,150.33333333333334,158,True
+4,level_04 level_06 level_12,1.0,191.33333333333334,233,True
+5,level_07 level_13 level_17,1.0,2599.6666666666665,2877.3333333333335,True
+6,level_08 level_14 level_18,1.0,1603.3333333333333,2126.6666666666665,True

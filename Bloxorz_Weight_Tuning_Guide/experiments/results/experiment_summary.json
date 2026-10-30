@@ -1,0 +1,475 @@
+{
+  "dataset": {
+    "n_levels": 18,
+    "n_trajectories_audited": 180,
+    "invalid_or_failed_trajectory_replays": 5,
+    "duplicate_sequences_within_level": 59
+  },
+  "ucs": {
+    "grid_size": 244,
+    "baseline_configurations": {
+      "baseline_rubric": {
+        "config_id": 121,
+        "weights": {
+          "w_backtrack": 3.0,
+          "w_void": 2.0,
+          "w_fragile": 4.0,
+          "w_switch_change": 2.5,
+          "w_bridge_entry": 3.0
+        },
+        "mean_quality_loss": 0.06781273507677331,
+        "mean_cv_heldout_loss": 0.06781273507677331,
+        "description": "Hand-crafted engineering rubric baseline (3, 2, 4, 2.5, 3)"
+      },
+      "baseline_const_1": {
+        "config_id": 0,
+        "weights": {
+          "w_backtrack": 0.0,
+          "w_void": 0.0,
+          "w_fragile": 0.0,
+          "w_switch_change": 0.0,
+          "w_bridge_entry": 0.0
+        },
+        "mean_quality_loss": 0.10543976872132985,
+        "mean_cv_heldout_loss": 0.10543976872132985,
+        "description": "Unit step cost baseline (cost_function = const = 1.0, zero penalties)"
+      },
+      "baseline_equal_1": {
+        "config_id": 243,
+        "weights": {
+          "w_backtrack": 1.0,
+          "w_void": 1.0,
+          "w_fragile": 1.0,
+          "w_switch_change": 1.0,
+          "w_bridge_entry": 1.0
+        },
+        "mean_quality_loss": 0.08416301606265764,
+        "mean_cv_heldout_loss": 0.08416301606265764,
+        "description": "Equal penalty weights baseline (all penalty weights = 1.0)"
+      }
+    },
+    "baseline_config_id": 121,
+    "baseline_rubric_config_id": 121,
+    "baseline_const1_config_id": 0,
+    "baseline_equal1_config_id": 243,
+    "best_full_data_config_id": 229,
+    "chosen_config_id": 121,
+    "decision": "retain baseline rubric because grouped-CV did not improve on baseline rubric",
+    "baseline_weights": {
+      "w_backtrack": 3.0,
+      "w_void": 2.0,
+      "w_fragile": 4.0,
+      "w_switch_change": 2.5,
+      "w_bridge_entry": 3.0
+    },
+    "chosen_weights": {
+      "w_backtrack": 3.0,
+      "w_void": 2.0,
+      "w_fragile": 4.0,
+      "w_switch_change": 2.5,
+      "w_bridge_entry": 3.0
+    },
+    "best_full_data_mean_rank_loss": 0.0666179919465463,
+    "baseline_mean_rank_loss": 0.06781273507677331,
+    "baseline_const1_mean_rank_loss": 0.10543976872132985,
+    "baseline_equal1_mean_rank_loss": 0.08416301606265764,
+    "mean_cv_heldout_improvement_vs_rubric": -0.002743484224965703,
+    "mean_cv_heldout_improvement_vs_const1": 0.034883549419590834,
+    "mean_cv_heldout_improvement_vs_equal1": 0.013606796760918619,
+    "mean_cv_heldout_improvement_vs_baseline": -0.002743484224965703,
+    "cv_selected_config_ids": [
+      229,
+      229,
+      229,
+      148,
+      229,
+      121
+    ],
+    "folds": {
+      "0": [
+        "level_01",
+        "level_09",
+        "level_15"
+      ],
+      "1": [
+        "level_02",
+        "level_10",
+        "level_16"
+      ],
+      "2": [
+        "level_03",
+        "level_05",
+        "level_11"
+      ],
+      "3": [
+        "level_04",
+        "level_06",
+        "level_12"
+      ],
+      "4": [
+        "level_07",
+        "level_13",
+        "level_17"
+      ],
+      "5": [
+        "level_08",
+        "level_14",
+        "level_18"
+      ]
+    },
+    "quality_weights": {
+      "steps": 0.06451612903225806,
+      "backtracks": 0.1935483870967742,
+      "void_exposure": 0.12903225806451613,
+      "fragile_entries": 0.25806451612903225,
+      "switch_changes": 0.16129032258064516,
+      "bridge_entries": 0.1935483870967742
+    },
+    "interpretation": "Engineering tuning against the predeclared rank-normalized rubric; evaluated and compared against 3 baselines: Team Rubric, Constant Cost (c=1), and Equal Weights (all=1)."
+  },
+  "astar": {
+    "alpha_grid": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "selected_alpha_full_data": 1.0,
+    "full_data_summary": [
+      {
+        "alpha": 0.0,
+        "all_levels_valid_and_optimal": true,
+        "mean_expanded_nodes": 1285.8333333333333,
+        "median_expanded_nodes": 216.0,
+        "mean_cached_graph_search_ms": 10.796055566364279
+      },
+      {
+        "alpha": 0.25,
+        "all_levels_valid_and_optimal": true,
+        "mean_expanded_nodes": 1211.388888888889,
+        "median_expanded_nodes": 211.0,
+        "mean_cached_graph_search_ms": 7.901827769172895
+      },
+      {
+        "alpha": 0.5,
+        "all_levels_valid_and_optimal": true,
+        "mean_expanded_nodes": 1136.3333333333333,
+        "median_expanded_nodes": 209.5,
+        "mean_cached_graph_search_ms": 7.57151111934541
+      },
+      {
+        "alpha": 0.75,
+        "all_levels_valid_and_optimal": true,
+        "mean_expanded_nodes": 1053.5555555555557,
+        "median_expanded_nodes": 199.5,
+        "mean_cached_graph_search_ms": 6.821744435001165
+      },
+      {
+        "alpha": 1.0,
+        "all_levels_valid_and_optimal": true,
+        "mean_expanded_nodes": 989.6666666666666,
+        "median_expanded_nodes": 187.0,
+        "mean_cached_graph_search_ms": 6.559144450067025
+      }
+    ],
+    "cv_mean_selected_alpha": 1.0,
+    "cv_selected_alphas": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "heldout_mean_expansion_improvement_vs_alpha0": 234.83333333333334,
+    "heuristic_checks": [
+      {
+        "level_id": "level_01",
+        "nodes": 113,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 113,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_02",
+        "nodes": 281,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 281,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_03",
+        "nodes": 225,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 225,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_04",
+        "nodes": 381,
+        "split_nodes": 0,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 381,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_05",
+        "nodes": 213,
+        "split_nodes": 0,
+        "goal_nodes": 3,
+        "reachable_to_goal_nodes": 213,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_06",
+        "nodes": 225,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 225,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_07",
+        "nodes": 169,
+        "split_nodes": 0,
+        "goal_nodes": 3,
+        "reachable_to_goal_nodes": 169,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_08",
+        "nodes": 241,
+        "split_nodes": 0,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 241,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_09",
+        "nodes": 289,
+        "split_nodes": 0,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 289,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_10",
+        "nodes": 321,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 321,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_11",
+        "nodes": 235,
+        "split_nodes": 0,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 235,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_12",
+        "nodes": 313,
+        "split_nodes": 0,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 313,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_13",
+        "nodes": 217,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 217,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_14",
+        "nodes": 449,
+        "split_nodes": 0,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 449,
+        "admissibility_violations": 0,
+        "base_cost_consistency_violations": 0,
+        "has_split_switches": false,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_15",
+        "nodes": 1042,
+        "split_nodes": 937,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 1000,
+        "admissibility_violations": 6,
+        "base_cost_consistency_violations": 38,
+        "has_split_switches": true,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_16",
+        "nodes": 16309,
+        "split_nodes": 15942,
+        "goal_nodes": 2,
+        "reachable_to_goal_nodes": 16217,
+        "admissibility_violations": 34,
+        "base_cost_consistency_violations": 402,
+        "has_split_switches": true,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_17",
+        "nodes": 10401,
+        "split_nodes": 10130,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 10393,
+        "admissibility_violations": 16,
+        "base_cost_consistency_violations": 322,
+        "has_split_switches": true,
+        "heuristic_eval": "actual_codebase_heuristic"
+      },
+      {
+        "level_id": "level_18",
+        "nodes": 19252,
+        "split_nodes": 18840,
+        "goal_nodes": 1,
+        "reachable_to_goal_nodes": 19231,
+        "admissibility_violations": 20,
+        "base_cost_consistency_violations": 348,
+        "has_split_switches": true,
+        "heuristic_eval": "actual_codebase_heuristic"
+      }
+    ],
+    "definition": "h=alpha*(min Manhattan distance over occupied cells / 2 + 0.5 if not standing), with h=0 on any board containing a split switch; w_step fixed to 1 and the selected cost model is shared with UCS."
+  },
+  "gbfs": {
+    "grid_size": 256,
+    "baseline_original_gbfs_config_id": 144,
+    "best_full_data_config_id": 0,
+    "chosen_config_id": 144,
+    "chosen_params": {
+      "w_orientation": 1.0,
+      "w_split": 1.0,
+      "w_edge": 0.0,
+      "w_fragile": 0.0
+    },
+    "decision": "retain the original GreedySolver heuristic because grouped-CV did not improve on it",
+    "best_full_data_mean_rank_loss": 0.10423782416192283,
+    "original_gbfs_full_data_mean_rank_loss": 0.12239791974137325,
+    "mean_cv_selected_heldout_loss": 0.12296015180265654,
+    "mean_cv_original_gbfs_heldout_loss": 0.12239791974137325,
+    "cv_selected_configs": [
+      0,
+      94,
+      0,
+      0,
+      0,
+      0
+    ],
+    "cv_heldout_improvement": -0.0005622320612832984,
+    "quality_weights": {
+      "steps": 0.06451612903225806,
+      "backtracks": 0.1935483870967742,
+      "void_exposure": 0.12903225806451613,
+      "fragile_entries": 0.25806451612903225,
+      "switch_changes": 0.16129032258064516,
+      "bridge_entries": 0.1935483870967742
+    },
+    "baseline_params": {
+      "w_orientation": 1.0,
+      "w_split": 1.0,
+      "w_edge": 0.0,
+      "w_fragile": 0.0
+    },
+    "heuristic": "distance + w_orientation*orientation_indicator + w_split*split_indicator + w_edge*number_of_occupied_edge-risk cells + w_fragile*number_of_occupied_fragile cells; baseline (1,1,0,0) matches existing GreedySolver penalties; intended for GBFS ordering, no optimality guarantee."
+  },
+  "selected_configurations": {
+    "ucs_weights": {
+      "w_backtrack": 3.0,
+      "w_void": 2.0,
+      "w_fragile": 4.0,
+      "w_switch_change": 2.5,
+      "w_bridge_entry": 3.0
+    },
+    "astar_alpha": 1.0,
+    "gbfs_params": {
+      "w_orientation": 1.0,
+      "w_split": 1.0,
+      "w_edge": 0.0,
+      "w_fragile": 0.0
+    }
+  },
+  "quality_rubric_weights": {
+    "steps": 0.06451612903225806,
+    "backtracks": 0.1935483870967742,
+    "void_exposure": 0.12903225806451613,
+    "fragile_entries": 0.25806451612903225,
+    "switch_changes": 0.16129032258064516,
+    "bridge_entries": 0.1935483870967742
+  },
+  "feature_definitions": {
+    "S": "directional rolls U/D/L/R only; SPACE/SWITCH is a control change and is not counted as a move",
+    "B": "a roll immediately reverses the previous roll; control switching resets the immediate-backtrack context",
+    "V": "a transition ends with at least one occupied tile having >=2 blocked/out-of-board orthogonal neighbours",
+    "M_fragile": "newly occupied cells that are fragile; this is a contact proxy, not a failed move",
+    "M_switch": "number of bridge flags whose state changes on that transition; a proxy for switch-caused configuration changes, not a detector of unnecessary switches",
+    "C_bridge": "newly occupied bridge cells"
+  },
+  "caveats": [
+    "SPACE/SWITCH changes the active cube but is not counted as a move under the instructor FAQ; it has zero base move cost and its own action/control-switch count is reported separately.",
+    "Existing trajectory score/rating labels were not used for tuning because failed trajectories have inconsistent high scores and the labels are produced by the same evaluator being examined.",
+    "The objective is a predeclared engineering multi-criteria rubric based on normalized within-level ranks, not independently human-labelled ground truth.",
+    "The grid is coarse; the selected coefficients are a supported choice among tested grid values, not a continuous or universal global optimum.",
+    "Grouped held-out analysis is a stability check based on per-level relative ranks, not an independent external test with human-labelled ground truth.",
+    "UCS/A* use an experiment-local weighted search with augmented key (state,last_action); the stock solver classes are not modified by this script and require integration before the GUI can claim to use this path-dependent cost model.",
+    "Benchmark timing from the direct repeated run includes Board.transition work and tracemalloc overhead; it excludes GUI/rendering and the separate replay validator. Compare algorithms under the same protocol."
+  ],
+  "environment": {
+    "python": "3.14.0",
+    "platform": "win32",
+    "repeats_per_level_algorithm": 3
+  }
+}

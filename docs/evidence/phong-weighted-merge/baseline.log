@@ -1,0 +1,21 @@
+.............................................................................................................................................................................F..........................................................................................................................................................................................................................................................................................................................................................................................................................................[SceneStyle] Missing background: /tmp/bloxorz-premerge-baseline-_y41erdo/assets/backgrounds/jungle-temple.png
+................................................Switch shader unavailable; opaque sculpted fallback retained.
+Traceback (most recent call last):
+  File "/tmp/bloxorz-premerge-baseline-_y41erdo/src/gui/switch_materials.py", line 22, in configure
+    if shader is None or shader.prepareNow(gsg.getPreparedObjects(),gsg) is None or shader.getErrorFlag():
+                                           ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'types.SimpleNamespace' object has no attribute 'getPreparedObjects'
+...........
+======================================================================
+FAIL: test_settings_omit_quality_controls_and_fit_both_themes_at_minimum_size (test_game_ui_state.GameUiStateTests.test_settings_omit_quality_controls_and_fit_both_themes_at_minimum_size)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/bloxorz-premerge-baseline-_y41erdo/tests/test_game_ui_state.py", line 61, in test_settings_omit_quality_controls_and_fit_both_themes_at_minimum_size
+    self.assertTrue({'Master volume','Music / Ambience','Sound effects'}<=set(labels))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 659 tests in 110.879s
+
+FAILED (failures=1)

@@ -1,0 +1,78 @@
+[
+  {
+    "file": "levels/level_01.json",
+    "sha256": "1a876d19321d608c56f510f56ea54c38eeb01e238d836a61cd7b3926f81477cd"
+  },
+  {
+    "file": "levels/level_02.json",
+    "sha256": "7c4e5370e722336a21bf90ecc7df83b065892c9ac0fba6aab4a93e32df7d29fd"
+  },
+  {
+    "file": "levels/level_03.json",
+    "sha256": "1aff5c2546df4cb2edf7b143eb36c1c8718412c0899d9489f701ec80685eb441"
+  },
+  {
+    "file": "levels/level_04.json",
+    "sha256": "23815b8fa66ca6048d331aceaddadf31e9d1d110b34a99884004ffe79fa173f6"
+  },
+  {
+    "file": "levels/level_05.json",
+    "sha256": "806aaebeb775f31dc287fdc062bd094595205c5c8522d2848c99e32b99a4288a"
+  },
+  {
+    "file": "levels/level_06.json",
+    "sha256": "6ffaedef05c0b3caf6e5a38b7052ed6c21bff35b5244d9200ef0d1f73ef62f82"
+  },
+  {
+    "file": "levels/level_07.json",
+    "sha256": "8d9747313b8c767be1c77326e27e73bed48441e828403b4e611002d6955dd155"
+  },
+  {
+    "file": "levels/level_08.json",
+    "sha256": "f368be34b296606706375fb782d000f4bb5e0e6c7ca1d10fd798fab0a4d064fd"
+  },
+  {
+    "file": "levels/level_09.json",
+    "sha256": "e17f9fb16938b1dd6c8259a9268d7fbaa19887d8f50019ded98b7f3735cda1f7"
+  },
+  {
+    "file": "levels/level_10.json",
+    "sha256": "7c5c25e5512a633f5bc9188a521a84f9b94c6ae0e16650c41347f2f5fc7dfa51"
+  },
+  {
+    "file": "levels/level_11.json",
+    "sha256": "031bdbc01393a22dd62770274c793d1ac7077fb1440b6d8e73088b0f4410be4b"
+  },
+  {
+    "file": "levels/level_12.json",
+    "sha256": "4a619e95647c0d5fccd750b3fc5aa1357eab100b04ea19f45de67e7afbfb08f3"
+  },
+  {
+    "file": "levels/level_13.json",
+    "sha256": "eb5e44e7b96fc5bd8d73762411c83306a08c94903927dc5d001c0babefd01338"
+  },
+  {
+    "file": "levels/level_14.json",
+    "sha256": "705b16d756f3dd31617221b0254d883887ed19c346702a118c6ef25893ea33cf"
+  },
+  {
+    "file": "levels/level_15.json",
+    "sha256": "ee34f3d2cd928bbdfb28b7e9be7a091decbe2779bac053b85cd47ce9e3bd93dd"
+  },
+  {
+    "file": "levels/level_16.json",
+    "sha256": "3c32c72d4abdbad634f1dd4b2b8028504238302dc6e86c81b38453e3141a2c59"
+  },
+  {
+    "file": "levels/level_17.json",
+    "sha256": "91759a7bf9b5ba606b3580b0708bca5ba8318c3295218c5b93f130cad6b237db"
+  },
+  {
+    "file": "levels/level_18.json",
+    "sha256": "5d41d8b935147f0826182a760dbb57cb9f9001a4d58c5044f86f3ca4027d550e"
+  },
+  {
+    "file": "levels/level_19.json",
+    "sha256": "44e872abe049673ca436cfa2af19575627c97e75075ae02e42d53a2f2d7cd985"
+  }
+]

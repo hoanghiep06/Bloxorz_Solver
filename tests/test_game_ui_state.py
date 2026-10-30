@@ -58,7 +58,10 @@ class GameUiStateTests(SceneFixture):
             self.assertNotIn('Graphics quality',labels)
             self.assertTrue({'Auto','High','Balanced','Low'}.isdisjoint(buttons))
             self.assertTrue({'Keyboard','Mouse','Light','Dark','On','Off','Back'}<=set(buttons))
-            self.assertTrue({'Master volume','Music / Ambience','Sound effects'}<=set(labels))
+            self.assertTrue({'Music / Ambience','Sound effects'}<=set(labels))
+            # Main intentionally removed the master/mute row in e664d05.
+            self.assertNotIn('Master volume',labels)
+            self.assertTrue({'Mute All','Unmute All'}.isdisjoint(buttons))
             self.assertEqual(self.flow.save.settings.quality,'high')
             back=next(w for w in screen._owned if isinstance(w,DirectButton) and w['text']=='Back')
             self.assertLessEqual(-back.getZ()+50,720)

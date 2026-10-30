@@ -9,6 +9,8 @@ from src.core.board import Board
 from src.core.state import BloxorzState, Orientation
 from src.solvers.astar import AStarSolver
 from src.solvers.bfs import BFSSolver
+from src.solvers.ucs import UCSSolver
+from src.solvers.UCS_Algorithm.cost_functions import UniformCost,TunedWeightCost,INVERSE_ACTIONS
 
 
 class AStarRegressionTests(unittest.TestCase):
@@ -24,7 +26,7 @@ class AStarRegressionTests(unittest.TestCase):
 
     def assert_same_optimum(self, board):
         expected = BFSSolver(board).solve()
-        actual = AStarSolver(board).solve()
+        actual = AStarSolver(board,cost_function=UniformCost()).solve()
         self.assertEqual(actual.success, expected.success)
         self.assertEqual(actual.solution_length, expected.solution_length)
         if actual.success:
@@ -92,6 +94,48 @@ class AStarRegressionTests(unittest.TestCase):
             split_switch={'cell': [0, 3], 'split_positions': [[0, 0], [0, 2]]},
         )
         self.assertFalse(self.assert_same_optimum(board).success)
+
+    def assert_weighted_optimum(self, board, root=None):
+        astar,ucs=AStarSolver(board),UCSSolver(board)
+        ar,ur=astar.solve(start_state=root),ucs.solve(start_state=root)
+        self.assertTrue(ar.success and ur.success)
+        self.assertIsInstance(astar.cost_function,TunedWeightCost)
+        self.assertAlmostEqual(astar.total_cost,ucs.total_cost)
+        state=board.get_initial_state() if root is None else root
+        self.assertEqual(ar.start_state,state)
+        last=None;cost=0.
+        for action in ar.actions:
+            nxt=board.transition(state,action);self.assertIsNotNone(nxt)
+            cost+=astar.cost_function.calculate_cost(state,action,nxt,board,last_action=last)
+            last=action if action in INVERSE_ACTIONS else None;state=nxt
+        self.assertTrue(board.is_goal(state));self.assertAlmostEqual(cost,astar.total_cost)
+        return astar,ar
+
+    def test_weighted_default_matches_ucs_on_laboratory_and_prefers_cost_to_move_count(self):
+        board=Board(str(Path(__file__).resolve().parents[1]/'levels/level_19.json'))
+        astar,result=self.assert_weighted_optimum(board)
+        bfs=BFSSolver(board).solve();state=board.get_initial_state();last=None;bfs_cost=0.
+        for action in bfs.actions:
+            nxt=board.transition(state,action)
+            bfs_cost+=astar.cost_function.calculate_cost(state,action,nxt,board,last_action=last)
+            last=action if action in INVERSE_ACTIONS else None;state=nxt
+        self.assertLessEqual(astar.total_cost,bfs_cost)
+        self.assertGreater(result.solution_length,bfs.solution_length)
+        # Shortest-action behavior remains explicitly available through UniformCost.
+        uniform=AStarSolver(board,cost_function=UniformCost()).solve()
+        self.assertEqual(uniform.solution_length,bfs.solution_length)
+
+    def test_weighted_teleport_guard_holds_before_and_after_split_and_current_cube_selection(self):
+        board=self.make_board(split_switch={'cell':[1,3],'split_positions':[[1,24],[1,26]]})
+        astar,result=self.assert_weighted_optimum(board)
+        self.assertEqual(astar.heuristic(board.get_initial_state()),0)
+        self.assertAlmostEqual(astar.total_cost,4.)
+        split=board.transition(board.transition(board.get_initial_state(),'R'),'R')
+        self.assertTrue(split.is_split());self.assertEqual(astar.heuristic(split),0)
+        selected=board.transition(split,'SPACE')
+        resumed,_=self.assert_weighted_optimum(board,selected)
+        self.assertEqual(resumed.heuristic(selected),0)
+        self.assertEqual(resumed.cost_function.calculate_cost(split,'SPACE',selected,board),0)
 
     def test_basic_board_keeps_nonzero_heuristic_and_optimal_solution(self):
         path = Path(__file__).resolve().parents[1] / 'levels' / 'level_01.json'

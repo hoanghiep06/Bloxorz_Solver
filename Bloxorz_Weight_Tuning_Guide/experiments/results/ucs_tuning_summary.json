@@ -1,0 +1,122 @@
+{
+  "grid_size": 244,
+  "baseline_configurations": {
+    "baseline_rubric": {
+      "config_id": 121,
+      "weights": {
+        "w_backtrack": 3.0,
+        "w_void": 2.0,
+        "w_fragile": 4.0,
+        "w_switch_change": 2.5,
+        "w_bridge_entry": 3.0
+      },
+      "mean_quality_loss": 0.06781273507677331,
+      "mean_cv_heldout_loss": 0.06781273507677331,
+      "description": "Hand-crafted engineering rubric baseline (3, 2, 4, 2.5, 3)"
+    },
+    "baseline_const_1": {
+      "config_id": 0,
+      "weights": {
+        "w_backtrack": 0.0,
+        "w_void": 0.0,
+        "w_fragile": 0.0,
+        "w_switch_change": 0.0,
+        "w_bridge_entry": 0.0
+      },
+      "mean_quality_loss": 0.10543976872132985,
+      "mean_cv_heldout_loss": 0.10543976872132985,
+      "description": "Unit step cost baseline (cost_function = const = 1.0, zero penalties)"
+    },
+    "baseline_equal_1": {
+      "config_id": 243,
+      "weights": {
+        "w_backtrack": 1.0,
+        "w_void": 1.0,
+        "w_fragile": 1.0,
+        "w_switch_change": 1.0,
+        "w_bridge_entry": 1.0
+      },
+      "mean_quality_loss": 0.08416301606265764,
+      "mean_cv_heldout_loss": 0.08416301606265764,
+      "description": "Equal penalty weights baseline (all penalty weights = 1.0)"
+    }
+  },
+  "baseline_config_id": 121,
+  "baseline_rubric_config_id": 121,
+  "baseline_const1_config_id": 0,
+  "baseline_equal1_config_id": 243,
+  "best_full_data_config_id": 229,
+  "chosen_config_id": 121,
+  "decision": "retain baseline rubric because grouped-CV did not improve on baseline rubric",
+  "baseline_weights": {
+    "w_backtrack": 3.0,
+    "w_void": 2.0,
+    "w_fragile": 4.0,
+    "w_switch_change": 2.5,
+    "w_bridge_entry": 3.0
+  },
+  "chosen_weights": {
+    "w_backtrack": 3.0,
+    "w_void": 2.0,
+    "w_fragile": 4.0,
+    "w_switch_change": 2.5,
+    "w_bridge_entry": 3.0
+  },
+  "best_full_data_mean_rank_loss": 0.0666179919465463,
+  "baseline_mean_rank_loss": 0.06781273507677331,
+  "baseline_const1_mean_rank_loss": 0.10543976872132985,
+  "baseline_equal1_mean_rank_loss": 0.08416301606265764,
+  "mean_cv_heldout_improvement_vs_rubric": -0.002743484224965703,
+  "mean_cv_heldout_improvement_vs_const1": 0.034883549419590834,
+  "mean_cv_heldout_improvement_vs_equal1": 0.013606796760918619,
+  "mean_cv_heldout_improvement_vs_baseline": -0.002743484224965703,
+  "cv_selected_config_ids": [
+    229,
+    229,
+    229,
+    148,
+    229,
+    121
+  ],
+  "folds": {
+    "0": [
+      "level_01",
+      "level_09",
+      "level_15"
+    ],
+    "1": [
+      "level_02",
+      "level_10",
+      "level_16"
+    ],
+    "2": [
+      "level_03",
+      "level_05",
+      "level_11"
+    ],
+    "3": [
+      "level_04",
+      "level_06",
+      "level_12"
+    ],
+    "4": [
+      "level_07",
+      "level_13",
+      "level_17"
+    ],
+    "5": [
+      "level_08",
+      "level_14",
+      "level_18"
+    ]
+  },
+  "quality_weights": {
+    "steps": 0.06451612903225806,
+    "backtracks": 0.1935483870967742,
+    "void_exposure": 0.12903225806451613,
+    "fragile_entries": 0.25806451612903225,
+    "switch_changes": 0.16129032258064516,
+    "bridge_entries": 0.1935483870967742
+  },
+  "interpretation": "Engineering tuning against the predeclared rank-normalized rubric; evaluated and compared against 3 baselines: Team Rubric, Constant Cost (c=1), and Equal Weights (all=1)."
+}

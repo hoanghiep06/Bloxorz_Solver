@@ -7,7 +7,7 @@ ENV/
 # ---------- Python cache / build ----------
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 *.egg-info/
 .eggs/
 build/
@@ -33,6 +33,12 @@ Thumbs.db
 # ---------- Biến môi trường / log ----------
 .env
 *.log
+
+# ---------- File tài liệu kế hoạch cá nhân ----------
+NHIEM_VU_*.md
+docs/PHASE_*.md
+
+# ---------- Thư mục dữ liệu sinh cục bộ ----------
 
 # ---------- Kết quả benchmark (bỏ comment nếu không muốn commit) ----------
 # benchmark_results.csv

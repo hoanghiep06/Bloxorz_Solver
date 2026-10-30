@@ -1,0 +1,64 @@
+{
+  "input": "Native X11 XTest in real Panda3D GLX window",
+  "runs": [
+    {
+      "theme": "light",
+      "solver": "UCS",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 39.5,
+      "expanded_nodes": 24436
+    },
+    {
+      "theme": "light",
+      "solver": "A*",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 39.5,
+      "expanded_nodes": 24436
+    },
+    {
+      "theme": "light",
+      "solver": "Greedy",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 50.5,
+      "expanded_nodes": 43
+    },
+    {
+      "theme": "dark",
+      "solver": "UCS",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 39.5,
+      "expanded_nodes": 24436
+    },
+    {
+      "theme": "dark",
+      "solver": "A*",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 39.5,
+      "expanded_nodes": 24436
+    },
+    {
+      "theme": "dark",
+      "solver": "Greedy",
+      "manual_moves": 2,
+      "remaining_actions": 19,
+      "total_moves": 21,
+      "weighted_cost": 50.5,
+      "expanded_nodes": 43
+    }
+  ],
+  "screenshots": [
+    "light-weighted-current-state-goal.png",
+    "dark-weighted-current-state-goal.png"
+  ],
+  "status": "PASS"
+}

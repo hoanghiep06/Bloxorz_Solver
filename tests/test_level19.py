@@ -122,15 +122,17 @@ class LaboratoryCoreTests(unittest.TestCase):
             self.assertTrue(all(0<=r<b.rows and 0<=c<b.cols for target in targets for r,c in target.cells))
 
     def test_all_six_solvers_return_valid_goal_paths_without_mutating_level(self):
-        raw=LEVEL.read_bytes();b=self.board;root=b.get_initial_state();lengths={}
+        raw=LEVEL.read_bytes();b=self.board;root=b.get_initial_state();lengths={};costs={}
         for name,(module,cls) in SOLVER_SPECS.items():
             with self.subTest(solver=name):
-                result=getattr(importlib.import_module(module),cls)(b).solve()
+                solver=getattr(importlib.import_module(module),cls)(b);result=solver.solve()
                 self.assertTrue(result.success);self.assertEqual(result.start_state,root)
                 self.assertTrue(b.is_goal(walk(b,result.actions)))
                 self.assertEqual(result.solution_length,len(result.actions));lengths[name]=result.solution_length
+                if name in ('A*','UCS'):costs[name]=solver.total_cost
         self.assertEqual(lengths['BFS'],16);self.assertEqual(lengths['IDS'],lengths['BFS'])
-        self.assertEqual(lengths['A*'],lengths['BFS'])
+        # Weighted A*/UCS optimize the same tuned cost, not BFS action count.
+        self.assertAlmostEqual(costs['A*'],costs['UCS'])
         self.assertEqual(LEVEL.read_bytes(),raw);self.assertEqual(b.get_initial_state(),root)
 
     def test_bfs_resumes_from_real_split_and_changed_bridge_states(self):

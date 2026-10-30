@@ -1,0 +1,181 @@
+﻿level_id,trajectory_name,stored_success,replay_success,solution_valid,stored_steps,replayed_steps,replayed_action_count,replayed_control_switches,duplicate_sequence_in_level,duplicate_of,stored_score,stored_rating,actions
+level_01,P1_BFS_Standard,True,True,True,7,7,7,0,False,,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P3_BFS_Alternative,True,True,True,7,7,7,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P4_UCS_SafetyFirst,True,True,True,7,7,7,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P5_Greedy_Direct,True,True,True,7,7,7,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P6_BFS_Horizontal,True,True,True,7,7,7,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P7_Hesitation_2Steps,True,True,True,7,7,7,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R D L U R R
+level_01,P8_Hesitation_4Steps,True,True,True,9,9,9,0,False,,80.0,Tot (An toan),R L R R D L U R R
+level_01,P10_Wander_6Steps,True,True,True,13,13,13,0,False,,67.5,Kha (Trung binh kha),R D L U R L L D R U R R R
+level_01,P10_DFS_DeepWander,True,True,True,27,27,27,0,False,,10.0,Rat kem (Di lac),R R R D L L D R U L L U L D R R D L U L L D R U R R R
+level_01,P9_DFS_Suboptimal,True,True,True,26,26,26,0,False,,7.5,Rat kem (Di lac),R R R D L L L U L D R U U L D R R U L D R D R U R R
+level_02,P5_Greedy_Direct,True,True,True,13,13,13,0,False,,100.0,Xuat sac (Toi uu),D R R R R R R U R R R D R
+level_02,P1_BFS_Standard,True,True,True,12,12,12,0,False,,97.5,Xuat sac (Toi uu),R D R R R U R R R D R R
+level_02,P3_BFS_Alternative,True,True,True,12,12,12,0,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),R D R R R U R R R D R R
+level_02,P4_UCS_SafetyFirst,True,True,True,12,12,12,0,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),R D R R R U R R R D R R
+level_02,P6_BFS_Horizontal,True,True,True,12,12,12,0,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),R D R R R U R R R D R R
+level_02,P7_Hesitation_2Steps,True,True,True,12,12,12,0,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),R D R R R U R R R D R R
+level_02,P10_Wander_6Steps,True,True,True,16,16,16,0,False,,72.5,Kha (Trung binh kha),R D L R R D U R R U R R R D R R
+level_02,P8_Hesitation_4Steps,True,True,True,17,17,17,0,False,,67.5,Kha (Trung binh kha),D L U D R R R R R R R U R R R D R
+level_02,P10_DFS_DeepWander,True,True,True,20,20,20,0,False,,67.5,Kha (Trung binh kha),R D R R R U R R R R D R U R D L U L D R
+level_02,P9_DFS_Suboptimal,True,True,True,37,37,37,0,False,,5.0,Rat kem (Di lac),R D R R R U L D L L L U L D R R U L D R R R R U U R R R D L U L D R R D R
+level_03,P1_BFS_Standard,True,True,True,16,16,16,0,False,,100.0,Xuat sac (Toi uu),R D R R R R R U R U L U L L U R
+level_03,P3_BFS_Alternative,True,True,True,16,16,16,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R R R U R U L U L L U R
+level_03,P4_UCS_SafetyFirst,True,True,True,16,16,16,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R R R U R U L U L L U R
+level_03,P5_Greedy_Direct,True,True,True,16,16,16,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R R R U R U L U L L U R
+level_03,P6_BFS_Horizontal,True,True,True,16,16,16,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R R R U R U L U L L U R
+level_03,P7_Hesitation_2Steps,True,True,True,18,18,18,0,False,,82.5,Tot (An toan),R R L D R R R R R U R U L U L L U R
+level_03,P10_Wander_6Steps,True,True,True,18,18,18,0,False,,80.0,Tot (An toan),R D R R R L R R R U R U L U L L U R
+level_03,P8_Hesitation_4Steps,True,True,True,20,20,20,0,False,,62.5,Trung binh (Co loi thua),R L R R L D R R R R R U R U L U L L U R
+level_03,P10_DFS_DeepWander,True,True,True,37,37,37,0,False,,7.5,Rat kem (Di lac),R R D L U L D R R R R D L L L U R D R U R R R U U R D D L U R U L L L U R
+level_03,P9_DFS_Suboptimal,True,True,True,42,42,42,0,False,,0.0,Rat kem (Di lac),R R D L U L D R R R R D L L L U L U L D R R D L U L D R R R R R R U R U L U L L U R
+level_04,P4_UCS_SafetyFirst,True,True,True,17,17,17,0,False,,100.0,Xuat sac (Toi uu),R D D R R R R R D R D R D R U R U
+level_04,P6_BFS_Horizontal,True,True,True,17,17,17,0,False,,95.0,Xuat sac (Toi uu),R D D R R R R R D R R D R D R U U
+level_04,P7_Hesitation_2Steps,True,True,True,17,17,17,0,True,P6_BFS_Horizontal,95.0,Xuat sac (Toi uu),R D D R R R R R D R R D R D R U U
+level_04,P1_BFS_Standard,True,True,True,17,17,17,0,False,,85.0,Tot (An toan),D R R D R U R R R R D R U R R R D
+level_04,P3_BFS_Alternative,True,True,True,17,17,17,0,True,P1_BFS_Standard,85.0,Tot (An toan),D R R D R U R R R R D R U R R R D
+level_04,P8_Hesitation_4Steps,True,True,True,19,19,19,0,False,,72.5,Kha (Trung binh kha),D R U D R D R U R R R R D R U R R R D
+level_04,P5_Greedy_Direct,True,True,True,18,18,18,0,False,,67.5,Kha (Trung binh kha),D R R D R R U R R R D R R U R R R D
+level_04,P10_Wander_6Steps,True,True,True,21,21,21,0,False,,62.5,Trung binh (Co loi thua),R D L R L R D R R R R R D R R D R D R U U
+level_04,P10_DFS_DeepWander,True,True,True,43,43,43,0,False,,5.0,Rat kem (Di lac),R D D R R R R R R R R D D D D L L U U U L D R U L U R R U R D R U L D R D D L D R U U
+level_04,P9_DFS_Suboptimal,True,True,True,44,44,44,0,False,,0.0,Rat kem (Di lac),R D D L U R R D L U U R D D R U R R U R D R R R U R R D L U L D L L D R D R U U R R R D
+level_05,P1_BFS_Standard,True,True,True,11,11,11,0,False,,100.0,Xuat sac (Toi uu),D R R U R R R R D L U
+level_05,P3_BFS_Alternative,True,True,True,11,11,11,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R R U R R R R D L U
+level_05,P4_UCS_SafetyFirst,True,True,True,11,11,11,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R R U R R R R D L U
+level_05,P5_Greedy_Direct,True,True,True,11,11,11,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R R U R R R R D L U
+level_05,P6_BFS_Horizontal,True,True,True,11,11,11,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R R U R R R R D L U
+level_05,P7_Hesitation_2Steps,True,True,True,13,13,13,0,False,,77.5,Kha (Trung binh kha),R L D R R U R R R R D L U
+level_05,P8_Hesitation_4Steps,True,True,True,14,14,14,0,False,,72.5,Kha (Trung binh kha),D L U D U R R R R R R D L U
+level_05,P10_Wander_6Steps,True,True,True,19,19,19,0,False,,67.5,Kha (Trung binh kha),R U L D R D U R U L D R R R R R D L U
+level_05,P10_DFS_DeepWander,True,True,True,27,27,27,0,False,,35.0,Kem (Long vong),R U L D R U L D R D R U R R R U R D R U L D R D L L U
+level_05,P9_DFS_Suboptimal,True,True,True,42,42,42,0,False,,0.0,Rat kem (Di lac),R U L D L U R R D L U L D R D L L U R R R R R U R D L L U R R D D L U L U R D R U L
+level_06,P1_BFS_Standard,True,True,True,15,15,15,0,False,,100.0,Xuat sac (Toi uu),R D D R R R R U R D R U L D R
+level_06,P3_BFS_Alternative,True,True,True,15,15,15,0,False,,100.0,Xuat sac (Toi uu),R D D R R R R D R U R D L U R
+level_06,P4_UCS_SafetyFirst,True,True,True,15,15,15,0,True,P3_BFS_Alternative,100.0,Xuat sac (Toi uu),R D D R R R R D R U R D L U R
+level_06,P6_BFS_Horizontal,True,True,True,15,15,15,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D D R R R R U R D R U L D R
+level_06,P7_Hesitation_2Steps,True,True,True,17,17,17,0,False,,82.5,Tot (An toan),R R L D D R R R R U R D R U L D R
+level_06,P8_Hesitation_4Steps,True,True,True,20,20,20,0,False,,80.0,Tot (An toan),D R U D L D R U R R R R U R D R U L D R
+level_06,P5_Greedy_Direct,True,True,True,22,22,22,0,False,,72.5,Kha (Trung binh kha),D D R U R R R R R D L U R U L D R R U L D R
+level_06,P10_Wander_6Steps,True,True,True,23,23,23,0,False,,67.5,Kha (Trung binh kha),R D L D R D U L U R D R R R R U R D R U L D R
+level_06,P10_DFS_DeepWander,True,True,True,33,33,33,0,False,,30.0,Kem (Long vong),R R D D L U U R D L U L U R D D L U R U R D R R R U R D R U L D R
+level_06,P9_DFS_Suboptimal,True,True,True,41,41,41,0,False,,0.0,Rat kem (Di lac),R R D L L L L D R U U L D R U R R D L L U L D R U L D R R R R R U R D L L U R D R
+level_07,P1_BFS_Standard,True,True,True,17,17,17,0,False,,100.0,Xuat sac (Toi uu),R U L D L U R D R R R R D R D L D
+level_07,P2_AStar_Direct,True,True,True,17,17,17,0,False,,100.0,Xuat sac (Toi uu),R D L U L D R U R R R R D R D L D
+level_07,P3_BFS_Alternative,True,True,True,17,17,17,0,True,P2_AStar_Direct,100.0,Xuat sac (Toi uu),R D L U L D R U R R R R D R D L D
+level_07,P4_UCS_SafetyFirst,True,True,True,17,17,17,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U L D L U R D R R R R D R D L D
+level_07,P6_BFS_Horizontal,True,True,True,17,17,17,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U L D L U R D R R R R D R D L D
+level_07,P5_Greedy_Direct,True,True,True,18,18,18,0,False,,97.5,Xuat sac (Toi uu),R D L U R R D L U R R R R D R D L D
+level_07,P7_Hesitation_2Steps,True,True,True,19,19,19,0,False,,70.0,Kha (Trung binh kha),R L R U L D L U R D R R R R D R D L D
+level_07,P8_Hesitation_4Steps,True,True,True,21,21,21,0,False,,70.0,Kha (Trung binh kha),R D U L R U L D L U R D R R R R D R D L D
+level_07,P9_DFS_Suboptimal,True,True,True,44,44,44,0,False,,0.0,Rat kem (Di lac),R U L D L U R R D L U L D D R U L L D R U R R R R R D L U L D R D R D L D R U L D L U R
+level_07,P10_DFS_DeepWander,True,True,True,50,50,50,0,False,,0.0,Rat kem (Di lac),R U L D R U L D D R U R D L U R R R R R D D D L U U U L D R D R U L L D D R D R U U U L D D D R U L
+level_08,P2_AStar_Direct,True,True,True,21,21,21,0,False,,100.0,Xuat sac (Toi uu),R D L U L D R U R R R R R D D R R D R R U
+level_08,P3_BFS_Alternative,True,True,True,21,21,21,0,True,P2_AStar_Direct,100.0,Xuat sac (Toi uu),R D L U L D R U R R R R R D D R R D R R U
+level_08,P4_UCS_SafetyFirst,True,True,True,21,21,21,0,True,P2_AStar_Direct,100.0,Xuat sac (Toi uu),R D L U L D R U R R R R R D D R R D R R U
+level_08,P1_BFS_Standard,True,True,True,21,21,21,0,False,,95.0,Xuat sac (Toi uu),R U L D L U R D R R R R R D D R R D R R U
+level_08,P6_BFS_Horizontal,True,True,True,21,21,21,0,True,P1_BFS_Standard,95.0,Xuat sac (Toi uu),R U L D L U R D R R R R R D D R R D R R U
+level_08,P5_Greedy_Direct,True,True,True,25,25,25,0,False,,85.0,Tot (An toan),R U L D R D D R D R U R U U R U R D D R R D R R U
+level_08,P8_Hesitation_4Steps,True,True,True,25,25,25,0,False,,70.0,Kha (Trung binh kha),R D U L R U L D L U R D R R R R R D D R R D R R U
+level_08,P7_Hesitation_2Steps,True,True,True,23,23,23,0,False,,65.0,Kha (Trung binh kha),R L R U L D L U R D R R R R R D D R R D R R U
+level_08,P10_DFS_DeepWander,True,True,True,32,32,32,0,False,,52.5,Trung binh (Co loi thua),R U L D R U L D R D R U R R R R D D R R R D D L U R R D L U U R
+level_08,P9_DFS_Suboptimal,True,True,True,42,42,42,0,False,,17.5,Rat kem (Di lac),R U L D L U R R D L U L D R D R U L D L U R R R D D D R R U U R U R D D R R D R R U
+level_09,P1_BFS_Standard,True,True,True,10,10,10,0,False,,100.0,Xuat sac (Toi uu),R U R U L D R R R R
+level_09,P3_BFS_Alternative,True,True,True,10,10,10,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U R U L D R R R R
+level_09,P4_UCS_SafetyFirst,True,True,True,10,10,10,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U R U L D R R R R
+level_09,P5_Greedy_Direct,True,True,True,10,10,10,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U R U L D R R R R
+level_09,P6_BFS_Horizontal,True,True,True,10,10,10,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U R U L D R R R R
+level_09,P7_Hesitation_2Steps,True,True,True,12,12,12,0,False,,82.5,Tot (An toan),R R L U R U L D R R R R
+level_09,P8_Hesitation_4Steps,True,True,True,14,14,14,0,False,,62.5,Trung binh (Co loi thua),R L R R L U R U L D R R R R
+level_09,P10_Wander_6Steps,True,True,True,15,15,15,0,False,,62.5,Trung binh (Co loi thua),R U L D R L R U U R D R R R R
+level_09,P9_DFS_Suboptimal,True,True,True,39,39,39,0,False,,0.0,Rat kem (Di lac),R U L D L U R R U L D L D R U U R D L D L L D R U U L D R U R R R R R R D L U
+level_09,P10_DFS_DeepWander,True,True,True,34,34,34,0,False,,0.0,Rat kem (Di lac),R U U U R D D L U U R D L L U R U L D R D L U R U R D R R R R D L U
+level_10,P2_AStar_Direct,True,True,True,14,14,14,0,False,,100.0,Xuat sac (Toi uu),R D L U R R U L D R R R R R
+level_10,P6_BFS_Horizontal,True,True,True,14,14,14,0,True,P2_AStar_Direct,100.0,Xuat sac (Toi uu),R D L U R R U L D R R R R R
+level_10,P1_BFS_Standard,True,True,True,14,14,14,0,False,,87.5,Tot (An toan),U L D R U U R L D R R R R R
+level_10,P3_BFS_Alternative,True,True,True,14,14,14,0,True,P1_BFS_Standard,87.5,Tot (An toan),U L D R U U R L D R R R R R
+level_10,P4_UCS_SafetyFirst,True,True,True,14,14,14,0,True,P1_BFS_Standard,87.5,Tot (An toan),U L D R U U R L D R R R R R
+level_10,P7_Hesitation_2Steps,True,True,True,16,16,16,0,False,,68.8,Kha (Trung binh kha),R L U R R U L D R L D R R R R R
+level_10,P8_Hesitation_4Steps,True,True,True,16,16,16,0,False,,68.8,Kha (Trung binh kha),U R U D R U L D R L D R R R R R
+level_10,P5_Greedy_Direct,True,True,True,26,26,26,0,False,,40.0,Kem (Long vong),R U U L D R R U D L L U R D R R R R U R D L U L D R
+level_10,P9_DFS_Suboptimal,True,True,True,44,44,44,0,False,,0.0,Rat kem (Di lac),U L D R U U L D R U R D L U R R D D L U L U R D R U L L D R U R U L D L D R U R R R R R
+level_10,P10_DFS_DeepWander,True,True,True,65,65,65,0,False,,0.0,Rat kem (Di lac),U U R D D D D L U R U L D R U R D L U U R D D L D R U U D D L U U U U R D L D L U U R D L U R U L D D R U R R R R U R D L U L D R
+level_11,P1_BFS_Standard,True,True,True,24,24,24,0,False,,100.0,Xuat sac (Toi uu),D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P3_BFS_Alternative,True,True,True,24,24,24,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P4_UCS_SafetyFirst,True,True,True,24,24,24,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P5_Greedy_Direct,True,True,True,24,24,24,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P6_BFS_Horizontal,True,True,True,24,24,24,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P7_Hesitation_2Steps,True,True,True,28,28,28,0,False,,72.5,Kha (Trung binh kha),R D U L D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P8_Hesitation_4Steps,True,True,True,28,28,28,0,False,,67.5,Kha (Trung binh kha),D L U D R R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P10_Wander_6Steps,True,True,True,32,32,32,0,False,,47.5,Trung binh (Co loi thua),R D L R L R U L D R U L D R U U R R L L D D R R R R R U L D R U
+level_11,P10_DFS_DeepWander,True,True,True,36,36,36,0,False,,40.0,Kem (Long vong),R D D L U R R D L U U R D L U L D R U U R R L L D D R R R R R U L D R U
+level_11,P9_DFS_Suboptimal,True,True,True,41,41,41,0,False,,17.5,Rat kem (Di lac),R D D L U L D R U U L D R R U L D R U U R R L L D D L U R D L L U R D R R R R U R
+level_12,P1_BFS_Standard,True,True,True,19,19,19,0,False,,100.0,Xuat sac (Toi uu),R U U R L D D R U L D R U R R R D R U
+level_12,P3_BFS_Alternative,True,True,True,19,19,19,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U U R L D D R U L D R U R R R D R U
+level_12,P6_BFS_Horizontal,True,True,True,19,19,19,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U U R L D D R U L D R U R R R D R U
+level_12,P4_UCS_SafetyFirst,True,True,True,21,21,21,0,False,,91.2,Tot (An toan),R U U R L D L D L U R D R R U R R R D R U
+level_12,P7_Hesitation_2Steps,True,True,True,21,21,21,0,False,,77.5,Kha (Trung binh kha),R R L U U R L D D R U L D R U R R R D R U
+level_12,P9_DFS_Suboptimal,True,True,True,42,42,42,0,False,,65.0,Kha (Trung binh kha),R U L D L U R D R U L U R D L D R R U L D L D L U R D R R U R R R R U L D R U L D R
+level_12,P10_DFS_DeepWander,True,True,True,40,40,40,0,False,,63.8,Trung binh (Co loi thua),R U U R D L L U R U L D R R R D L U L D L L U R D R R U R R R R U L D R U L D R
+level_12,P8_Hesitation_4Steps,True,True,True,23,23,23,0,False,,47.5,Trung binh (Co loi thua),R L R R L U U R L D D R U L D R U R R R D R U
+level_12,P5_Greedy_Direct,True,True,True,33,33,33,0,False,,36.2,Kem (Long vong),R R U R D L U U L D R R U D L L U R D D R U L L D R U R R R D R U
+level_12,P10_Wander_6Steps,True,True,True,25,25,25,0,False,,32.5,Kem (Long vong),R U L R L D U R U R L D D R U L D R U R R R D R U
+level_13,P1_BFS_Standard,True,True,True,15,15,15,0,False,,100.0,Xuat sac (Toi uu),R R R U R D D R R R U L D R U
+level_13,P3_BFS_Alternative,True,True,True,15,15,15,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R R U R D D R R R U L D R U
+level_13,P4_UCS_SafetyFirst,True,True,True,15,15,15,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R R U R D D R R R U L D R U
+level_13,P5_Greedy_Direct,True,True,True,15,15,15,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R R U R D D R R R U L D R U
+level_13,P6_BFS_Horizontal,True,True,True,15,15,15,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R R R U R D D R R R U L D R U
+level_13,P7_Hesitation_2Steps,True,True,True,17,17,17,0,False,,67.5,Kha (Trung binh kha),R L R R R U R D D R R R U L D R U
+level_13,P8_Hesitation_4Steps,True,True,True,19,19,19,0,False,,37.5,Kem (Long vong),R R L L R R R U R D D R R R U L D R U
+level_13,P10_DFS_DeepWander,True,True,True,27,27,27,0,False,,35.0,Kem (Long vong),R R R U R D D R R U R R D L U U R D L L U R D L D R U
+level_13,P10_Wander_6Steps,True,True,True,21,21,21,0,False,,2.5,Rat kem (Di lac),R L R L R L R R R U R D D R R R U L D R U
+level_13,P9_DFS_Suboptimal,True,True,True,33,33,33,0,False,,0.0,Rat kem (Di lac),R R R U R D L L U R D L R D L U R L D R D R R R U L D R U L D R U
+level_14,P1_BFS_Standard,True,True,True,19,19,19,0,False,,100.0,Xuat sac (Toi uu),R D L U R R D R U D D R R R D R D R R
+level_14,P3_BFS_Alternative,True,True,True,19,19,19,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D L U R R D R U D D R R R D R D R R
+level_14,P4_UCS_SafetyFirst,True,True,True,19,19,19,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D L U R R D R U D D R R R D R D R R
+level_14,P6_BFS_Horizontal,True,True,True,19,19,19,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D L U R R D R U D D R R R D R D R R
+level_14,P5_Greedy_Direct,True,True,True,20,20,20,0,False,,97.5,Xuat sac (Toi uu),R U L D R R R R L L D R R R R D R D R R
+level_14,P7_Hesitation_2Steps,True,True,True,20,20,20,0,True,P5_Greedy_Direct,97.5,Xuat sac (Toi uu),R U L D R R R R L L D R R R R D R D R R
+level_14,P8_Hesitation_4Steps,True,True,True,21,21,21,0,False,,87.5,Tot (An toan),R R L D L U R R D R U D D R R R D R D R R
+level_14,P10_Wander_6Steps,True,True,True,21,21,21,0,False,,80.0,Tot (An toan),R D L U R L R R D R U D D R R R D R D R R
+level_14,P9_DFS_Suboptimal,True,True,True,38,38,38,0,False,,12.5,Rat kem (Di lac),R U L D L U R R D L U L D R R R L L L U R D L L U R R D D R R R R D R D R R
+level_14,P10_DFS_DeepWander,True,True,True,54,54,54,0,False,,0.0,Rat kem (Di lac),R U L D R U L D R R R D L U L U L D R U L D R R D D R U L D L U L U R R D R U L L U R D D R R R R D R D R R
+level_15,P5_Greedy_Direct,True,True,True,17,15,17,2,False,,100.0,Xuat sac (Toi uu),D R R U L D R SPACE R R SPACE R R D R D R
+level_15,P1_BFS_Standard,True,True,True,15,15,15,0,False,,93.8,Tot (An toan),D R R U L D R R L R R D R D R
+level_15,P3_BFS_Alternative,True,True,True,15,15,15,0,True,P1_BFS_Standard,93.8,Tot (An toan),D R R U L D R R L R R D R D R
+level_15,P4_UCS_SafetyFirst,True,True,True,15,15,15,0,True,P1_BFS_Standard,93.8,Tot (An toan),D R R U L D R R L R R D R D R
+level_15,P6_BFS_Horizontal,True,True,True,15,15,15,0,True,P1_BFS_Standard,93.8,Tot (An toan),D R R U L D R R L R R D R D R
+level_15,P8_Hesitation_4Steps,True,True,True,17,17,17,0,False,,81.2,Tot (An toan),D R U D R U L D R R L R R D R D R
+level_15,P9_DFS_Suboptimal,True,True,True,19,19,19,0,False,,68.8,Kha (Trung binh kha),R D D L U R R D L U R R L R R D R D R
+level_15,P10_DFS_DeepWander,True,True,True,19,19,19,0,True,P9_DFS_Suboptimal,68.8,Kha (Trung binh kha),R D D L U R R D L U R R L R R D R D R
+level_15,P7_Hesitation_2Steps,True,True,True,19,19,19,0,False,,61.2,Trung binh (Co loi thua),R D U L D R R U L D R R L R R D R D R
+level_15,P10_Wander_6Steps,True,True,True,23,23,23,0,False,,36.2,Kem (Long vong),R D L R L R U L D R R U L D R R L R R D R D R
+level_16,P1_BFS_Standard,True,True,True,46,45,46,1,False,,100.0,Xuat sac (Toi uu),R U U R R L L D D R R R R R R U R D L L U R D L L L L L L L U R D D D R R SPACE U U R R R R R R
+level_16,P4_UCS_SafetyFirst,True,True,True,46,45,46,1,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U U R R L L D D R R R R R R U R D L L U R D L L L L L L L U R D D D R R SPACE U U R R R R R R
+level_16,P6_BFS_Horizontal,True,True,True,46,45,46,1,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R U U R R L L D D R R R R R R U R D L L U R D L L L L L L L U R D D D R R SPACE U U R R R R R R
+level_16,P7_Hesitation_2Steps,False,False,False,2,2,2,0,False,,100.0,Xuat sac (Toi uu),R L
+level_16,P8_Hesitation_4Steps,False,False,False,4,4,4,0,False,,100.0,Xuat sac (Toi uu),R D U L
+level_16,P8_Wander_6Steps,False,False,False,6,6,6,0,False,,100.0,Xuat sac (Toi uu),R U D L R L
+level_16,P9_Wander_8Steps,False,False,False,8,8,8,0,False,,100.0,Xuat sac (Toi uu),R D D U D R L R
+level_16,P10_Wander_10Steps,False,False,False,10,10,10,0,False,,100.0,Xuat sac (Toi uu),R U D D D U U U D U
+level_16,P3_BFS_Alternative,True,True,True,46,45,46,1,False,,87.5,Tot (An toan),R U U R R L L D D R R R R R R D R U L L D R U L L L L L L L D R U D D R R SPACE U U R R R R R R
+level_16,P5_Greedy_Direct,True,True,True,48,45,48,3,False,,62.5,Trung binh (Co loi thua),R U U R R L L D D R R R R R R U R D L L U R D L L L L L L L D R U D D R SPACE U SPACE R SPACE U R R R R R R
+level_17,P4_UCS_SafetyFirst,True,True,True,24,23,24,1,False,,100.0,Xuat sac (Toi uu),D R U R R R R R R D R SPACE R R R R R R R U R D L U
+level_17,P1_BFS_Standard,True,True,True,21,20,21,1,False,,97.5,Xuat sac (Toi uu),D R U R R R R SPACE U U R R R R R R D R D L U
+level_17,P3_BFS_Alternative,True,True,True,21,20,21,1,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),D R U R R R R SPACE U U R R R R R R D R D L U
+level_17,P6_BFS_Horizontal,True,True,True,21,20,21,1,True,P1_BFS_Standard,97.5,Xuat sac (Toi uu),D R U R R R R SPACE U U R R R R R R D R D L U
+level_17,P5_Greedy_Direct,True,True,True,29,26,29,3,False,,52.5,Trung binh (Co loi thua),D R U SPACE R R SPACE R R R R R R D SPACE R R R R R R R U L D R D L U
+level_17,P8_Hesitation_4Steps,True,True,True,33,33,33,0,False,,15.0,Rat kem (Di lac),D R U L R R R R R R R D D L L L L L L R R R R R U R D L U R D L U
+level_17,P10_DFS_DeepWander,True,True,True,39,39,39,0,False,,7.5,Rat kem (Di lac),D R U R R R R R R R R D D D L U U L D L L L L L L R R R R R U R D L U R D L U
+level_17,P7_Hesitation_2Steps,True,True,True,33,33,33,0,False,,5.0,Rat kem (Di lac),R L D R U R R R R R R D D L L L L L L R R R R R U R D L U R D L U
+level_17,P9_DFS_Suboptimal,True,True,True,41,41,41,0,False,,0.0,Rat kem (Di lac),D R U R R R R R L L L L L L L L D R D U L U R R D L U U R D D R R R R R U R D L U
+level_17,P10_Wander_6Steps,True,True,True,37,37,37,0,False,,0.0,Rat kem (Di lac),R L R L R L D R U R R R R R R D D L L L L L L R R R R R U R D L U R D L U
+level_18,P1_BFS_Standard,True,True,True,22,22,22,0,False,,100.0,Xuat sac (Toi uu),R D R R R D R U R R R L L L L R D R R R D R
+level_18,P3_BFS_Alternative,True,True,True,22,22,22,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R D R U R R R L L L L R D R R R D R
+level_18,P4_UCS_SafetyFirst,True,True,True,22,22,22,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R D R U R R R L L L L R D R R R D R
+level_18,P6_BFS_Horizontal,True,True,True,22,22,22,0,True,P1_BFS_Standard,100.0,Xuat sac (Toi uu),R D R R R D R U R R R L L L L R D R R R D R
+level_18,P5_Greedy_Direct,True,True,True,23,21,23,2,False,,90.0,Tot (An toan),R D R R R D R U R SPACE R SPACE R R L L L D R R R D R
+level_18,P7_Hesitation_2Steps,True,True,True,24,24,24,0,False,,73.8,Kha (Trung binh kha),R L R D R R R D R U R R R L L L L R D R R R D R
+level_18,P8_Hesitation_4Steps,True,True,True,26,26,26,0,False,,62.5,Trung binh (Co loi thua),R D U L R D R R R D R U R R R L L L L R D R R R D R
+level_18,P10_Wander_6Steps,True,True,True,30,30,30,0,False,,51.2,Trung binh (Co loi thua),R U L D R R L U L D D R R R R R R R R L L L L R D R R R D R
+level_18,P9_DFS_Suboptimal,True,True,True,42,42,42,0,False,,0.0,Rat kem (Di lac),R U L D L U R R D L U L D R D R U L D L U R R D R R R R R R R L L L L R D R R R D R
+level_18,P10_DFS_DeepWander,True,True,True,67,67,67,0,False,,0.0,Rat kem (Di lac),R U L D R U L D R D R U L D R U L D R R R R R R R L L L U L D U L L L U U L D R U L D R D R U L D R R R R D D D R R R R R D L U L D R
