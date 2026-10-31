@@ -219,6 +219,8 @@ Runtime kiểm tra current-state, sáu solver, replay, bridge/split/active cube 
 
 ## Benchmark
 
+Hai CSV ở thư mục gốc hiện giữ nguyên **bộ thực nghiệm của Huy**, commit `c8c8ab4`, sáu solver trên Level 01–18. Xem [nguồn và phạm vi số liệu](docs/experiments/HUY_BENCHMARK.md); đây không phải kết quả đo lại code main sau merge.
+
 Chạy tất cả file `level_*.json` trong `levels/` với sáu solver:
 
 ```bash
