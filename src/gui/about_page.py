@@ -9,7 +9,7 @@ import logging,re,threading,webbrowser
 from panda3d.core import DynamicTextFont,Filename,TextNode
 from src.gui import ui_theme as ui,icons
 
-DEMO_YOUTUBE_URL = None
+DEMO_YOUTUBE_URL = 'https://youtu.be/a9fYH07MTgY'
 TITLE = 'BLOXORZ SOLVER'
 SUBTITLE = '3D Puzzle Game & AI Search'
 DESCRIPTION = ('Bloxorz Solver is a 3D puzzle game where players roll a rectangular block '
