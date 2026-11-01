@@ -195,3 +195,19 @@ def _steps():
     return _disc(-.42,.36,.28)+_disc(.4,-.22,.28)+_rect(-.57,-.3,-.27,.18)+_rect(.25,-.88,.55,-.4)
 
 BUILDERS.update(clock=_clock,graph=_graph,chip=_chip,nodes=_nodes,steps=_steps)
+
+def _scaled(tris, s, dx=0.0, dz=0.0):
+    return [tuple((x * s + dx, z * s + dz) for x, z in tri) for tri in tris]
+
+
+def _github():
+    ring = _band(_circle_points(0.95), _circle_points(0.80))
+    cat = (_disc(0, 0.08, 0.52)
+           + [((-0.55, 0.22), (-0.46, 0.84), (-0.05, 0.60)),
+              ((0.55, 0.22), (0.46, 0.84), (0.05, 0.60))]
+           + _rect(-0.30, -0.86, 0.30, -0.25)
+           + _disc(-0.30, -0.80, 0.14) + _disc(0.30, -0.80, 0.14))
+    return ring + _scaled(cat, 0.62, 0.0, -0.02)
+
+
+BUILDERS['github'] = _github

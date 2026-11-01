@@ -1,6 +1,7 @@
 """About content for the existing Screen owner; no window, event or game state.
 
 Configure DEMO_YOUTUBE_URL with the final YouTube video URL when available.
+Configure GITHUB_URL with the project repository URL.
 """
 from functools import lru_cache
 from pathlib import Path
@@ -10,6 +11,7 @@ from panda3d.core import DynamicTextFont,Filename,TextNode
 from src.gui import ui_theme as ui,icons
 
 DEMO_YOUTUBE_URL = 'https://youtu.be/a9fYH07MTgY'
+GITHUB_URL = 'https://github.com/hoanghiep06/Bloxorz_Solver'
 TITLE = 'BLOXORZ SOLVER'
 SUBTITLE = '3D Puzzle Game & AI Search'
 DESCRIPTION = ('Bloxorz Solver is a 3D puzzle game where players roll a rectangular block '
@@ -42,15 +44,31 @@ def valid_demo_url(url):
     except (ValueError,TypeError):return False
 
 
-def open_demo(url):
+def valid_github_url(url):
+    """Accept only HTTPS links on github.com: /owner or /owner/repo."""
+    if not isinstance(url,str) or any(c.isspace() for c in url):return False
+    try:
+        parts=urlsplit(url)
+        if parts.scheme!='https' or parts.username or parts.password or parts.port not in (None,443):return False
+        if parts.hostname not in ('github.com','www.github.com'):return False
+        path=[p for p in parts.path.strip('/').split('/') if p]
+        return 1<=len(path)<=2 and all(re.fullmatch(r'[A-Za-z0-9_.-]+',p) for p in path)
+    except (ValueError,TypeError):return False
+
+
+def _open_url(url,validator,name):
     """The browser launch may block on some OSes; never run it on Panda's thread."""
-    if not valid_demo_url(url):return None
+    if not validator(url):return None
     def launch():
         try:webbrowser.open(url,new=2)
-        except Exception:logging.getLogger(__name__).exception('Could not open gameplay demo.')
-    worker=threading.Thread(target=launch,name='AboutDemoBrowser',daemon=True)
+        except Exception:logging.getLogger(__name__).exception('Could not open %s.',name)
+    worker=threading.Thread(target=launch,name=name,daemon=True)
     worker.start()
     return worker
+
+
+def open_demo(url):return _open_url(url,valid_demo_url,'AboutDemoBrowser')
+def open_github(url):return _open_url(url,valid_github_url,'AboutGithubBrowser')
 
 
 @lru_cache(maxsize=2)
@@ -68,7 +86,7 @@ def build_about(screen,width,height):
     left=int(width*screen.flow.LEFT_SHARE)
     screen.card(-2,-2,left+2,height+4,alpha=1)
     content=min(520,left-48);x=(left-content)/2;cx=left/2
-    top=max(16,(height-650)/2)
+    top=max(16,(height-760)/2)
     labels=[]
     def label(text,size,xx,baseline,*,bold=False,center=False,color=None):
         widget=screen.label(text,size,xx,baseline,color=color or ui.INK,
@@ -89,6 +107,8 @@ def build_about(screen,width,height):
     for i,(student,name) in enumerate(TEAM):
         y=team_y+55+i*28
         team_labels.append((label(student,15,x,y),label(name,15,x+100,y)))
+
+    # Gameplay Demo (YouTube)
     demo_y=team_y+55+4*28+44
     badge=screen.own(ui.rounded_rect(30,21,5,(.9,.1,.14,1)))
     badge.reparentTo(screen.root);badge.setPos(x,0,-demo_y+16)
@@ -99,7 +119,21 @@ def build_about(screen,width,height):
     status=label('Open in your browser' if available else 'Coming soon',13,x,demo_y+27,color=ui.MUTED)
     watch=screen.button('Watch Demo',x,demo_y+43,content,40,
                         lambda:open_demo(DEMO_YOUTUBE_URL),enabled=available,size=18)
-    back=screen.button('Back',cx-100,demo_y+105,200,46,
+
+    # Source Code (GitHub)
+    gh_y=demo_y+115
+    gh_badge=screen.own(ui.rounded_rect(30,21,5,(.14,.16,.2,1)))
+    gh_badge.reparentTo(screen.root);gh_badge.setPos(x,0,-gh_y+16)
+    gh_icon=screen.own(icons.make_icon('github'));gh_icon.reparentTo(gh_badge)
+    gh_icon.setPos(14,-.01,-10.5);gh_icon.setScale(7);gh_icon.setColor(1,1,1,1)
+    label('Source Code',17,x+42,gh_y,bold=True)
+    gh_available=valid_github_url(GITHUB_URL)
+    gh_status=label('Open on GitHub' if gh_available else 'Coming soon',13,x,gh_y+27,color=ui.MUTED)
+    github=screen.button('View on GitHub',x,gh_y+43,content,40,
+                         lambda:open_github(GITHUB_URL),enabled=gh_available,size=18)
+
+    back=screen.button('Back',cx-100,gh_y+105,200,46,
                        lambda:screen.flow.show('main'),primary=True,size=20)
     return dict(labels=labels,team=team_labels,watch=watch,back=back,status=status,
-                left=left,content_width=content,bottom=demo_y+151)
+                github=github,github_status=gh_status,
+                left=left,content_width=content,bottom=gh_y+151)
