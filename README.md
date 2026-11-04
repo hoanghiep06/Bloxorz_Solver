@@ -8,6 +8,12 @@ Trò chơi Bloxorz 3D bằng Python/Panda3D, kết hợp chơi tay và sáu thu�
 
 Ảnh chụp runtime thật sau khi replay đến Goal ở Level 19; không phải concept art.
 
+## 📺 Demo Video
+Nhấp vào hình ảnh bên dưới để xem video demo chi tiết về các tính năng và thuật toán của đồ án:
+
+[![Bloxorz Solver Demo](https://youtube.com)](https://youtu.be/a9fYH07MTgY?si=ItHKG3AEwcXvTicK)
+
+
 ## Mục lục
 
 - [Tính năng](#tính-năng)
